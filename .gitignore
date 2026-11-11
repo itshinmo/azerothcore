@@ -11,18 +11,25 @@
 !/modules/CMakeLists.txt
 !/modules/*.h
 !/modules/*.cmake
+# Project modules are tracked; vendor modules stay ignored.
+!/modules/mod-*/
+!/modules/mod-*/**
 /build*/
 /var/*
 !/var/build/.gitkeep
 !/var/ccache/.gitkeep
 /env/dist/*
 !/env/dist/.gitkeep
+/env/test/*
+!/env/test/.gitkeep
 /env/user/*
 /.env*
 /e2e/.env
 /apps/joiner
 /deps/deno
-/data/sql/custom/*
+# Project custom SQL is tracked.
+!/data/sql/custom/
+!/data/sql/custom/**
 /src/server/scripts/Custom/*
 !/src/server/scripts/Custom/README.md
 
@@ -132,3 +139,13 @@ e2e/local/**
 !e2e/local/README.md
 e2e/go.work
 e2e/go.work.sum
+
+# Project tooling local state
+tools/dbadmin/.env
+tools/dbadmin/node_modules/
+tools/gm-panel/.env
+tools/gm-panel/node_modules/
+tools/dev/config.env
+var/dbadmin/
+var/backups/
+var/run/
