@@ -16,7 +16,7 @@ description: Use before handing a change to review. Picks the right verification
 | Tier | Applies to | Commands |
 |------|------------|----------|
 | T0 docs | Markdown, ADRs, runbooks | `make verify-docs` |
-| T1 SQL/tooling | SQL, RBAC, GUI schema | `make verify-sql` (auto test-realm apply when configured; `VERIFY_SQL_APPLY=0` lint only) |
+| T1 SQL/tooling | SQL, RBAC, GUI schema | `make verify-sql` (auto test-realm apply for pending/custom SQL when configured; `VERIFY_SQL_APPLY=0` lint only) |
 | T2 C++/scripts | core, modules, scripts | `make verify-cpp` |
 | T3 player-visible | GM tools, GUI writes, behavior | `make verify-smoke`, then `make verify-full`; live e2e when asked |
 | T4 production | deploy, config, DB | T3 + backup + staging + rollback plan |

@@ -59,3 +59,11 @@ fi
 
 printf 'backup: %s\n' "$out/acore.sql"
 printf 'sha256: %s\n' "$(cut -d' ' -f1 "$out/acore.sql.sha256")"
+
+retention_days="${BACKUP_RETENTION_DAYS:-14}"
+if [ -d "$BACKUP_DIR/manual" ]; then
+    while IFS= read -r -d '' old; do
+        rm -rf "$old"
+        printf 'pruned: %s\n' "$old"
+    done < <(find "$BACKUP_DIR/manual" -maxdepth 1 -type d -name '20*' -mtime +"$retention_days" -print0)
+fi

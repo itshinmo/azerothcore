@@ -72,7 +72,10 @@ First-time local setup, or rebuilding a Mac after a clean checkout.
    ls "$DATA_DIR"/mmaps | head
    ```
 
-7. Create a GM account:
+7. Optional: copy `tools/dev/config.env.example` to `tools/dev/config.env` for test-realm and backup
+   overrides. Do not commit it.
+
+8. Create a GM account:
 
    ```bash
    cd env/dist/bin
@@ -82,7 +85,7 @@ First-time local setup, or rebuilding a Mac after a clean checkout.
    account set gmlevel ADMIN 3 -1
    ```
 
-8. Start both servers:
+9. Start both servers:
 
    ```bash
    make start

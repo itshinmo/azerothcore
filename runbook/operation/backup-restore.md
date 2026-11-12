@@ -72,7 +72,17 @@ Before trusting a backup, restore it into a scratch MySQL instance or scratch sc
 - Pre-change: every write batch.
 - Daily: one full dump, retained according to policy.
 - Keep enough history to cover the slowest bad-update discovery.
-- On macOS use launchd; on Linux use cron or a systemd timer. The wrapper is `tools/dev/backup.sh`.
+- On macOS use launchd; on Linux use cron or a systemd timer. The wrapper is
+  `tools/dev/backup-schedule.sh`.
+
+```bash
+bash tools/dev/backup-schedule.sh install   # daily 04:00
+bash tools/dev/backup-schedule.sh status
+bash tools/dev/backup-schedule.sh remove
+```
+
+`tools/dev/backup.sh` keeps `BACKUP_RETENTION_DAYS` (default 14) of daily dumps under
+`var/backups/manual/` and prunes older ones. `make backup-schedule CMD=install` is the wrapper.
 
 ## Rules
 

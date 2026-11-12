@@ -68,6 +68,20 @@ build.
 - `env/dist/bin/worldserver -d` and `authserver -d` exit 0 with the configured databases.
 - Unit tests pass.
 
+## macOS local toolchain notes
+
+The `make` configuration passes these automatically when the paths exist:
+
+- If the link fails with `tapi error: malformed file` or `unknown architecture arm64e.x1-macos`, the
+  installed linker cannot read the newest SDK stubs. Configure with
+  `-DCMAKE_OSX_SYSROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk`.
+- If `CliRunnable.cpp` fails with `rl_done` or `rl_event_hook` missing, CMake found the SDK's libedit
+  instead of GNU readline. Set
+  `-DREADLINE_INCLUDE_DIR="$(brew --prefix readline)/include"` and
+  `-DREADLINE_LIBRARY="$(brew --prefix readline)/lib/libreadline.dylib"`.
+- These are local toolchain issues, not code issues. Keep the fixes in the build wrapper so a new
+  checkout works.
+
 ## Troubleshooting
 
 - **CMake cannot find MySQL/OpenSSL:** pass the Homebrew prefixes.

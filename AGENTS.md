@@ -120,7 +120,7 @@ make doctor          # check binaries, config, DB, data dirs, ports, pending SQL
 make build           # configure, build, install into env/dist
 make test            # build the test target and run unit tests
 make verify-docs     # markdown link and structure check
-make verify-sql      # SQL lint; auto-applies to test realm when configured (VERIFY_SQL_APPLY=0 disables)
+make verify-sql      # SQL lint; auto-applies pending/custom SQL to test realm when configured
 make verify-cpp      # codestyle, cppcheck, -Werror build, unit tests
 make verify-smoke    # start the local stack, health-check, stop
 make verify-full     # all applicable tiers
@@ -130,6 +130,8 @@ make status          # show process and port status
 make logs            # tail server logs
 make console         # attach to the worldserver screen console
 make backup          # dump auth, characters, and world
+make test-realm CMD=setup|start|stop|status|reset
+make backup-schedule CMD=install|remove|status
 make dbadmin         # start the database GUI (phase 3; not built yet)
 ```
 

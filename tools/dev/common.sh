@@ -3,6 +3,8 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+# launchd/cron have a minimal PATH; include Homebrew's tools for mysqldump/mysql.
+export PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:$PATH"
 BIN_DIR="$ROOT/env/dist/bin"
 ETC_DIR="$ROOT/env/dist/etc"
 RUN_DIR="$ROOT/var/run"

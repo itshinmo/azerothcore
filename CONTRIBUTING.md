@@ -80,7 +80,7 @@ change gets an RFC first.
 | Change | Must pass |
 |--------|-----------|
 | Documentation | link check, reviewer |
-| SQL, RBAC, schema | SQL lint; auto test-realm apply, row checks, backup when configured; `VERIFY_SQL_APPLY=0` disables |
+| SQL, RBAC, schema | SQL lint; auto test-realm apply when configured and SQL files are pending; row checks, backup; `VERIFY_SQL_APPLY=0` disables |
 | C++ or scripts | codestyle, cppcheck, `-Werror` build, unit tests |
 | Player-visible or critical | the C++ gate plus startup smoke and a manual checklist; live e2e when asked |
 | Production | all of the above plus backup, staging, rollback plan, human approval |

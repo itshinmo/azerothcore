@@ -68,9 +68,9 @@ names, backs up the test databases, applies with the test config, and runs row c
 make verify-sql
 ```
 
-- Auto-applies when `env/test/etc/worldserver.conf` exists.
+- Auto-applies when `env/test/etc/worldserver.conf` exists and there are pending/custom SQL files.
 - `VERIFY_SQL_APPLY=0 make verify-sql` runs lint only.
-- `VERIFY_SQL_APPLY=1 make verify-sql` fails if the test config is missing.
+- `VERIFY_SQL_APPLY=1 make verify-sql` forces an update run and fails if the test config is missing.
 - The local `acore_*` databases are never used by this path.
 
 Manual test apply, only when the verifier path cannot be used:

@@ -12,9 +12,52 @@ and client data, but not databases.
 ## Prerequisites
 
 - MySQL running.
+- A dedicated MySQL admin user with `CREATE USER`, `CREATE DATABASE`, and `GRANT` privileges. Do not
+  use `root`; set `MYSQL_ADMIN_USER` and `MYSQL_ADMIN_PASSWORD`.
 - Disk space for a second set of databases.
 - A copy of the client data (read-only is fine).
-- Ports 3724 and 8085 free, or a second pair of ports.
+- Ports 3824 and 8185 free, or override `TEST_AUTH_PORT` / `TEST_WORLD_PORT`.
+- `screen` for the background sessions.
+
+One-time admin user creation, run by a human with the MySQL root account:
+
+```sql
+CREATE USER IF NOT EXISTS 'acore_admin'@'127.0.0.1' IDENTIFIED BY '<admin-password>';
+GRANT ALL PRIVILEGES ON *.* TO 'acore_admin'@'127.0.0.1' WITH GRANT OPTION;
+FLUSH PRIVILEGES;
+```
+
+## Automation
+
+The script creates and runs the test realm on ports 3824 (auth) and 8185 (world), with its own
+configs under `env/test/etc/` and logs under `env/test/logs/`:
+
+```bash
+export TEST_DB_PASSWORD='<test-password>'
+export MYSQL_ADMIN_USER='acore_admin'
+export MYSQL_ADMIN_PASSWORD='<admin-password>'
+bash tools/dev/test-realm.sh setup
+bash tools/dev/test-realm.sh start
+bash tools/dev/test-realm.sh status
+bash tools/dev/test-realm.sh stop
+bash tools/dev/test-realm.sh reset
+```
+
+`TEST_DB_PASSWORD` and `TEST_DB_USER` may contain only letters, digits, dot, underscore, and hyphen.
+The script rejects `MYSQL_ADMIN_USER=root`.
+
+Or through `make`:
+
+```bash
+make test-realm CMD=setup
+make test-realm CMD=start
+make test-realm CMD=status
+make test-realm CMD=stop
+```
+
+Put local values in `tools/dev/config.env` (ignored); the template is
+`tools/dev/config.env.example`. The script refuses to reset databases whose names do not contain
+`test`. It backs up nothing by itself; `make verify-sql` backs up the test databases before an apply.
 
 ## Setup
 

@@ -30,7 +30,7 @@ feature spec.
 | Tier | Applies to | Must pass |
 |------|------------|-----------|
 | T0 docs | Markdown, ADRs, runbooks | link check, reviewer |
-| T1 SQL/tooling | SQL, RBAC, GUI schema | SQL lint; auto test-realm apply, row checks, backup when configured; `VERIFY_SQL_APPLY=0` disables |
+| T1 SQL/tooling | SQL, RBAC, GUI schema | SQL lint; auto test-realm apply when configured and SQL files are pending; row checks, backup; `VERIFY_SQL_APPLY=0` disables |
 | T2 C++/scripts | core, modules, scripts | codestyle, cppcheck, `-Werror` build, unit tests |
 | T3 player-visible | GM tools, GUI writes, behavior | T2 + startup smoke + manual checklist + clean errors; live e2e when the change needs it and the user asked |
 | T4 production | deploy, config, DB | T3 + backup + staging + rollback plan + human approval |
@@ -45,9 +45,9 @@ feature spec.
 
 ### Fork CI
 
-- Planned for phase 1: `.github/workflows/fork-ci.yml` runs on this fork.
-- On push/PR: docs check, SQL lint, C++ lint, build, unit tests, dry-run.
-- E2E smoke on label or manual dispatch.
+- Built in phase 1: `.github/workflows/fork-ci.yml` runs on this fork.
+- On push/PR: docs check, SQL lint, C++ lint, build, unit tests.
+- E2E smoke on label or manual dispatch is not wired yet.
 - No upstream-repository guard.
 - Actions pinned by full SHA with version comments.
 

@@ -6,6 +6,8 @@ source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/common.sh"
 
 fail=0
 warnings=0
+expect_running=0
+[ "${1:-}" = "--expect-running" ] && expect_running=1
 ok()   { printf '  ok   %s\n' "$*"; }
 warn() { printf '  warn %s\n' "$*"; warnings=$((warnings + 1)); }
 bad()  { printf '  fail %s\n' "$*"; fail=$((fail + 1)); }
@@ -59,7 +61,15 @@ done
 
 printf '\nPorts\n'
 for port in 3724 8085; do
-    if port_listening "$port"; then warn "port $port is in use (server may be running)"; else ok "port $port free"; fi
+    if port_listening "$port"; then
+        if [ "$expect_running" -eq 1 ]; then
+            ok "port $port listening (expected)"
+        else
+            warn "port $port is in use (server may be running)"
+        fi
+    else
+        ok "port $port free"
+    fi
 done
 
 printf '\nSQL updates\n'

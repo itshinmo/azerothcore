@@ -33,6 +33,14 @@ run_sql() {
         return 0
     fi
 
+    local pending_count
+    pending_count="$(find "$ROOT"/data/sql/updates/pending_db_* "$ROOT/data/sql/custom" -type f -name '*.sql' 2>/dev/null | wc -l | tr -d ' ')"
+    if [ "$apply_mode" = "auto" ] && [ "$pending_count" -eq 0 ]; then
+        printf 'test realm configured but no pending/custom SQL files; lint only.\n'
+        printf 'Set VERIFY_SQL_APPLY=1 to force an update run.\n'
+        return 0
+    fi
+
     local local_world local_auth local_char test_world test_auth test_char
     local_world="$(config_value 'WorldDatabaseInfo' "$WORLD_CONF")"
     local_auth="$(config_value 'LoginDatabaseInfo' "$AUTH_CONF")"
@@ -55,6 +63,16 @@ run_sql() {
     check_test_db world "$local_world" "$test_world" || return 1
     check_test_db auth "$local_auth" "$test_auth" || return 1
     check_test_db characters "$local_char" "$test_char" || return 1
+
+    local test_auth_db test_char_db test_world_db
+    test_auth_db="$(db_field "$test_auth" 5)"
+    test_char_db="$(db_field "$test_char" 5)"
+    test_world_db="$(db_field "$test_world" 5)"
+    if [ "$test_auth_db" = "$test_char_db" ] || [ "$test_auth_db" = "$test_world_db" ] \
+        || [ "$test_char_db" = "$test_world_db" ]; then
+        printf 'test auth, characters, and world databases must be distinct\n' >&2
+        return 1
+    fi
 
     if [ "$(db_field "$test_world" 1)/$(db_field "$test_world" 3)" != "$(db_field "$test_auth" 1)/$(db_field "$test_auth" 3)" ] \
         || [ "$(db_field "$test_world" 1)/$(db_field "$test_world" 3)" != "$(db_field "$test_char" 1)/$(db_field "$test_char" 3)" ]; then
@@ -87,6 +105,11 @@ run_sql() {
     fi
     printf 'test-realm apply ok: updates=%s creatures=%s log=%s\n' "$updates" "$creatures" "$RUN_DIR/worldserver-test-apply.log"
     printf 'test backup: %s\n' "$backup_dir/test.sql"
+
+    local retention_days="${VERIFY_BACKUP_RETENTION_DAYS:-7}" old
+    while IFS= read -r -d '' old; do
+        rm -rf "$old"
+    done < <(find "$BACKUP_DIR/verify" -maxdepth 1 -type d -name '20*' -mtime +"$retention_days" -print0)
 }
 
 run_cpp() {
@@ -129,7 +152,7 @@ run_smoke() {
         printf 'smoke failed: authserver and worldserver ports must both be listening\n' >&2
         return 1
     fi
-    "$ROOT/tools/dev/doctor.sh"
+    "$ROOT/tools/dev/doctor.sh" --expect-running
     if [ "$started" -eq 1 ]; then
         "$ROOT/tools/dev/server.sh" stop
         trap - EXIT
