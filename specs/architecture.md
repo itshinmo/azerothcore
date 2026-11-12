@@ -18,7 +18,7 @@ This spec covers structure and extension points, not every gameplay rule.
 Owns: the C++ core, server runtime, script/module loading, database access patterns.
 
 Does not own: individual boss mechanics, quest rewards, or item balance; those live in content scripts
-and data. Does not own the database clients or GM panel; see their docs.
+and data. Does not own the database clients or the future server website; see their docs.
 
 ## Runtime
 
@@ -43,6 +43,22 @@ DataDir: dbc/, maps/, vmaps/, mmaps/
   classified thread-safe or thread-unsafe; unsafe handlers run on the world thread.
 - Database access uses three connection pools and prepared statements. Long reads are asynchronous;
   multi-statement writes use `SQLTransaction`.
+
+## Future server website
+
+The long-term visual layer is the server website, not an in-repo panel. It is not built yet.
+
+```text
+browser -> website BFF -> mod-gm-api -> worldserver
+```
+
+- The admin BFF owns the web session and the GM API secret. The browser never gets the secret.
+- Web identity is separate from game SRP6 auth and links to a game account.
+- The read-only API uses one shared HMAC secret and has no caller identity. Write endpoints must
+  add signed actor identity, RBAC, and audit before shipping. The website is a client, not a
+  source of authority.
+- Public, account, and GM dashboard zones stay separate.
+- See [ADR-010](../decisions/ADR-010-website-as-visual-interface.md).
 
 ## Core modules
 
@@ -84,6 +100,7 @@ DataDir: dbc/, maps/, vmaps/, mmaps/
 | New prepared query | `src/server/database/Database/Implementation/WorldDatabase.*` |
 | New config | `WorldConfig.h/.cpp` + `worldserver.conf.dist` |
 | Project feature | `modules/mod-*`, tracked SQL, or `tools/` |
+| Website feature | API contract first; future website BFF; no in-repo UI |
 
 ## Constraints
 

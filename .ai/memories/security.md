@@ -33,7 +33,7 @@ The contract is [specs/security.md](../../specs/security.md).
 ## GM tools
 
 - RBAC-gated commands; use the smallest role.
-- The web GM panel (phase 4) calls a server module API, not the database directly.
+- The future server website BFF calls the GM API, not the database directly.
 - HMAC-signed requests, replay protection, rate limit, localhost/VPN bind.
 - Audit every action: actor, target, command, arguments, result, timestamp.
 - The in-game addon wraps existing commands and does not bypass server checks.

@@ -21,7 +21,7 @@ purchase.
    - confirm the exact item, not a lookalike.
 3. Choose the path:
    - online character, simple grant: `.additem`
-   - offline character or purchase: mail via `.send items`, or the GM panel when it lands (phase 4).
+   - offline character or purchase: mail via `.send items`, or the future server website when it lands.
 4. Record: order id (if any), account, character, item, quantity, reason, actor.
 5. Perform the grant.
 6. Verify the inventory or mailbox and the audit entry.
@@ -48,7 +48,7 @@ Confirm exact syntax with `.help send items`.
 - Never grant from a screenshot or a player's claim alone.
 - Never grant gold or items to an account you cannot verify.
 - High-value or bulk grants require human approval.
-- Use the panel or a wrapped command; raw SQL bypasses game logic.
+- Use the future website or a wrapped command; raw SQL bypasses game logic.
 
 ## Verification
 

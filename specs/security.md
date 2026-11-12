@@ -63,6 +63,20 @@ Owns access control and secret handling. Does not own game balance or individual
 - Read-only endpoints first; writes require a role and audit.
 - No secrets in the frontend.
 
+### Future website security
+
+- The browser talks to a website BFF, not directly to the GM API.
+- The admin BFF holds the GM API HMAC secret. The public BFF and browser never receive it.
+- Web identity is separate from game SRP6. Link a web identity to a game account; do not reuse game
+  session keys.
+- Web login uses passkeys, OAuth, or an Argon2id password hash. Destructive actions require MFA or
+  re-authentication.
+- Public pages, account/identity pages, and the GM dashboard are separate security zones. The GM
+  dashboard is behind VPN/SSO or a separate admin origin.
+- The read-only API uses one shared HMAC secret and has no caller identity. Write endpoints must add
+  signed actor identity, RBAC, and audit; website login alone grants no GM rights.
+- The website and BFF never write directly to the database.
+
 ### Secrets
 
 - Never log passwords, tokens, session keys, or full connection strings.

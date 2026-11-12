@@ -44,7 +44,7 @@ Every option can be overridden with `AC_<KEY>`: camelCase is split, and `.`, `-`
 
 - Database client: DBeaver stores its own connection profiles; nothing in the repo. See
   [runbook/database/dbeaver.md](../database/dbeaver.md).
-- GM panel (phase 4): `tools/gm-panel/.env` (ignored).
+- GM API: `GmApi.*` in `worldserver.conf` (ignored). `GmApi.Secret` is a credential.
 - Dev scripts: `tools/dev/config.env` (ignored) or environment variables.
 
 ## Rules

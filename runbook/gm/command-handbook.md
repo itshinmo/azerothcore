@@ -99,7 +99,7 @@ Temporary spawns must be removed after the test. Permanent spawns need tracked S
 .send money <player> "<subject>" "<text>" <amount>
 ```
 
-Use the audited panel for purchases and refunds. Never grant from a screenshot alone.
+Use the future audited website or a wrapped command for purchases and refunds. Never grant from a screenshot alone.
 
 ## Instances
 

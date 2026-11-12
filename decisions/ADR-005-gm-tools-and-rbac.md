@@ -17,9 +17,10 @@ must reduce risk, not add a new bypass.
 2. **Least-privilege roles.** `support`, `content-tester`, `economy`, `admin`, `superadmin`, implemented
    as `rbac_*` permission sets in tracked SQL. No shared accounts.
 3. **Audit.** `modules/mod-gm-audit` uses `AllCommandScript::OnTryExecuteCommand` to log command
-   attempts. Panel actions log outcomes directly. High/critical actions record before/after state where
+   attempts. Website actions log outcomes directly. High/critical actions record before/after state where
    practical. Audit failure aborts the action.
-4. **Web panel.** Frontend in `tools/gm-panel/`, backend `modules/mod-gm-api/` inside `worldserver`.
+4. **Web panel.** Superseded by [ADR-010](ADR-010-website-as-visual-interface.md): the future
+   server website is the frontend; the backend is `modules/mod-gm-api/` inside `worldserver`.
    HMAC-signed requests with nonce and timestamp, replay window, rate limit, localhost/VPN bind.
    Read-only endpoints first; safe writes next; admin writes last. No direct database writes.
 5. **In-game addon.** `tools/gm-addon/` Lua addon wraps existing commands. The server remains the
@@ -41,7 +42,10 @@ must reduce risk, not add a new bypass.
 - The addon can be distributed with the client without server changes.
 - Audit storage needs retention and access control.
 
-## Amendment
+## Amendments
 
 [ADR-009](ADR-009-rbac-command-permission-precedence.md) permits one core patch in the command
 loader so RBAC command permissions are not overwritten by legacy `command.security` values.
+
+[ADR-010](ADR-010-website-as-visual-interface.md) makes the future server website the long-term
+visual layer and removes the in-repo panel UI.

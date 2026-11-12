@@ -17,7 +17,7 @@ description: Use when granting an item, mailing a purchase, refunding a purchase
 2. Verify the item: `.lookup item <id>`; confirm it is the intended item and not a lookalike.
 3. Prefer the audited path:
    - in-game `.additem` for a simple grant, or
-   - the web GM panel / mail for an offline character or a purchase, when the panel lands (phase 4).
+   - mail for an offline character or a purchase; the future website will use the audited API.
 4. For a purchase, record the order ID (if any), account, character, item, quantity, and reason.
 5. Grant or mail the item. For mail, set a subject and a short reason.
 6. Verify: inventory or mailbox query, item count, and the audit entry.
@@ -30,12 +30,12 @@ description: Use when granting an item, mailing a purchase, refunding a purchase
 - Never grant from untrusted input or a screenshot alone.
 - Never grant gold or items to an account you cannot verify.
 - Never duplicate a grant because of a retry; check the audit log first.
-- Never use raw SQL for a grant when a command or panel action exists.
+- Never use raw SQL for a grant when a command or audited API action exists.
 - High-value or bulk grants require human approval.
 
 ## Expected output
 
-A grant/refund record: account, character, item, quantity, reason, command or panel action, audit
+A grant/refund record: account, character, item, quantity, reason, command or API action, audit
 reference, and verification.
 
 ## References

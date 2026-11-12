@@ -12,7 +12,7 @@ Reviewing privileged actions, investigating a player report, or checking that a 
 - player name and GUID
 - command and arguments
 - timestamp
-- `result`: `NULL` for command-hook rows; reserved for panel outcomes
+- `result`: `NULL` for command-hook rows; reserved for website outcomes
 
 Console commands, accounts with security above player, and accounts with any direct RBAC grant
 beyond the default permission set are audited.
@@ -75,7 +75,7 @@ The server log gets a `module.gm-audit` error when the insert fails.
 ## Limits
 
 - The hook runs before command execution. It records the attempt, not whether the handler succeeded.
-- `result` stays `NULL` until a panel or a future post-execute hook writes it.
+- `result` stays `NULL` until the website or a future post-execute hook writes it.
 - The table contains account names, player names, and command arguments. Treat it as sensitive; do
   not paste rows into chat, issues, or commits without redaction.
 - Redaction covers known password-bearing commands. Do not add new secret-bearing command forms

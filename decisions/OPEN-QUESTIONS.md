@@ -39,16 +39,16 @@ approved, and tested on a copy of the client.
 **Owner:** human.
 **Record:** ADR-002 or a new ADR.
 
-## GM panel first scope
+## Server website first scope
 
-**Question:** Which read-only endpoints ship first?
+**Question:** Which read-only website pages and API endpoints ship first?
 
-Proposed: account lookup, character summary, online players, instance info, audit search. Writes
-follow after the read path is proven.
+Proposed API order: account lookup, character summary, online players, instance info, audit search.
+Website pages follow the API. Writes follow after the read path is proven.
 
 **Blocks:** phase 4 implementation detail.
 **Owner:** implementer + db-admin, confirmed by human.
-**Record:** ADR-005 update.
+**Record:** ADR-010 update.
 
 ## Windows development path
 

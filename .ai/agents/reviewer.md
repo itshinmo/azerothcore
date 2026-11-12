@@ -20,7 +20,7 @@ on:
   credentials in the repository, backup before a write batch, SQL injection in tooling, unsafe
   multi-statement execution, missing confirmation before destructive edits.
 - **GM tools:** least-privilege violations, unauthenticated API, missing HMAC/replay protection,
-  command injection, missing audit, a panel action that bypasses game logic, an addon that assumes
+  command injection, missing audit, a website/API action that bypasses game logic, an addon that assumes
   server-side permission.
 - **Secrets and privacy:** passwords, tokens, keys, player data, internal hostnames, or production
   values in code, docs, tests, logs, or sample config.

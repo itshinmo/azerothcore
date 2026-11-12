@@ -18,7 +18,7 @@ error: the core treats it as fatal and shuts the server down. Apply the SQL befo
 - realm, account id and name, player name and GUID
 - command and arguments
 - timestamp
-- `result` is `NULL` for command-hook rows; panel actions can write an outcome later
+- `result` is `NULL` for command-hook rows; website actions can write an outcome later
 
 Console commands, accounts with security above player, and accounts with any direct RBAC grant
 beyond the default permission set are audited.
@@ -29,7 +29,7 @@ Password-bearing commands are redacted: `account create`, `account password`,
 ## Known limit
 
 `AllCommandScript::OnTryExecuteCommand` runs before the command executes, so the module records
-attempts, not success or failure. The result column is reserved for the panel and a future
+attempts, not success or failure. The result column is reserved for the website and a future
 post-execute hook.
 
 ## Query

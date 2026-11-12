@@ -141,8 +141,6 @@ e2e/go.work
 e2e/go.work.sum
 
 # Project tooling local state
-tools/gm-panel/.env
-tools/gm-panel/node_modules/
 tools/dev/config.env
 var/backups/
 var/run/

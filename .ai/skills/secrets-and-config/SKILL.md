@@ -7,7 +7,7 @@ description: Use when creating or changing local configuration, database credent
 
 ## Prerequisites
 
-- Know which component reads the config: server, database client, GM panel, or scripts.
+- Know which component reads the config: server, database client, GM API/future website BFF, or scripts.
 - Know whether the environment is local, test, or production.
 
 ## Workflow

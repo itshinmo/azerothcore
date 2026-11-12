@@ -109,7 +109,8 @@ Read the matching doc(s) BEFORE starting the task:
 - `conf/dist/` — build and shell templates; `conf/*.conf` is gitignored.
 - `src/server/apps/{authserver,worldserver}/*.conf.dist` — server config templates.
 - `env/dist/` — local install prefix, binaries, configs, logs (gitignored).
-- `tools/` — project tooling: dev scripts, GM addon, GM panel (future).
+- `tools/` — project tooling: dev scripts, GM addon (future). The long-term visual layer is the
+  server website.
 - `runbook/`, `specs/`, `decisions/`, `rfcs/`, `.ai/` — knowledge layer.
 
 ## Commands
@@ -170,9 +171,25 @@ New content is currently out of scope. When it returns:
 
 - GM commands are RBAC-gated. Use the least-privilege role that can do the job; see
   `runbook/gm/rbac-roles.md`.
-- Every GM action must be auditable. Prefer the web GM panel or a wrapped command over raw SQL.
+- Every GM action must be auditable. Prefer a wrapped command now; the future website will use the
+  same API and audit rules. Never bypass server-side checks with raw SQL.
 - The in-game addon wraps existing commands; it must not bypass server-side permission checks.
 - Never grant items, gold, or account changes from untrusted input without validation and audit.
+
+## Visual interface
+
+- The long-term visual layer is the future server website. See
+  `decisions/ADR-010-website-as-visual-interface.md`.
+- Build features API-first. Keep the command/API path, RBAC checks, and audit; add the website page
+  later.
+- Do not add one-off in-repo web UIs. The local GM panel was removed.
+- Browser talks to an admin website BFF. Only the admin BFF holds the GM API secret; the browser
+  never does.
+- Web auth is separate from game SRP6. Link a web identity to a game account; do not reuse game
+  session keys.
+- Public, account, and GM dashboard zones are separate. The read-only API uses one shared HMAC
+  secret. Write endpoints must add caller identity, RBAC, and audit before shipping.
+- Visuals use basic HTML/CSS/JS first. New local JavaScript servers may use Bun after a pinned pilot.
 
 ## Modules
 

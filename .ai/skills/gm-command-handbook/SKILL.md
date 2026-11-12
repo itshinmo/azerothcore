@@ -22,7 +22,7 @@ description: Use when a GM needs to find, explain, or safely run an in-game comm
    a second confirmation.
 5. Run the command. Record the exact command and the observed result.
 6. Verify the outcome with a read-only command or a DB query.
-7. For item, gold, or account changes, use the audited panel or a wrapped command; never raw SQL.
+7. For item, gold, or account changes, use a wrapped command now; the future website will use the audited API; never raw SQL.
 
 ## Danger levels
 

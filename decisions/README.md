@@ -23,5 +23,6 @@ decision supersedes one and both link each other.
 | [ADR-007](ADR-007-verification-gates-and-fork-ci.md) | accepted | tiered verification, dedicated test realm, fork CI |
 | [ADR-008](ADR-008-database-access-with-dbeaver.md) | accepted | DBeaver for local/test; read-only production via SSH tunnel |
 | [ADR-009](ADR-009-rbac-command-permission-precedence.md) | accepted | core RBAC permissions override legacy `command.security` |
+| [ADR-010](ADR-010-website-as-visual-interface.md) | accepted | future server website is the long-term visual layer; API-first, separate web auth |
 
 Open questions: [OPEN-QUESTIONS.md](OPEN-QUESTIONS.md).

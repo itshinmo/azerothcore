@@ -4972,3 +4972,58 @@ Cluster.IsCrossrealm=0
 # CLUSTER SETTINGS END                                                                            #
 #                                                                                                 #
 ###################################################################################################
+
+###################################################################################################
+#                                                                                                 #
+# GM API SETTINGS                                                                                 #
+#                                                                                                 #
+###################################################################################################
+
+#
+#    GmApi.Enable
+#        Description: Starts the read-only GM API inside worldserver.
+#        Default:     0 - (Disabled)
+
+GmApi.Enable = 0
+
+#
+#    GmApi.BindAddress
+#        Description: Interface for the GM API. Keep it on loopback or a private VPN address.
+
+GmApi.BindAddress = 127.0.0.1
+
+#
+#    GmApi.Port
+#        Description: TCP port for the GM API.
+
+GmApi.Port = 8090
+
+#
+#    GmApi.Secret
+#        Description: Shared HMAC secret. Required when the API is enabled. Never commit it.
+
+GmApi.Secret = ""
+
+#
+#    GmApi.MaxClockSkew
+#        Description: Maximum allowed difference, in seconds, between client and server time.
+
+GmApi.MaxClockSkew = 60
+
+#
+#    GmApi.NonceTtl
+#        Description: Seconds a request nonce is remembered for replay protection.
+
+GmApi.NonceTtl = 120
+
+#
+#    GmApi.RateLimit
+#        Description: Requests per minute per source address. The future website BFF shares one bucket.
+
+GmApi.RateLimit = 120
+
+###################################################################################################
+#                                                                                                 #
+# GM API SETTINGS END                                                                             #
+#                                                                                                 #
+###################################################################################################

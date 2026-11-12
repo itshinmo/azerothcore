@@ -2,20 +2,22 @@
 
 > Status: phase 4 in progress. RBAC role presets are tracked in
 > `data/sql/custom/db_auth/gm_rbac_presets.sql`; the command audit module is in
-> `modules/mod-gm-audit`; the command index is in `runbook/gm/command-index.md`. The panel and addon
-> are not built yet; this spec is the contract for when they land.
+> `modules/mod-gm-audit`; the command index is in `runbook/gm/command-index.md`; the read-only GM
+> API is in `modules/mod-gm-api`. The long-term visual layer is the future server website
+> ([ADR-010](../decisions/ADR-010-website-as-visual-interface.md)); no in-repo web UI. The addon is
+> not built yet; this spec is the contract for when it lands.
 
 ## Purpose
 
 Improve the quality and safety of human GM work: findable commands, least-privilege roles, auditable
-actions, a web panel, and an in-game addon.
+actions, a server website, and an in-game addon.
 
 ## Scope
 
 - GM command handbook.
 - RBAC role presets.
 - GM audit.
-- Web GM panel and its server API.
+- Server website (future) and its GM API.
 - In-game GM addon.
 
 ## Boundary
@@ -54,25 +56,30 @@ Owns the GM workflow and tooling. Does not own the game commands themselves; the
 - `modules/mod-gm-audit` implements `AllCommandScript::OnTryExecuteCommand`.
 - Records actor account, player, command, redacted arguments, and timestamp in
   `acore_auth.gm_audit_log`.
-- The command hook records attempts before execution; `result` is `NULL` until a panel or a future
+- The command hook records attempts before execution; `result` is `NULL` until the website or a future
   post-execute hook writes an outcome.
 - Password-bearing command forms are redacted. A non-fatal audit write failure aborts the command;
   schema errors are fatal by core policy.
-- Panel actions record the outcome directly.
+- Website actions record the outcome directly.
 - High/critical actions additionally record before/after state where practical.
 - Logs go to a dedicated table or structured file, never to a public channel.
 - Procedure and queries: [runbook/gm/audit.md](../runbook/gm/audit.md).
 
-### Web GM panel
+### Web GM website (future)
 
-- Frontend: `tools/gm-panel/`, Node 26 + vanilla UI, same security model as the panel API.
-- Backend: `modules/mod-gm-api/` inside `worldserver`.
+- Long-term visual layer: the server website. No in-repo web UI exists now; see
+  [ADR-010](../decisions/ADR-010-website-as-visual-interface.md).
+- Backend: `modules/mod-gm-api/` inside `worldserver`. Read-only API built.
+- Browser architecture: browser -> admin website BFF -> GM API. Only the admin BFF holds the API
+  secret; the public BFF and browser never see it. The website uses its own web identity, not the game SRP6 session.
 - Transport: HTTP on localhost or a private VPN interface; HMAC-signed requests with a nonce and
-  timestamp; replay window; rate limit.
-- Endpoints are read-only first: account, character, online players, instance info, audit.
-- Safe writes: item grant, mail, unstuck, kick.
-- Admin writes: ban, RBAC, server control. Human approval required.
+  timestamp; replay window; per-address rate limit.
+- Implemented read-only endpoints: server status, audit rows. Planned: account, character, online
+  players, instance info.
+- Safe writes: item grant, mail, unstuck, kick. Not built.
+- Admin writes: ban, RBAC, server control. Human approval required. Not built.
 - Every endpoint validates input and calls game logic; no direct SQL writes.
+- Procedure: [runbook/gm/gm-api.md](../runbook/gm/gm-api.md).
 
 ### In-game addon
 
@@ -93,20 +100,21 @@ Owns the GM workflow and tooling. Does not own the game commands themselves; the
 ## Security
 
 - Least privilege.
-- No direct DB writes from the panel.
+- No direct DB writes from the website.
 - No secrets in the addon or frontend.
 - Localhost/VPN only.
-- Panel approvals and audit are mandatory for high/critical actions.
+- Website approvals and audit are mandatory for high/critical actions.
 
 ## Observability
 
 - Audit table/file.
-- Structured API log with request id, actor, endpoint, status, duration; no secrets.
+- Structured API request log is planned. Current module logs start, stop, and errors only.
 - In-game command audit.
 
 ## Test plan
 
-- Unit: HMAC, nonce/replay, input validation, role checks, audit.
+- Unit: HMAC canonicalization/signature, timestamp window, nonce length, limit parsing.
+- Manual API: skew, nonce replay, rate limit, input validation.
 - Integration: test realm with each role; read endpoint, safe write, denied write, audit.
 - Manual: in-game addon install, command execution, audit review.
 - Negative: expired signature, replayed nonce, wrong role, offline target, audit failure.

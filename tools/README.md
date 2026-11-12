@@ -6,11 +6,11 @@ confuse the two.
 | Path | Purpose | Status |
 |------|---------|--------|
 | `dev/` | doctor, server lifecycle, backup, verification | available |
-| `gm-panel/` | web GM panel frontend | phase 4 |
 | `gm-addon/` | in-game GM addon | phase 4 |
 
 Database access is external: DBeaver, documented in `runbook/database/dbeaver.md`. There is no
-in-repo database GUI server.
+in-repo database GUI server. The long-term GM and server visual layer is the future server website;
+there is no in-repo web UI right now.
 
 Rules:
 
