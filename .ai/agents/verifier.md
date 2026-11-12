@@ -27,7 +27,7 @@ description: Use when a change needs evidence. Runs the tiered verification gate
 
 | Tier | Evidence |
 |------|----------|
-| T0 docs | link check, reviewer |
+| T0 docs | link check, command index check, reviewer |
 | T1 SQL/tooling | SQL lint; auto test-realm apply when configured and SQL files are pending; row checks, backup; `VERIFY_SQL_APPLY=0` disables |
 | T2 C++/scripts | codestyle, cppcheck, `-Werror` build, unit tests |
 | T3 player-visible | T2 + startup smoke, manual checklist, clean `Errors.log`; live e2e when asked |

@@ -24,6 +24,7 @@ jobs:
         with:
           node-version: 26
       - run: node tools/dev/check-docs.mjs
+      - run: python3 tools/dev/command-index.py --check
 
   sql:
     name: sql-lint

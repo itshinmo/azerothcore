@@ -10,6 +10,7 @@ Thin wrappers for the local loop. They are safe to run repeatedly and print what
 | `backup.sh` | dump auth, characters, and world with checksum and manifest |
 | `verify.sh` | verification tiers: docs, sql, cpp, smoke, full |
 | `check-docs.mjs` | relative Markdown link check |
+| `command-index.py` | regenerate or check the GM command index |
 | `test-realm.sh` | create, reset, start, stop an isolated test realm |
 | `backup-schedule.sh` | install/remove a daily backup schedule |
 | `config.env.example` | template for local overrides |

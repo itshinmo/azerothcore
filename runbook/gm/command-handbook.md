@@ -3,7 +3,8 @@
 ## When to use
 
 A GM needs a command, its permission, its side effects, or a safe example. In-game `.help <command>`
-is authoritative for exact syntax; this handbook is the workflow and safety layer.
+is authoritative for exact syntax; this handbook is the workflow and safety layer. The generated
+[command-index.md](command-index.md) lists every command and its RBAC permission.
 
 ## Danger levels
 

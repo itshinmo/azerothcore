@@ -24,7 +24,8 @@ Each command has a one-line purpose so a human can choose the right one without 
 | `make build` | Configures if needed, builds, and installs into `env/dist`. |
 | `make install` | Alias of `make build`: builds and installs into `env/dist`. |
 | `make test` | Configures `build-verify`, builds it, runs the unit tests. |
-| `make verify-docs` | Checks knowledge-layer Markdown links. |
+| `make command-index` | Regenerates the GM command index from `cs_*.cpp`. |
+| `make verify-docs` | Checks knowledge-layer Markdown links and the generated command index. |
 | `make verify-sql` | Runs the SQL linter; applies pending/custom SQL to the test realm when configured. |
 | `make verify-cpp` | C++ codestyle, cppcheck, `-Werror` build, unit tests. |
 | `make verify-smoke` | Starts the local stack, health-checks it, stops it. |
@@ -154,8 +155,8 @@ Runs:
 make verify-docs
 ```
 
-Scans the project knowledge layer for broken relative Markdown links. It skips `node_modules` and
-symlinked directories.
+Scans the project knowledge layer for broken relative Markdown links and checks that
+`runbook/gm/command-index.md` is current. It skips `node_modules` and symlinked directories.
 
 ### SQL gate
 
@@ -400,7 +401,7 @@ Never commit, push, or deploy without human and reviewer approval.
 ## CI
 
 `.github/workflows/fork-ci.yml` runs on this fork:
-- docs link check
+- docs link and command index check
 - SQL lint
 - C++ lint and cppcheck
 - `-Werror` build and unit tests

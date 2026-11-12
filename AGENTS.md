@@ -121,7 +121,8 @@ Use the documented wrappers instead of ad-hoc equivalents. The `make` targets ar
 make doctor          # check binaries, config, DB, data dirs, ports, pending SQL, logs
 make build           # configure, build, install into env/dist
 make test            # build the test target and run unit tests
-make verify-docs     # markdown link and structure check
+make command-index   # regenerate the GM command index
+make verify-docs     # markdown link check and generated command index check
 make verify-sql      # SQL lint; auto-applies pending/custom SQL to test realm when configured
 make verify-cpp      # codestyle, cppcheck, -Werror build, unit tests
 make verify-smoke    # start the local stack, health-check, stop

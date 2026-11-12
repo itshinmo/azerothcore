@@ -26,7 +26,7 @@ The contract is [specs/testing-and-release.md](../../specs/testing-and-release.m
 - `python apps/codestyle/codestyle-sql.py`
 - `cppcheck --force --inline-suppr --suppressions-list=./.suppress.cppcheck src/`
 - Build with `-Werror`.
-- `make verify-docs` for markdown links and structure.
+- `make verify-docs` for markdown links, structure, and the generated command index.
 
 ## Test realm
 
@@ -39,7 +39,7 @@ The contract is [specs/testing-and-release.md](../../specs/testing-and-release.m
 
 | Tier | Applies to | Must pass |
 |------|------------|-----------|
-| T0 | docs | link check, reviewer |
+| T0 | docs | link check, command index check, reviewer |
 | T1 | SQL/tooling | SQL lint; auto test-realm apply when configured and SQL files are pending; row checks, backup; `VERIFY_SQL_APPLY=0` disables |
 | T2 | C++/scripts | codestyle, cppcheck, `-Werror` build, unit tests |
 | T3 | player-visible | T2 + startup smoke + manual checklist + clean errors; live e2e when asked |

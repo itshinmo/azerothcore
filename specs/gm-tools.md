@@ -2,8 +2,8 @@
 
 > Status: phase 4 in progress. RBAC role presets are tracked in
 > `data/sql/custom/db_auth/gm_rbac_presets.sql`; the command audit module is in
-> `modules/mod-gm-audit`. The generated handbook index, panel, and addon are not built yet; this spec is
-> the contract for when they land.
+> `modules/mod-gm-audit`; the command index is in `runbook/gm/command-index.md`. The panel and addon
+> are not built yet; this spec is the contract for when they land.
 
 ## Purpose
 
@@ -31,7 +31,7 @@ Owns the GM workflow and tooling. Does not own the game commands themselves; the
 - Each entry: command, syntax, permission constant, danger level, side effects, examples, related
   commands.
 - Generated index from `src/server/scripts/Commands/cs_*.cpp` plus curated entries for the top
-  workflows.
+  workflows. Regenerate with `make command-index`; `make verify-docs` fails when it is stale.
 - In-game `.help <command>` remains authoritative for exact argument syntax.
 
 ### RBAC roles

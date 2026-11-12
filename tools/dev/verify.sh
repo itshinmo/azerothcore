@@ -13,6 +13,7 @@ TEST_WORLD_CONF="$ROOT/env/test/etc/worldserver.conf"
 run_docs() {
     printf '\n== docs ==\n'
     node "$ROOT/tools/dev/check-docs.mjs"
+    python3 "$ROOT/tools/dev/command-index.py" --check
 }
 
 run_sql() {
