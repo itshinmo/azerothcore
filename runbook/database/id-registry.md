@@ -14,7 +14,7 @@ the same change.
 | Quests | `920000–929999` | includes chain addon rows |
 | GameObjects | `930000–939999` | templates and spawns |
 | Spells | `940000–949999` | server-side `spell_dbc` only until a client patch |
-| Misc | `950000–959999` | text, conditions, other IDs |
+| Misc | `950000–959999` | text, conditions, other IDs; auth RBAC role groups also use this range |
 | Maps | `1000+` | requires a client patch and extracted map data |
 
 ## Rules
@@ -31,9 +31,13 @@ the same change.
 
 | ID | Kind | Name | Feature | Owner | Date |
 |----|------|------|---------|-------|------|
-| — | — | — | — | — | — |
+| 950100 | Auth RBAC role | support | GM role preset | repo owner | 2026-11-12 |
+| 950101 | Auth RBAC role | content-tester | GM role preset | repo owner | 2026-11-12 |
+| 950102 | Auth RBAC role | economy | GM role preset | repo owner | 2026-11-12 |
+| 950103 | Auth RBAC role | admin | GM role preset | repo owner | 2026-11-12 |
+| 950104 | Auth RBAC role | superadmin | GM role preset | repo owner | 2026-11-12 |
 
-No custom IDs are allocated yet.
+World content IDs are still unallocated. The RBAC rows live in `acore_auth`, not `acore_world`.
 
 ## References
 

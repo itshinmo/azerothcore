@@ -1,7 +1,8 @@
 # GM tools
 
-> Status: phase 4. The handbook, RBAC presets, audit module, panel, and addon are not built yet; this
-> spec is the contract for when they land.
+> Status: phase 4 in progress. RBAC role presets are tracked in
+> `data/sql/custom/db_auth/gm_rbac_presets.sql`. The generated handbook index, audit module, panel, and
+> addon are not built yet; this spec is the contract for when they land.
 
 ## Purpose
 
@@ -43,7 +44,8 @@ Owns the GM workflow and tooling. Does not own the game commands themselves; the
 | `superadmin` | named human only | shared/service accounts |
 
 - Roles are permission sets, not `gmlevel` aliases.
-- Changes are tracked SQL in `data/sql/custom/db_auth/`.
+- Changes are tracked SQL in `data/sql/custom/db_auth/`; presets live in
+  `gm_rbac_presets.sql` and are documented in [runbook/gm/rbac-roles.md](../runbook/gm/rbac-roles.md).
 - Test each role with a dedicated account on the test realm.
 
 ### Audit

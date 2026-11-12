@@ -18,11 +18,52 @@ permission set.
 
 | Role | Intended use | Includes | Excludes |
 |------|--------------|----------|----------|
-| `support` | player support | account/character lookup, unstuck, mute, ticket tools | item grants, bans, RBAC, server control |
-| `content-tester` | testing content | teleport, GM mode, temporary spawn, instance inspect, reload | economy grants, bans, RBAC |
-| `economy` | purchases and refunds | item grant, mail, money grant, refund tools | bans, RBAC, server control |
-| `admin` | server administration | bans, RBAC grants, server commands | — |
-| `superadmin` | named human only | all | — |
+| `support` (950100) | player support | lookup, unstuck, mute, tickets | grants, bans, RBAC, server |
+| `content-tester` (950101) | testing content | teleport, GM mode, temp spawn, inspect, reloads | grants, bans, RBAC |
+| `economy` (950102) | purchases and refunds | item/mail grants, refunds | bans, RBAC, server |
+| `admin` (950103) | server administration | bans, RBAC, server | — |
+| `superadmin` (950104) | named human only | all permissions | — |
+
+Group IDs are allocated from the misc range `950000–959999` in the auth database; they do not collide
+with world content IDs. `content-tester` has no `.npc delete`; temporary spawns disappear on restart.
+
+## Presets
+
+Tracked SQL: `data/sql/custom/db_auth/gm_rbac_presets.sql`. The examples below use `acore_auth`;
+substitute `acore_test_auth` on the test realm.
+
+- The file upserts the five role rows and replaces their linked permissions. It never deletes a role
+  row, so existing account grants survive a re-apply.
+- Apply it with the startup updater, or on the test realm with `make verify-sql`.
+- Grant a role to an account:
+
+  ```sql
+  DELETE FROM acore_auth.rbac_account_permissions
+  WHERE accountId = <id> AND permissionId = 950100 AND realmId = -1;
+
+  INSERT INTO acore_auth.rbac_account_permissions
+  (accountId, permissionId, granted, realmId)
+  VALUES (<id>, 950100, 1, -1);
+  ```
+
+  Or in game: `.rbac account grant <account> 950100`.
+
+- Verify the expanded set before granting. Replace the seed with the role ID:
+
+  ```sql
+  WITH RECURSIVE expanded AS (
+    SELECT 950100 AS id
+    UNION DISTINCT
+    SELECT l.linkedId
+    FROM acore_auth.rbac_linked_permissions l
+    JOIN expanded e ON l.id = e.id
+  )
+  SELECT COUNT(*) FROM expanded;
+  ```
+
+  Expected counts include the role row: support 32, content-tester 27, economy 15, admin 600,
+  superadmin 654. These counts are a smoke check, not the contract; review the SQL for the actual
+  permission list.
 
 ## Procedure
 
@@ -38,19 +79,6 @@ permission set.
    - the audit records the action.
 8. Record the role, permissions, accounts, and test result.
 
-## Example shape
-
-```sql
--- Illustrative only: resolve real permission IDs first.
-DELETE FROM acore_auth.rbac_account_permissions
-WHERE accountId = <test_account_id> AND permissionId = <group_id>;
-INSERT INTO acore_auth.rbac_account_permissions
-(accountId, permissionId, granted, realmId)
-VALUES (<test_account_id>, <group_id>, 1, -1);
-```
-
-Never copy an ID from this example. Look it up.
-
 ## Rules
 
 - No shared GM accounts.
@@ -61,8 +89,10 @@ Never copy an ID from this example. Look it up.
 
 ## Open work
 
-The exact permission IDs and group rows are generated in Phase 4. Until then, these roles are the
-design contract, not an applied preset.
+The preset SQL is tracked and verified against the test auth database: the expected expansion counts
+match, and an account grant survives a re-apply. Interactive verification with one test account per
+role on the test realm is still pending. Until that runs, treat the role matrix as reviewed SQL, not a
+live-tested grant.
 
 ## References
 
