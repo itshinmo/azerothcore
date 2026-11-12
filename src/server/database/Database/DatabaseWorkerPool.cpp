@@ -524,25 +524,27 @@ void DatabaseWorkerPool<T>::Execute(PreparedStatement<T>* stmt)
 }
 
 template <class T>
-void DatabaseWorkerPool<T>::DirectExecute(std::string_view sql)
+bool DatabaseWorkerPool<T>::DirectExecute(std::string_view sql)
 {
     if (sql.empty())
-        return;
+        return true;
 
     T* connection = GetFreeConnection();
-    connection->Execute(sql);
+    bool result = connection->Execute(sql);
     connection->Unlock();
+    return result;
 }
 
 template <class T>
-void DatabaseWorkerPool<T>::DirectExecute(PreparedStatement<T>* stmt)
+bool DatabaseWorkerPool<T>::DirectExecute(PreparedStatement<T>* stmt)
 {
     T* connection = GetFreeConnection();
-    connection->Execute(stmt);
+    bool result = connection->Execute(stmt);
     connection->Unlock();
 
     //! Delete proxy-class. Not needed anymore
     delete stmt;
+    return result;
 }
 
 template <class T>

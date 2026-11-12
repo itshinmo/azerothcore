@@ -45,6 +45,7 @@ I do it"; behavior lives in `specs/`.
 
 - [command-handbook.md](gm/command-handbook.md) — command reference and danger levels.
 - [rbac-roles.md](gm/rbac-roles.md) — least-privilege roles.
+- [audit.md](gm/audit.md) — GM command audit table, queries, redaction, failure behavior.
 - [item-grant-refund.md](gm/item-grant-refund.md) — grants, mail, refunds.
 - [ban-appeal.md](gm/ban-appeal.md) — ban and appeal procedure.
 - [incident-response.md](gm/incident-response.md) — contain, diagnose, restore, record.

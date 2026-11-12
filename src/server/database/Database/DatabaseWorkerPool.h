@@ -101,23 +101,25 @@ public:
     */
 
     //! Directly executes a one-way SQL operation in string format, that will block the calling thread until finished.
-    //! This method should only be used for queries that are only executed once, e.g during startup.
-    void DirectExecute(std::string_view sql);
+    //! Use sparingly, for example during startup or for a low-volume audit write.
+    //! Returns false when the statement failed.
+    bool DirectExecute(std::string_view sql);
 
     //! Directly executes a one-way SQL operation in string format -with variable args-, that will block the calling thread until finished.
-    //! This method should only be used for queries that are only executed once, e.g during startup.
+    //! Use sparingly, for example during startup or for a low-volume audit write.
     template<typename... Args>
-    void DirectExecute(std::string_view sql, Args&&... args)
+    bool DirectExecute(std::string_view sql, Args&&... args)
     {
         if (sql.empty())
-            return;
+            return true;
 
-        DirectExecute(Acore::StringFormat(sql, std::forward<Args>(args)...));
+        return DirectExecute(Acore::StringFormat(sql, std::forward<Args>(args)...));
     }
 
     //! Directly executes a one-way SQL operation in prepared statement format, that will block the calling thread until finished.
     //! Statement must be prepared with the CONNECTION_SYNCH flag.
-    void DirectExecute(PreparedStatement<T>* stmt);
+    //! Returns false when the statement failed.
+    bool DirectExecute(PreparedStatement<T>* stmt);
 
     /**
         Synchronous query (with resultset) methods.

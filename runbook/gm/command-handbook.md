@@ -161,7 +161,8 @@ Reload re-reads a table; it does not apply SQL. Apply SQL first, then reload.
 
 - Use the smallest role.
 - Confirm the target before a write.
-- Record high/critical actions.
+- Record high/critical actions. Command attempts are audited in `acore_auth.gm_audit_log`; see
+  [audit.md](audit.md).
 - Remove temporary spawns and test items.
 - Never share a GM account.
 - Never run a mass command without approval.
@@ -170,6 +171,7 @@ Reload re-reads a table; it does not apply SQL. Apply SQL first, then reload.
 ## References
 
 - [rbac-roles.md](rbac-roles.md)
+- [audit.md](audit.md)
 - [item-grant-refund.md](item-grant-refund.md)
 - [incident-response.md](incident-response.md)
 - [src/server/scripts/Commands](../../src/server/scripts/Commands)

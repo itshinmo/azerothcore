@@ -1,8 +1,9 @@
 # GM tools
 
 > Status: phase 4 in progress. RBAC role presets are tracked in
-> `data/sql/custom/db_auth/gm_rbac_presets.sql`. The generated handbook index, audit module, panel, and
-> addon are not built yet; this spec is the contract for when they land.
+> `data/sql/custom/db_auth/gm_rbac_presets.sql`; the command audit module is in
+> `modules/mod-gm-audit`. The generated handbook index, panel, and addon are not built yet; this spec is
+> the contract for when they land.
 
 ## Purpose
 
@@ -51,10 +52,16 @@ Owns the GM workflow and tooling. Does not own the game commands themselves; the
 ### Audit
 
 - `modules/mod-gm-audit` implements `AllCommandScript::OnTryExecuteCommand`.
-- Records actor account, player, command string, arguments, timestamp, and result when available.
+- Records actor account, player, command, redacted arguments, and timestamp in
+  `acore_auth.gm_audit_log`.
+- The command hook records attempts before execution; `result` is `NULL` until a panel or a future
+  post-execute hook writes an outcome.
+- Password-bearing command forms are redacted. A non-fatal audit write failure aborts the command;
+  schema errors are fatal by core policy.
 - Panel actions record the outcome directly.
 - High/critical actions additionally record before/after state where practical.
 - Logs go to a dedicated table or structured file, never to a public channel.
+- Procedure and queries: [runbook/gm/audit.md](../runbook/gm/audit.md).
 
 ### Web GM panel
 
