@@ -17,9 +17,10 @@ decision supersedes one and both link each other.
 | [ADR-001](ADR-001-agent-knowledge-layer.md) | accepted | `.ai` knowledge layer, role agents, strict approval gate, pointer adapters |
 | [ADR-002](ADR-002-custom-content-isolation-and-ids.md) | accepted | tracked modules + tracked SQL, reserved ID ranges, client-patch boundary |
 | [ADR-003](ADR-003-runtime-topology.md) | accepted | native macOS dev, Ubuntu 24.04 production, native binaries |
-| [ADR-004](ADR-004-database-gui.md) | accepted | custom Node 26 GUI, localhost only, read-only production |
+| [ADR-004](ADR-004-database-gui.md) | superseded by ADR-008 | custom Node database GUI |
 | [ADR-005](ADR-005-gm-tools-and-rbac.md) | accepted | GM handbook, least-privilege RBAC, audit, module API, in-repo addon |
 | [ADR-006](ADR-006-shop-policy.md) | accepted (policy); trust model open | cosmetics + convenience only; delivery trust model TODO |
 | [ADR-007](ADR-007-verification-gates-and-fork-ci.md) | accepted | tiered verification, dedicated test realm, fork CI |
+| [ADR-008](ADR-008-database-access-with-dbeaver.md) | accepted | DBeaver for local/test; read-only production via SSH tunnel |
 
 Open questions: [OPEN-QUESTIONS.md](OPEN-QUESTIONS.md).

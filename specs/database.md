@@ -6,13 +6,13 @@ Define the three databases, the SQL tree, the updater contract, and the safety r
 
 ## Scope
 
-`acore_auth`, `acore_characters`, `acore_world`, `data/sql/`, the startup updater, and the database
-GUI's data access.
+`acore_auth`, `acore_characters`, `acore_world`, `data/sql/`, the startup updater, and direct client
+access.
 
 ## Boundary
 
 Owns schema and data lifecycle. Does not own gameplay rules; those are encoded in data and scripts.
-The GUI's UI and auth are in [database-gui.md](database-gui.md).
+Direct client access is in [runbook/database/dbeaver.md](../runbook/database/dbeaver.md).
 
 ## Contract
 

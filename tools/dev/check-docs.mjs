@@ -31,6 +31,7 @@ const required = [
 
 const files = [];
 const walk = (path) => {
+  if (path.split("/").includes("node_modules")) return;
   const full = join(root, path);
   if (!existsSync(full)) return;
   if (lstatSync(full).isSymbolicLink()) return;

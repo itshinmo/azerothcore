@@ -8,7 +8,7 @@ description: Use before starting any task in this repository. One task, one bran
 ## Prerequisites
 
 - Clean or understood `git status` in the current checkout.
-- The task has a short slug (`feat/dbadmin`, `fix/log-triage`, `docs/runbooks`).
+- The task has a short slug (`feat/gm-panel`, `fix/log-triage`, `docs/runbooks`).
 
 ## Workflow
 

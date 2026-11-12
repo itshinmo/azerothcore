@@ -52,7 +52,7 @@ Load only what the task needs.
 - [`development-workflow.md`](memories/development-workflow.md) — build, run, worktrees, approvals.
 - [`database.md`](memories/database.md) — three databases, key tables, updater, safety.
 - [`operations.md`](memories/operations.md) — start/stop, logs, backups, health.
-- [`security.md`](memories/security.md) — RBAC, DB users, GUI auth, secrets, audit.
+- [`security.md`](memories/security.md) — RBAC, DB users, client access, secrets, audit.
 - [`working/README.md`](memories/working/README.md) — lifecycle for in-flight memories.
 
 ### Agents
@@ -63,7 +63,7 @@ commit on request. pr-shepherd on request.
 - [`documenter.md`](agents/documenter.md) — requirements to specs, ADRs, RFCs, runbooks.
 - [`content-author.md`](agents/content-author.md) — future content design and SQL drafts.
 - [`implementer.md`](agents/implementer.md) — C++ and script changes to spec.
-- [`db-admin.md`](agents/db-admin.md) — schema, queries, GUI, migrations, backups.
+- [`db-admin.md`](agents/db-admin.md) — schema, queries, DBeaver, migrations, backups.
 - [`reviewer.md`](agents/reviewer.md) — strict gate: correctness, security, regression, spec drift.
 - [`verifier.md`](agents/verifier.md) — build, unit/e2e, smoke, manual evidence.
 - [`server-operator.md`](agents/server-operator.md) — local/test start-stop, SQL apply, backups, logs.

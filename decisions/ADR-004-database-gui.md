@@ -1,6 +1,6 @@
 # ADR-004 — Database GUI
 
-- Status: accepted
+- Status: superseded by [ADR-008](ADR-008-database-access-with-dbeaver.md)
 - Date: 2026-11-12
 
 ## Context
@@ -42,3 +42,9 @@ PHP and Docker are not. The GUI will handle player data and must not become a se
 - The tool can enforce project-specific safety and audit.
 - It must be tested and reviewed like production code.
 - A future shared/team mode needs a separate decision: auth, HTTPS, VPN.
+
+## Supersession
+
+Superseded by [ADR-008](ADR-008-database-access-with-dbeaver.md). The custom GUI was removed in favor
+of DBeaver. The security requirements from items 5, 6, and 9 carry over, except the audit and
+pre-write backup that only the custom GUI provided.

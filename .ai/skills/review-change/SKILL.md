@@ -18,7 +18,7 @@ description: Use when reviewing a local diff, a commit, or a pull request. Findi
    - `.agents/docs/cpp-guidelines.md`, `cpp-scripts.md`, `sql-guidelines.md`
    - `AGENTS.md` (secrets, DB safety, approval)
    - `specs/` and `decisions/` for the contract
-   - `specs/security.md` for RBAC, GUI auth, GM API
+   - `specs/security.md` for RBAC, client access, GM API
 3. Trace changed control flow into every consumer, including unchanged lines the new flow reaches.
 4. Verify claims against code, data, or a source. Do not accept a PR description as fact.
 5. Run both linters when the diff touches C++ or SQL.

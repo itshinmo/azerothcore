@@ -18,7 +18,7 @@ This spec covers structure and extension points, not every gameplay rule.
 Owns: the C++ core, server runtime, script/module loading, database access patterns.
 
 Does not own: individual boss mechanics, quest rewards, or item balance; those live in content scripts
-and data. Does not own the database GUI or GM panel; see their specs.
+and data. Does not own the database clients or GM panel; see their docs.
 
 ## Runtime
 

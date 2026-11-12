@@ -2,11 +2,11 @@
 
 ## Purpose
 
-Define the security boundaries for the server, databases, database GUI, and GM tools.
+Define the security boundaries for the server, databases, direct database clients, and GM tools.
 
 ## Scope
 
-Accounts, RBAC, database users, local tool auth, GM API, secrets, audit, and production access.
+Accounts, RBAC, database users, client access, GM API, secrets, audit, and production access.
 
 ## Boundary
 
@@ -16,9 +16,10 @@ Owns access control and secret handling. Does not own game balance or individual
 
 ### Threat model
 
-- A local process or malicious website reaching a localhost GUI.
+- A local process or malicious website reaching a local database client.
 - A GM account with more permissions than the task needs.
 - A database tool using `root` or a shared credential.
+- A database client connected to production with write access.
 - A GM API exposed beyond localhost/VPN or missing replay protection.
 - A secret in a commit, log, chat, or error message.
 - A player or compromised account reaching a GM path.
@@ -36,19 +37,23 @@ Owns access control and secret handling. Does not own game balance or individual
 | User | Access | Use |
 |------|--------|-----|
 | server user | read/write on the three databases | `authserver`, `worldserver` |
-| local/test GUI user | read/write on local/test | database GUI write mode |
-| production GUI user | read-only | database GUI through SSH tunnel |
+| local/test client user | read/write on local/test | DBeaver local/test connections |
+| production client user | read-only | DBeaver through an SSH tunnel |
 
 - No `root` for tools, scripts, or agents.
-- Credentials in ignored `.env` or `env/dist/etc/`, never committed.
+- Credentials live in the client's own credential store or ignored `.env`/`env/dist/etc/`, never in
+  a commit.
 
-### Local GUI security
+### Direct database clients
 
-- Bind `127.0.0.1`.
-- Random startup token, HttpOnly SameSite=Strict cookie, CSRF token, Host/Origin checks.
-- CSP `default-src 'self'`, `frame-ancestors 'none'`, `nosniff`.
-- Read-only default; production read-only at route and database user.
-- Pre-write backup and audit.
+- Use DBeaver (recommended) or another native MySQL client. See
+  [runbook/database/dbeaver.md](../runbook/database/dbeaver.md).
+- Production is a **read-only** connection through an SSH tunnel. Never enable writes on it.
+- Keep autocommit off for edits; use a transaction where MySQL supports it.
+- Back up before a write batch: `make backup`.
+- The client has no built-in audit or pre-write backup. The backup and the repo SQL review are the
+  safety net.
+- Do not store DBeaver workspace files, query history, or connection profiles in the repository.
 
 ### GM API security
 
@@ -67,29 +72,31 @@ Owns access control and secret handling. Does not own game balance or individual
 
 ### Audit
 
-- Every privileged action records actor, target, action, arguments, result, timestamp.
+- Every privileged GM action records actor, target, action, arguments, result, timestamp.
 - Audit write failure aborts the action.
 - Audit records are append-only.
 - Audit may contain player identifiers; treat it as sensitive.
+- Direct SQL edits are not audited by the game; the DB backup and change review are the record.
 
 ## Errors and edge cases
 
-- Wrong token/HMAC: 401, no detail.
-- Replayed nonce: 409.
-- Missing CSRF or bad Origin: 403.
-- Read-only write attempt: 403.
-- Audit failure: abort.
+- Wrong DB credential: fix the client connection, do not weaken the user.
+- Read-only write attempt: expected on production; use a local/test connection.
 - Backup failure: abort the write.
+- Lost DB connection: no blind retry of a write; verify state first.
+- A secret in a client profile: rotate it and remove the profile.
 
 ## Observability
 
-- Structured security log with request id, route, status, actor, duration; no secrets.
-- Audit table/file.
-- Failed-auth rate and source for local tools.
+- MySQL error log and slow query log.
+- Server `Errors.log` for data errors.
+- Client query history is local; do not commit it.
+- No central audit for direct DB edits in v1.
 
 ## References
 
-- [specs/database-gui.md](database-gui.md)
+- [specs/database.md](database.md)
 - [specs/gm-tools.md](gm-tools.md)
 - [.ai/memories/security.md](../.ai/memories/security.md)
+- [runbook/database/dbeaver.md](../runbook/database/dbeaver.md)
 - [runbook/gm/rbac-roles.md](../runbook/gm/rbac-roles.md)

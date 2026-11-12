@@ -141,11 +141,8 @@ e2e/go.work
 e2e/go.work.sum
 
 # Project tooling local state
-tools/dbadmin/.env
-tools/dbadmin/node_modules/
 tools/gm-panel/.env
 tools/gm-panel/node_modules/
 tools/dev/config.env
-var/dbadmin/
 var/backups/
 var/run/

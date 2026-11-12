@@ -18,7 +18,7 @@ Foundation, not content. The work is:
 
 - agent and human knowledge layer
 - local development, test realm, backup, and verification tooling
-- database GUI (`tools/dbadmin/`, planned phase 3)
+- database access through DBeaver (no in-repo database GUI)
 - GM workflow: handbook, RBAC, audit, web panel, in-game addon
 
 New zones, quests, dungeons, items, and shop features are out of scope until the foundation is

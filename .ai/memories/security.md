@@ -1,5 +1,5 @@
 ---
-description: RBAC, database users, GUI auth, GM API, secrets, and audit. Read before adding a tool or permission.
+description: RBAC, database users, DBeaver access, GM API, secrets, and audit. Read before adding a tool or permission.
 last-verified: 2026-11-12
 ---
 
@@ -9,27 +9,26 @@ The contract is [specs/security.md](../../specs/security.md).
 
 ## Principles
 
-- Least privilege everywhere: database users, GM roles, GUI tokens, API scopes.
+- Least privilege everywhere: database users, GM roles, client connections, API scopes.
 - No secrets in the repository, docs, logs, tests, or chat.
 - Production writes are human-only.
-- Every privileged action is auditable.
+- Every privileged GM or API action is auditable. Direct SQL edits are not audited by the game.
 - Local-only by default; remote access goes through a VPN or SSH tunnel.
 
 ## Database users
 
 - `acore` is the server user; it needs read/write on the three game databases.
-- The GUI uses separate users: local/test write user, production read-only user.
-- Never use `root` for the GUI, scripts, or agents.
-- Credentials live in `.env` (ignored) or `env/dist/etc/` (ignored), never in a commit.
+- DBeaver uses separate users: local/test write user, production read-only user.
+- Never use `root` for DBeaver, scripts, or agents.
+- Credentials live in DBeaver's own store, `.env` (ignored), or `env/dist/etc/` (ignored), never in a
+  commit.
 
-## Database GUI
+## Database access
 
-- Bind `127.0.0.1`.
-- Random startup token, HttpOnly SameSite=Strict cookie, CSRF token, Origin/Host checks.
-- CSP `default-src 'self'`, `frame-ancestors 'none'`.
-- Read-only default; production profile is read-only at the route and the database user.
-- Pre-write backup and audit record for every write batch.
-- Remote production access through `ssh -L`.
+- Use DBeaver for browsing and querying: [runbook/database/dbeaver.md](../../runbook/database/dbeaver.md).
+- Production is a read-only connection through an SSH tunnel.
+- Back up before a write batch; DBeaver has no audit or pre-write backup.
+- Keep autocommit off for edits and do not commit DBeaver workspace files.
 
 ## GM tools
 

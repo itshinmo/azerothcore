@@ -19,7 +19,7 @@ actions, a web panel, and an in-game addon.
 ## Boundary
 
 Owns the GM workflow and tooling. Does not own the game commands themselves; they remain in
-`src/server/scripts/Commands/` and the RBAC system. Does not own the database GUI.
+`src/server/scripts/Commands/` and the RBAC system. Does not own database clients.
 
 ## Contract
 
@@ -56,7 +56,7 @@ Owns the GM workflow and tooling. Does not own the game commands themselves; the
 
 ### Web GM panel
 
-- Frontend: `tools/gm-panel/`, Node 26 + vanilla UI, same security model as the database GUI.
+- Frontend: `tools/gm-panel/`, Node 26 + vanilla UI, same security model as the panel API.
 - Backend: `modules/mod-gm-api/` inside `worldserver`.
 - Transport: HTTP on localhost or a private VPN interface; HMAC-signed requests with a nonce and
   timestamp; replay window; rate limit.

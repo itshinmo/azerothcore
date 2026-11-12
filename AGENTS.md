@@ -60,7 +60,8 @@ text and never submits an approval.
   upstream file's commit history.
 - **Secrets never enter the repository.** No database passwords, tokens, server keys, player data,
   internal hostnames, or dashboard links in code, docs, tests, logs, commits, or chat. Use `.env`
-  files and `env/dist/etc/`; both are ignored.
+  files, `env/dist/etc/`, or the database client's own credential store; the repository paths are
+  ignored.
 - **Ask, do not guess.** A missing contract, an ambiguous requirement, or a decision that is not
   yours goes to the human with concrete options and a recommendation. Procedure:
   `.ai/skills/ask-the-human/SKILL.md`.
@@ -80,6 +81,7 @@ Read the matching doc(s) BEFORE starting the task:
   - SmartAI work (`smart_scripts` data) → also `.agents/docs/cpp-scripts.md`.
 - Querying or editing the database → `runbook/database/schema-guide.md` and
   `.ai/skills/db-query-and-edit/SKILL.md`.
+- Using a database client (DBeaver) → `runbook/database/dbeaver.md`.
 - Backing up or restoring → `runbook/operation/backup-restore.md`.
 - Starting, stopping, or monitoring the server → `runbook/operation/start-stop.md`,
   `runbook/operation/health-check.md`, and `runbook/operation/logs-and-monitoring.md`.
@@ -107,7 +109,7 @@ Read the matching doc(s) BEFORE starting the task:
 - `conf/dist/` — build and shell templates; `conf/*.conf` is gitignored.
 - `src/server/apps/{authserver,worldserver}/*.conf.dist` — server config templates.
 - `env/dist/` — local install prefix, binaries, configs, logs (gitignored).
-- `tools/` — project tooling: dev scripts, database GUI, GM addon, GM panel.
+- `tools/` — project tooling: dev scripts, GM addon, GM panel (future).
 - `runbook/`, `specs/`, `decisions/`, `rfcs/`, `.ai/` — knowledge layer.
 
 ## Commands
@@ -132,7 +134,6 @@ make console         # attach to the worldserver screen console
 make backup          # dump auth, characters, and world
 make test-realm CMD=setup|start|stop|status|reset
 make backup-schedule CMD=install|remove|status
-make dbadmin         # start the database GUI (phase 3; not built yet)
 ```
 
 If a wrapper does not exist yet, use the procedure in `runbook/`; do not invent a new one-off command
@@ -159,7 +160,8 @@ New content is currently out of scope. When it returns:
 - Before any write batch, run `make backup` or the procedure in
   `runbook/operation/backup-restore.md`.
 - Test SQL on the test realm first. Production writes are human-only.
-- The database GUI uses least-privilege users and a read-only production profile. Never use `root`.
+- Direct database clients use least-privilege users and a read-only production connection. Never use
+  `root`. Back up before a write batch; DBeaver has no audit or pre-write backup.
 - `smart_scripts` edits rewrite the full `(entryorguid, source_type)` block with `DELETE` + `INSERT`.
   Never a partial `UPDATE`, not even for a comment-only fix.
 

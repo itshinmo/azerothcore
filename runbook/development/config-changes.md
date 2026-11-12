@@ -42,7 +42,8 @@ Every option can be overridden with `AC_<KEY>`: camelCase is split, and `.`, `-`
 
 ## Tool configuration
 
-- Database GUI (phase 3): `tools/dbadmin/.env` (ignored), template `.env.example`.
+- Database client: DBeaver stores its own connection profiles; nothing in the repo. See
+  [runbook/database/dbeaver.md](../database/dbeaver.md).
 - GM panel (phase 4): `tools/gm-panel/.env` (ignored).
 - Dev scripts: `tools/dev/config.env` (ignored) or environment variables.
 

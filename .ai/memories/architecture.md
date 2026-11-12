@@ -64,7 +64,8 @@ The contract is [specs/architecture.md](../../specs/architecture.md). This note 
 ## Project tooling
 
 - `tools/dev/` — doctor, server lifecycle, database, verification, logs.
-- `tools/dbadmin/` — local Node 26 database GUI (phase 3), read-only production profile.
+- `tools/` — project tooling: dev scripts, GM addon, GM panel (future). Database access uses DBeaver,
+  not an in-repo server.
 - `tools/gm-panel/` — web GM frontend (phase 4).
 - `tools/gm-addon/` — in-game GM addon (phase 4).
 - `modules/mod-gm-audit/`, `modules/mod-gm-api/` — GM audit and API (phase 4).

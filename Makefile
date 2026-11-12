@@ -10,7 +10,7 @@ ZLIB_FLAG := $(if $(MACOS_ZLIB),-DMYSQL_EXTRA_LIBRARIES=$(MACOS_ZLIB),)
 MACOS_READLINE := $(shell brew --prefix readline 2>/dev/null)
 READLINE_FLAG := $(if $(MACOS_READLINE),-DREADLINE_INCLUDE_DIR=$(MACOS_READLINE)/include -DREADLINE_LIBRARY=$(MACOS_READLINE)/lib/libreadline.dylib,)
 
-.PHONY: help doctor configure configure-verify build install test verify-docs verify-sql verify-cpp verify-smoke verify-full start stop restart status logs console backup dbadmin clean
+.PHONY: help doctor configure configure-verify build install test verify-docs verify-sql verify-cpp verify-smoke verify-full start stop restart status logs console backup clean
 
 help:
 	@printf '%s\n' \
@@ -25,8 +25,7 @@ help:
 	  'make start|stop|restart|status|logs|console' \
 	  'make backup           dump the three databases' \
 	  'make test-realm CMD=setup|reset|start|stop|status' \
-	  'make backup-schedule CMD=install|remove|status' \
-	  'make dbadmin          start the database GUI (phase 3)'
+	  'make backup-schedule CMD=install|remove|status'
 
 doctor:
 	@bash tools/dev/doctor.sh
@@ -105,14 +104,6 @@ test-realm:
 
 backup-schedule:
 	@bash tools/dev/backup-schedule.sh $(CMD)
-
-dbadmin:
-	@if [ -f tools/dbadmin/package.json ]; then \
-	  cd tools/dbadmin && npm start; \
-	else \
-	  printf '%s\n' 'database GUI is phase 3; see runbook/operation/dbadmin.md'; \
-	  exit 1; \
-	fi
 
 clean:
 	rm -rf build $(VERIFY_BUILD)

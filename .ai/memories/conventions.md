@@ -35,18 +35,10 @@ them.
 - Project SQL in `custom/db_*/` must be re-applicable.
 - Respect the custom ID ranges in `runbook/database/id-registry.md`.
 
-## Node
-
-- Node 26 ESM. Prefer built-in modules. `tools/dbadmin` (phase 3) uses only `mysql2` as a runtime
-  dependency.
-- No framework, no build step for the GUI. Server-rendered HTML, small vanilla JS.
-- All input validated; all SQL parameterized; all writes audited.
-- `node:test` for unit tests. No hidden global state between tests.
-
 ## Logging
 
 - Server logs: `LOG_*` with a hierarchical category.
-- GUI/tool logs: structured lines with timestamp, level, component, and no secrets.
+- Tool logs: structured lines with timestamp, level, component, and no secrets.
 - Never log passwords, tokens, session keys, full SQL containing secrets, or player personal data.
 
 ## Configuration and secrets

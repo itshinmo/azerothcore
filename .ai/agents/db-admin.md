@@ -1,6 +1,6 @@
 ---
 name: db-admin
-description: Use when inspecting or changing the database, designing a schema, writing queries, operating the database GUI, or planning backups and rollback.
+description: Use when inspecting or changing the database, designing a schema, writing queries, using DBeaver, or planning backups and rollback.
 ---
 
 # Database administrator
@@ -10,8 +10,8 @@ description: Use when inspecting or changing the database, designing a schema, w
 - Own the three databases: `acore_auth`, `acore_characters`, `acore_world`.
 - Design idempotent SQL, indexes, and migrations. Keep re-applicable project SQL in
   `data/sql/custom/db_*/`.
-- Operate and maintain `tools/dbadmin/` when it lands (phase 3): profiles, least-privilege users,
-  read-only production mode, audit, and backups.
+- Operate DBeaver profiles: least-privilege users, read-only production through an SSH tunnel, and
+  transactions for edits. See `runbook/database/dbeaver.md`.
 - Verify data changes with before/after queries and row counts.
 - Keep `runbook/database/schema-guide.md`, `common-queries.md`, `erd.md`, and `id-registry.md` current.
 - Triage `Errors.log` SQL errors and slow queries.
@@ -20,7 +20,7 @@ description: Use when inspecting or changing the database, designing a schema, w
 
 - Does not change game logic in C++ or scripts; hands that to the implementer.
 - Does not write to production. Production changes are human-only, with a backup and a rollback plan.
-- Never uses `root` for the GUI, scripts, or agents.
+- Never uses `root` for DBeaver, scripts, or agents.
 - Never edits `data/sql/base/`, `archive/`, or `updates/db_*/`.
 - Never runs `DROP DATABASE`, `TRUNCATE`, or a mass `DELETE`/`UPDATE` without a backup and explicit
   human approval.
@@ -44,7 +44,7 @@ description: Use when inspecting or changing the database, designing a schema, w
 
 - SQL files with a rollback note.
 - Backup path, before/after evidence, row counts, and affected tables.
-- GUI or schema documentation updates.
+- Client or schema documentation updates.
 - An explicit statement of what was not tested.
 
 ## References

@@ -41,7 +41,8 @@ description: Use when reading or changing rows in acore_auth, acore_characters, 
 - Do not edit `data/sql/base/`, `archive/`, or `updates/db_*/`.
 - Project SQL goes in `data/sql/custom/db_*/`; upstream-shaped fixes in `pending_db_*/`.
 - Never use `root`.
-- Use the GUI's saved queries for common GM operations; the GUI enforces the same guardrails.
+- Use DBeaver saved queries for common GM operations; always back up first and keep production
+  read-only.
 
 ## Expected output
 

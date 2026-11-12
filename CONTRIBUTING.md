@@ -17,7 +17,7 @@ out of scope until the foundation is stable. The content policy and custom ID ra
 - C++20 compiler (Apple clang is supported)
 - MySQL 8.4
 - Boost, OpenSSL 3, readline
-- Optional: Go 1.26+ for live e2e, Node 26 for the database GUI
+- Optional: Go 1.26+ for live e2e, DBeaver for database browsing
 
 ```bash
 brew install cmake openssl@3 readline boost mysql@8.4 ccache jq screen
@@ -108,7 +108,7 @@ branch are removed only when a human asks, after the work is merged or abandoned
 | documenter | requirements to specs, ADRs, RFCs, runbooks |
 | content-author | future content design and SQL drafts |
 | implementer | C++ and script changes to spec |
-| db-admin | schema, queries, GUI, migrations, backups |
+| db-admin | schema, queries, DBeaver, migrations, backups |
 | reviewer | correctness, security, regression, spec drift |
 | verifier | build, unit/e2e, smoke, manual evidence |
 | server-operator | local/test start-stop, SQL apply, backups, logs |
@@ -147,7 +147,7 @@ assumptions. Fix or flag the lower source.
 
 - No credentials, DB passwords, tokens, or player data in commits, docs, logs, or chat.
 - Local configuration lives in `env/dist/etc/` and `.env` files; both are ignored.
-- Use least-privilege database users. Never use `root` for the GUI, scripts, or agents.
+- Use least-privilege database users. Never use `root` for DBeaver, scripts, or agents.
 - Production writes are human-only. Agents may write to local and test databases after a backup.
 
 ## Asking for help

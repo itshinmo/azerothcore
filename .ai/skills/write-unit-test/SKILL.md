@@ -8,8 +8,7 @@ description: Use when adding pure logic, a parser, a calculation, a helper, or a
 ## Prerequisites
 
 - The behavior is isolated or can be isolated with existing mocks.
-- The relevant test directory: `src/test/` for C++, or `tools/dbadmin/test/` once the GUI exists
-  (phase 3).
+- The relevant test directory: `src/test/` for C++.
 
 ## Workflow
 
@@ -24,13 +23,6 @@ description: Use when adding pure logic, a parser, a calculation, a helper, or a
    ```bash
    ./build/src/test/unit_tests --gtest_filter='<Suite>.*'
    ctest --test-dir build -R unit --output-on-failure
-   ```
-
-6. For Node:
-
-   ```bash
-   # once the GUI exists (phase 3)
-   node --test tools/dbadmin/test/
    ```
 
 ## Constraints

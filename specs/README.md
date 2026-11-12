@@ -19,8 +19,7 @@ change updates its spec in the same change.
 - [`server.md`](server.md) — topology, ports, config, startup, shutdown, health, logging.
 - [`database.md`](database.md) — three databases, SQL tree, updater, schema conventions, safety.
 - [`content-pipeline.md`](content-pipeline.md) — how content is authored, stored, and verified.
-- [`database-gui.md`](database-gui.md) — local database GUI: features, security, audit, backups.
 - [`gm-tools.md`](gm-tools.md) — GM handbook, RBAC, audit, web panel, in-game addon.
 - [`testing-and-release.md`](testing-and-release.md) — test levels, tiers, test realm, CI, release.
-- [`security.md`](security.md) — threat model, database users, GUI auth, GM API, secrets, audit.
+- [`security.md`](security.md) — threat model, database users, client access, GM API, secrets, audit.
 - [`shop.md`](shop.md) — shop policy and open trust decision. No implementation yet.

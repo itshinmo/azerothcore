@@ -7,7 +7,7 @@ description: Use when creating or changing local configuration, database credent
 
 ## Prerequisites
 
-- Know which component reads the config: server, database GUI, GM panel, or scripts.
+- Know which component reads the config: server, database client, GM panel, or scripts.
 - Know whether the environment is local, test, or production.
 
 ## Workflow
@@ -23,8 +23,8 @@ description: Use when creating or changing local configuration, database credent
    ```
 
 4. Use separate database users:
-   - local/test write user for the GUI and scripts
-   - production read-only user for the GUI
+   - local/test write user for DBeaver and scripts
+   - production read-only user for DBeaver
    - server user for `worldserver`/`authserver`
    - never `root`
 5. Verify the file is ignored:

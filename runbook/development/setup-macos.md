@@ -12,7 +12,7 @@ First-time local setup, or rebuilding a Mac after a clean checkout.
 - CMake 3.16+
 - C++20 compiler (Apple clang)
 - Boost, OpenSSL 3, readline
-- Optional: Go 1.26+ for live e2e, Node 26 for the database GUI
+- Optional: Go 1.26+ for live e2e, DBeaver for database browsing
 - `screen` for background server sessions
 
 ## Steps

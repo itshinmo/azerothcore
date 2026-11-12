@@ -30,9 +30,9 @@ feature spec.
 | Tier | Applies to | Must pass |
 |------|------------|-----------|
 | T0 docs | Markdown, ADRs, runbooks | link check, reviewer |
-| T1 SQL/tooling | SQL, RBAC, GUI schema | SQL lint; auto test-realm apply when configured and SQL files are pending; row checks, backup; `VERIFY_SQL_APPLY=0` disables |
+| T1 SQL/tooling | SQL, RBAC, schema | SQL lint; auto test-realm apply when configured and SQL files are pending; row checks, backup; `VERIFY_SQL_APPLY=0` disables |
 | T2 C++/scripts | core, modules, scripts | codestyle, cppcheck, `-Werror` build, unit tests |
-| T3 player-visible | GM tools, GUI writes, behavior | T2 + startup smoke + manual checklist + clean errors; live e2e when the change needs it and the user asked |
+| T3 player-visible | GM tools, DB writes, behavior | T2 + startup smoke + manual checklist + clean errors; live e2e when the change needs it and the user asked |
 | T4 production | deploy, config, DB | T3 + backup + staging + rollback plan + human approval |
 
 ### Test realm

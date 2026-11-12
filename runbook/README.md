@@ -20,6 +20,7 @@ I do it"; behavior lives in `specs/`.
 - [database-bootstrap.md](development/database-bootstrap.md) — create and populate the three databases.
 - [config-changes.md](development/config-changes.md) — server and tool configuration.
 - [worktrees-and-branches.md](development/worktrees-and-branches.md) — one task, one worktree.
+- [commands.md](development/commands.md) — every build, test, server, database, and verification command.
 
 ### Operation
 
@@ -31,10 +32,10 @@ I do it"; behavior lives in `specs/`.
 - [rollback.md](operation/rollback.md) — database, binary, and config rollback.
 - [test-realm.md](operation/test-realm.md) — isolated realm for e2e and risky changes.
 - [production-deploy.md](operation/production-deploy.md) — Linux production target and deploy.
-- [dbadmin.md](operation/dbadmin.md) — start and use the database GUI.
 
 ### Database
 
+- [dbeaver.md](database/dbeaver.md) — connect, browse, query, and safely edit with DBeaver.
 - [schema-guide.md](database/schema-guide.md) — key tables and relationships.
 - [common-queries.md](database/common-queries.md) — support and content queries.
 - [erd.md](database/erd.md) — curated relationship map.

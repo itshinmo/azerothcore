@@ -16,9 +16,9 @@ on:
 - **Data safety:** missing backup, non-idempotent SQL, partial `UPDATE` of a `smart_scripts` block,
   edits to immutable SQL trees, missing `DELETE` before `INSERT`, a `WHERE` clause that can catch
   unrelated rows, a schema change without a rollback note.
-- **Database GUI and tooling:** auth bypass, CSRF, host-header or origin gaps, SQL injection, root
-  credentials, production writes from a read-only profile, missing audit, missing pre-write backup,
-  dangerous SQL not blocked.
+- **Database clients and tooling:** least-privilege users, read-only production, no `root`, no
+  credentials in the repository, backup before a write batch, SQL injection in tooling, unsafe
+  multi-statement execution, missing confirmation before destructive edits.
 - **GM tools:** least-privilege violations, unauthenticated API, missing HMAC/replay protection,
   command injection, missing audit, a panel action that bypasses game logic, an addon that assumes
   server-side permission.

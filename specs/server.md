@@ -10,7 +10,7 @@ Define the local and production server topology, configuration, lifecycle, and h
 
 ## Boundary
 
-Owns the process and configuration contract. Does not own gameplay content or the database GUI.
+Owns the process and configuration contract. Does not own gameplay content or database clients.
 
 ## Contract
 

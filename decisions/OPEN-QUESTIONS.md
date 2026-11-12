@@ -39,16 +39,6 @@ approved, and tested on a copy of the client.
 **Owner:** human.
 **Record:** ADR-002 or a new ADR.
 
-## Shared Mac authentication
-
-**Question:** Is the database GUI used by more than one macOS user on the same machine?
-
-If yes, add local username/password on top of the startup token. If no, the token is enough.
-
-**Blocks:** nothing now; affects the GUI auth implementation.
-**Owner:** human.
-**Record:** ADR-004 update.
-
 ## GM panel first scope
 
 **Question:** Which read-only endpoints ship first?
