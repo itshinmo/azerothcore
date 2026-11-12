@@ -40,3 +40,8 @@ must reduce risk, not add a new bypass.
 - The API adds attack surface and must be localhost/VPN only.
 - The addon can be distributed with the client without server changes.
 - Audit storage needs retention and access control.
+
+## Amendment
+
+[ADR-009](ADR-009-rbac-command-permission-precedence.md) permits one core patch in the command
+loader so RBAC command permissions are not overwritten by legacy `command.security` values.

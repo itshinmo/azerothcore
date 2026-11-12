@@ -35,6 +35,18 @@ is authoritative for exact syntax; this handbook is the workflow and safety laye
 .character deleted list <name>   # deleted characters only; confirm with .help
 ```
 
+## Player care
+
+```text
+.pinfo <player|#guid>              # blocked when target has higher security
+.mute <player> <time> [reason]     # time like 1d15h33s
+.unmute <player>
+.mutehistory <account>             # account name, not character name
+```
+
+A support role cannot inspect or mute an admin character. Compare GM levels, not only RBAC
+permissions, before acting on a target.
+
 ## Movement and testing
 
 ```text

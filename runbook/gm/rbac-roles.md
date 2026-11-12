@@ -12,6 +12,8 @@ permission set.
   `rbac_permissions`.
 - `rbac_linked_permissions` links a role/permission group to command permissions.
 - `rbac_account_permissions` grants a permission or group to an account.
+- RBAC command permissions (`>= 200`) are authoritative. The world `command` table still stores
+  legacy `0-4` security levels; the core ignores them for RBAC commands.
 - Changes are tracked SQL in `data/sql/custom/db_auth/`.
 
 ## Roles
@@ -65,6 +67,16 @@ substitute `acore_test_auth` on the test realm.
   superadmin 654. These counts are a smoke check, not the contract; review the SQL for the actual
   permission list.
 
+## Testing notes
+
+- `.pinfo <player>` refuses a target with **higher** security. `.mute <player> ...` refuses equal or
+  higher security. A `support` account at gmlevel 0 cannot inspect or mute an admin. Use a normal
+  player character as the target.
+- `.mutehistory <account>` takes an **account name**, not a character name. `.mute` takes a
+  character or player name.
+- A role grant is not a security-level grant. Target checks still compare GM levels, so the support
+  role cannot act on admin characters even when the command permission is granted.
+
 ## Procedure
 
 1. List the commands the workflow needs. Find each command's permission constant in `RBAC.h`.
@@ -89,10 +101,9 @@ substitute `acore_test_auth` on the test realm.
 
 ## Open work
 
-The preset SQL is tracked and verified against the test auth database: the expected expansion counts
-match, and an account grant survives a re-apply. Interactive verification with one test account per
-role on the test realm is still pending. Until that runs, treat the role matrix as reviewed SQL, not a
-live-tested grant.
+The five roles were live-tested on the test realm on 2026-11-12. Support, content-tester, economy,
+and admin allowed and denied the expected commands. Superadmin was spot-checked with safe commands.
+The audit module is still pending, so no audit entries were produced.
 
 ## References
 

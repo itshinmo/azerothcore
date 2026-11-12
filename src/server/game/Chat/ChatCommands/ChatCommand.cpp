@@ -117,10 +117,26 @@ static ChatSubCommandMap COMMAND_MAP;
 
             if (cmd->_invoker && (cmd->_permission.RequiredLevel != secLevel))
             {
-                LOG_WARN("sql.sql", "Table `command` has permission {} for '{}' which does not match the core ({}). Overriding.",
-                    secLevel, name, cmd->_permission.RequiredLevel);
+                // RBAC permissions are authoritative. The world data uses the legacy 0-4 levels.
+                if (cmd->_permission.RequiredLevel > SEC_CONSOLE)
+                {
+                    LOG_DEBUG("sql.sql",
+                        "Table `command` has legacy security {} for RBAC command '{}'; keeping core permission {}.",
+                        secLevel, name, cmd->_permission.RequiredLevel);
+                }
+                else if (secLevel <= SEC_CONSOLE)
+                {
+                    LOG_WARN("sql.sql", "Table `command` has permission {} for '{}' which does not match the core ({}). Overriding.",
+                        secLevel, name, cmd->_permission.RequiredLevel);
 
-                cmd->_permission.RequiredLevel = secLevel;
+                    cmd->_permission.RequiredLevel = secLevel;
+                }
+                else
+                {
+                    LOG_ERROR("sql.sql",
+                        "Table `command` has invalid security {} for '{}'; keeping core permission {}.",
+                        secLevel, name, cmd->_permission.RequiredLevel);
+                }
             }
 
             if (std::holds_alternative<std::string>(cmd->_help))
@@ -516,8 +532,8 @@ bool Acore::Impl::ChatCommands::ChatCommandNode::IsInvokerVisible(ChatHandler co
     if (who.IsConsole() && (_permission.AllowConsole == Acore::ChatCommands::Console::Yes))
         return true;
 
-    // RBAC permissions start at 200, SEC_* levels are 0-4
-    if (_permission.RequiredLevel >= rbac::RBAC_PERM_COMMAND_RBAC)
+    // Legacy security levels are 0-4; anything above is an RBAC permission.
+    if (_permission.RequiredLevel > SEC_CONSOLE)
         return who.HasPermission(_permission.RequiredLevel);
 
     return !who.IsConsole() && who.IsAvailable(_permission.RequiredLevel);

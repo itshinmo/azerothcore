@@ -22,5 +22,6 @@ decision supersedes one and both link each other.
 | [ADR-006](ADR-006-shop-policy.md) | accepted (policy); trust model open | cosmetics + convenience only; delivery trust model TODO |
 | [ADR-007](ADR-007-verification-gates-and-fork-ci.md) | accepted | tiered verification, dedicated test realm, fork CI |
 | [ADR-008](ADR-008-database-access-with-dbeaver.md) | accepted | DBeaver for local/test; read-only production via SSH tunnel |
+| [ADR-009](ADR-009-rbac-command-permission-precedence.md) | accepted | core RBAC permissions override legacy `command.security` |
 
 Open questions: [OPEN-QUESTIONS.md](OPEN-QUESTIONS.md).
