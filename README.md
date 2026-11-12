@@ -15,7 +15,7 @@ The current work is infrastructure and polish, not new game content:
 - agent and human knowledge layer under `.ai/`, `specs/`, `decisions/`, and `runbook/`
 - local development, test realm, backup, and verification tooling
 - a documented database access workflow using DBeaver
-- GM workflow: command handbook, least-privilege roles, audit, read-only GM API
+- GM workflow: command handbook, least-privilege roles, audit, read-only GM API, in-game addon
 - future server website as the long-term visual layer; no in-repo web UI for now
 
 New zones, quests, dungeons, and shop features are out of scope until the foundation is stable. The
@@ -69,7 +69,7 @@ Full procedures live in [runbook/development/setup-macos.md](runbook/development
 | `conf/dist/` | build and shell templates (`config.cmake`, `config.sh`, `env.ac`); `conf/*.conf` is ignored |
 | `src/server/apps/{authserver,worldserver}/*.conf.dist` | server config templates |
 | `env/dist/` | local install prefix, binaries, configs, logs (ignored) |
-| `tools/` | project tooling: dev scripts, GM addon (future) |
+| `tools/` | project tooling: dev scripts, GM addon |
 | `runbook/` | human procedures: setup, operation, database, GM, troubleshooting |
 | `specs/` | current behavior and contracts |
 | `decisions/` | accepted decisions (ADRs) and open questions |

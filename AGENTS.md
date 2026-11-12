@@ -109,8 +109,8 @@ Read the matching doc(s) BEFORE starting the task:
 - `conf/dist/` — build and shell templates; `conf/*.conf` is gitignored.
 - `src/server/apps/{authserver,worldserver}/*.conf.dist` — server config templates.
 - `env/dist/` — local install prefix, binaries, configs, logs (gitignored).
-- `tools/` — project tooling: dev scripts, GM addon (future). The long-term visual layer is the
-  server website.
+- `tools/` — project tooling: dev scripts, GM addon. The long-term visual layer is the server
+  website.
 - `runbook/`, `specs/`, `decisions/`, `rfcs/`, `.ai/` — knowledge layer.
 
 ## Commands

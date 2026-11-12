@@ -1,11 +1,9 @@
 # GM tools
 
-> Status: phase 4 in progress. RBAC role presets are tracked in
-> `data/sql/custom/db_auth/gm_rbac_presets.sql`; the command audit module is in
-> `modules/mod-gm-audit`; the command index is in `runbook/gm/command-index.md`; the read-only GM
-> API is in `modules/mod-gm-api`. The long-term visual layer is the future server website
-> ([ADR-010](../decisions/ADR-010-website-as-visual-interface.md)); no in-repo web UI. The addon is
-> not built yet; this spec is the contract for when it lands.
+> Status: phase 4 complete for the current scope. RBAC role presets, the command audit module, the
+> command index, the read-only GM API, and the in-game addon are built. The long-term visual layer is
+> the future server website ([ADR-010](../decisions/ADR-010-website-as-visual-interface.md)); no
+> in-repo web UI.
 
 ## Purpose
 
@@ -83,7 +81,7 @@ Owns the GM workflow and tooling. Does not own the game commands themselves; the
 
 ### In-game addon
 
-- Location: `tools/gm-addon/`.
+- Location: `tools/gm-addon/`. Built; wraps existing commands only.
 - Lua addon with a menu and slash commands; wraps existing commands.
 - Does not bypass RBAC; the server remains the gate.
 - Install docs for the 3.3.5a client `Interface/AddOns/`.

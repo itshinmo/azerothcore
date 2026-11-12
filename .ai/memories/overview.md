@@ -19,7 +19,7 @@ Foundation, not content. The work is:
 - agent and human knowledge layer
 - local development, test realm, backup, and verification tooling
 - database access through DBeaver (no in-repo database GUI)
-- GM workflow: handbook, RBAC, audit, GM API; visual layer moves to the future server website
+- GM workflow: handbook, RBAC, audit, GM API, in-game addon; visual layer moves to the future server website
 
 New zones, quests, dungeons, items, and shop features are out of scope until the foundation is
 stable. The content policy and ID ranges are documented so future work does not collide.
