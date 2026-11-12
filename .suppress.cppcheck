@@ -1,1 +1,9 @@
 cppcheckError
+# cppcheck 2.22: Windows-only _T macro is not configured on macOS.
+unknownMacro:src/common/Debugging/WheatyExceptionReport.cpp
+# cppcheck 2.22 false positive: tab is assigned before it is read again.
+uninitvar:src/server/game/Loot/LootMgr.cpp:195
+# libsidecar returns malloc'd buffers; its ABI has no out-of-memory result code.
+nullPointerOutOfMemory:src/server/game/TC9Sidecar/TC9GrpcHandler.cpp:77
+nullPointerOutOfMemory:src/server/game/TC9Sidecar/TC9GrpcHandler.cpp:80
+nullPointerOutOfMemory:src/server/game/TC9Sidecar/TC9GrpcHandler.cpp:152

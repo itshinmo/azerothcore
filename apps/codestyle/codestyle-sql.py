@@ -44,13 +44,22 @@ def collect_files_from_directories(directories: list) -> list:
 
 # Used to find changed or added files compared to master.
 def get_changed_files() -> list:
-    subprocess.run(["git", "fetch", "origin", "master"], check=True)
     result = subprocess.run(
         ["git", "diff", "--name-status", "origin/master"],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True,
     )
+    if result.returncode != 0:
+        result = subprocess.run(
+            ["git", "diff", "--name-status", "master"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+        )
+    if result.returncode != 0:
+        print("Could not compare against origin/master or master; fetch the base branch first.", file=sys.stderr)
+        sys.exit(1)
     changed_files = []
     for line in result.stdout.strip().splitlines():
         if not line:
