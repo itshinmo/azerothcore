@@ -15,12 +15,13 @@ This is a one-shot audit, not a contract. Fixes go through the strict gate.
 ### P1 — C++ verification was not executed end to end
 
 - Evidence: `build-verify` was configured with `BUILD_TESTING=ON` and `-Werror`. On 2026-11-12 the
-  full `unit_tests` target compiled and `./build-verify/src/test/unit_tests` exited 0. `cppcheck` is
-  still not installed on this Mac (`command -v cppcheck` empty).
-- Impact: the build and unit-test half of the T2 gate now has evidence; the static-analysis half does
-  not.
-- Fix: install `cppcheck` and run `make verify-cpp` once, or rely on fork CI's `cpp-lint` job.
-- Status: partially fixed; cppcheck open.
+  full `unit_tests` target compiled and `./build-verify/src/test/unit_tests` exited 0. At audit time
+  `cppcheck` was not installed on this Mac (`command -v cppcheck` empty). It was installed later
+  (2.22) and `make verify-cpp` passes.
+- Impact: the build and unit-test half of the T2 gate has evidence; the static-analysis half is now
+  covered too.
+- Fix: keep `cppcheck` installed and run `make verify-cpp`, or rely on fork CI's `cpp-lint` job.
+- Status: fixed 2026-11-13.
 
 ### P1 — Fork CI is written but not observed on GitHub
 
@@ -120,4 +121,3 @@ This is a one-shot audit, not a contract. Fixes go through the strict gate.
 - An actual GitHub Actions run.
 - Production deployment.
 - Player-client login.
-- RBAC role presets and GM audit module (phase 4).

@@ -193,6 +193,15 @@ pid_of_test() {
     ps -axo pid=,command= | awk -v b="$BIN_DIR/$name" -v f="$flag" '$2 == b && index($0, f) { print $1; exit }'
 }
 
+pid_matches() {
+    local name="$1" pid="$2" command
+    command="$(ps -p "$pid" -o command= 2>/dev/null || true)"
+    case "$command" in
+        "$BIN_DIR/$name"*) return 0 ;;
+    esac
+    return 1
+}
+
 ensure_stopped() {
     local pid
     for name in authserver worldserver; do
@@ -244,14 +253,50 @@ start_one() {
     fi
 }
 
+test_realm_flag() {
+    local info db realm
+    info="$(config_value 'LoginDatabaseInfo' "$TEST_AUTH_CONF")"
+    db="$(db_field "$info" 5)"
+    realm="$(config_value 'RealmID' "$TEST_WORLD_CONF")"
+    [ -n "$realm" ] || realm=1
+    mysql_from_info "$info" "$db" "SELECT flag FROM realmlist WHERE id = $realm" 2>/dev/null | tr -d '[:space:]'
+}
+
+clear_realm_offline() {
+    local info db realm
+    info="$(config_value 'LoginDatabaseInfo' "$TEST_AUTH_CONF")"
+    db="$(db_field "$info" 5)"
+    realm="$(config_value 'RealmID' "$TEST_WORLD_CONF")"
+    [ -n "$realm" ] || realm=1
+    mysql_from_info "$info" "$db" "UPDATE realmlist SET flag = flag & ~2 WHERE id = $realm"
+}
+
+wait_for_realm() {
+    local flag i
+    for ((i = 0; i < 30; i++)); do
+        flag="$(test_realm_flag)"
+        if [ -n "$flag" ] && [ $((flag & 3)) -eq 0 ]; then
+            return 0
+        fi
+        sleep 1
+    done
+    return 1
+}
+
 stop_one() {
     local name="$1" conf="$2" pid session i
     pid="$(pid_of_test "$name" "$conf")"
+    session="$(session_name "$name")"
     if [ -z "$pid" ]; then
         printf 'test %s is not running\n' "$name"
+        rm -f "$(pid_file "$name")"
         return 0
     fi
-    session="$(session_name "$name")"
+    if ! pid_matches "$name" "$pid"; then
+        printf 'test pid %s does not match %s; refusing to signal it\n' "$pid" "$BIN_DIR/$name" >&2
+        rm -f "$(pid_file "$name")"
+        return 1
+    fi
     printf 'stopping test %s (pid %s) ...\n' "$name" "$pid"
     kill -TERM "$pid" 2>/dev/null || true
     for ((i = 0; i < 30; i++)); do
@@ -261,7 +306,17 @@ stop_one() {
         sleep 1
     done
     if kill -0 "$pid" 2>/dev/null; then
-        printf 'test %s did not stop within 30s\n' "$name" >&2
+        printf 'test %s ignored SIGTERM for 30s; sending SIGKILL\n' "$name" >&2
+        kill -KILL "$pid" 2>/dev/null || true
+        for ((i = 0; i < 5; i++)); do
+            if ! kill -0 "$pid" 2>/dev/null; then
+                break
+            fi
+            sleep 1
+        done
+    fi
+    if kill -0 "$pid" 2>/dev/null; then
+        printf 'test %s did not stop after SIGKILL\n' "$name" >&2
         return 1
     fi
     rm -f "$(pid_file "$name")"
@@ -306,7 +361,21 @@ case "${1:-status}" in
     start)
         [ -f "$TEST_WORLD_CONF" ] || { printf 'missing %s; run setup first\n' "$TEST_WORLD_CONF" >&2; exit 1; }
         start_one worldserver "$TEST_WORLD_PORT" "$TEST_WORLD_CONF"
+        if ! wait_for_realm; then
+            printf 'test worldserver is listening but the realm flag still has offline or mismatch bits\n' >&2
+            exit 1
+        fi
         start_one authserver "$TEST_AUTH_PORT" "$TEST_AUTH_CONF"
+        # authserver marks every realm offline on boot; the worldserver is already up, so clear the
+        # offline bit for the test realm.
+        if ! clear_realm_offline; then
+            printf 'could not clear the test realm offline flag after starting authserver\n' >&2
+            exit 1
+        fi
+        if ! wait_for_realm; then
+            printf 'test realm flag is still offline after authserver start\n' >&2
+            exit 1
+        fi
         ;;
     stop)
         stop_one authserver "$TEST_AUTH_CONF" || true

@@ -8,7 +8,7 @@ Before querying or editing a table, designing content, or debugging a data probl
 
 | Database | Holds |
 |----------|-------|
-| `acore_auth` | accounts, `account_access`, `realmlist`, bans, session keys, logs |
+| `acore_auth` | accounts, `account_access`, `realmlist`, bans, session keys, logs, `gm_audit_log` |
 | `acore_characters` | characters, inventory, quests, mail, guilds, arena, achievements |
 | `acore_world` | creature/item/quest/gameobject templates, spawns, loot, SmartAI, conditions |
 
@@ -22,6 +22,7 @@ Before querying or editing a table, designing content, or debugging a data probl
 | `account_banned` | active and historical bans |
 | `ip_banned` | IP bans |
 | `rbac_*` | permissions, linked permissions, account grants |
+| `gm_audit_log` | GM command and GM API audit rows; see `runbook/gm/audit.md` |
 | `logs`, `logs_ip_actions` | server and IP action logs |
 
 There is no `gmlevel` column on `account`; use `account_access`.

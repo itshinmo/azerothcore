@@ -15,15 +15,22 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "AccountMgr.h"
 #include "Config.h"
 #include "DatabaseEnv.h"
 #include "GmApiAuth.h"
 #include "HMAC.h"
 #include "Log.h"
+#include "ObjectAccessor.h"
+#include "Player.h"
+#include "RBAC.h"
+#include "Realm.h"
 #include "ScriptMgr.h"
 #include "StringFormat.h"
 #include "Util.h"
+#include "World.h"
 #include "WorldScript.h"
+#include "WorldSession.h"
 
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/steady_timer.hpp>
@@ -36,8 +43,11 @@
 #include <cctype>
 #include <cerrno>
 #include <chrono>
+#include <condition_variable>
 #include <cstdlib>
 #include <cstring>
+#include <deque>
+#include <functional>
 #include <memory>
 #include <mutex>
 #include <string>
@@ -103,15 +113,184 @@ namespace
         return diff == 0;
     }
 
+    struct Actor
+    {
+        uint32 accountId = 0;
+        std::string name;
+        uint8 security = 0;
+    };
+
+    /// A write runs on the world thread; the HTTP thread waits for the outcome.
+    struct WriteJob
+    {
+        void Finish(http::status newStatus, std::string newBody)
+        {
+            std::lock_guard<std::mutex> lock(mutex);
+            status = newStatus;
+            body = std::move(newBody);
+            done = true;
+            cv.notify_all();
+        }
+
+        bool Wait(std::chrono::seconds timeout)
+        {
+            std::unique_lock<std::mutex> lock(mutex);
+            return cv.wait_for(lock, timeout, [this]() { return done; });
+        }
+
+        void Cancel() { cancelled = true; }
+
+        std::mutex mutex;
+        std::condition_variable cv;
+        bool done = false;
+        std::atomic<bool> cancelled{ false };
+        http::status status = http::status::service_unavailable;
+        std::string body = R"({"error":"world_unavailable"})";
+    };
+
+    struct QueuedJob
+    {
+        std::shared_ptr<WriteJob> job;
+        std::function<void()> action;
+    };
+
+    uint32 ParseAccountId(std::string_view actor)
+    {
+        uint64 value = 0;
+        for (char c : actor)
+            value = value * 10 + static_cast<uint64>(c - '0');
+        return static_cast<uint32>(value);
+    }
+
+    bool ResolveActor(uint32 accountId, Actor& actor)
+    {
+        if (accountId == 0)
+            return false;
+
+        actor.accountId = accountId;
+        if (!AccountMgr::GetName(accountId, actor.name))
+            return false;
+
+        actor.security = static_cast<uint8>(AccountMgr::GetSecurity(accountId, realm.Id.Realm));
+        return true;
+    }
+
+    std::string Escape(std::string const& value)
+    {
+        // Local escaping keeps audit writes thread-safe; DatabaseWorkerPool::EscapeString uses a
+        // shared synchronous connection without a lock. Backslash escaping assumes the default
+        // sql_mode (NO_BACKSLASH_ESCAPES is not set).
+        std::string out;
+        out.reserve(value.size() + 8);
+        for (char c : value)
+        {
+            switch (c)
+            {
+                case '\0': out += "\\0"; break;
+                case '\n': out += "\\n"; break;
+                case '\r': out += "\\r"; break;
+                case 0x1a: out += "\\Z"; break;
+                case '\'': out += "\\'"; break;
+                case '\\': out += "\\\\"; break;
+                default: out += c; break;
+            }
+        }
+        return out;
+    }
+
+    bool WriteAudit(Actor const& actor, std::string const& command, std::string const& arguments,
+        std::string const& playerName, uint64 playerGuid, std::string const& result)
+    {
+        std::string const sql = Acore::StringFormat(
+            "INSERT INTO `gm_audit_log` "
+            "(`realm_id`, `account_id`, `account_name`, `player_name`, `player_guid`, `command`, `arguments`, `result`) "
+            "VALUES ({}, {}, '{}', '{}', {}, '{}', '{}', '{}')",
+            realm.Id.Realm, actor.accountId, Escape(actor.name), Escape(playerName), playerGuid,
+            Escape(command), Escape(arguments), Escape(result));
+
+        if (!LoginDatabase.DirectExecute(sql))
+        {
+            LOG_ERROR("module.gm-api", "Could not write audit row for account {} command '{}'",
+                actor.accountId, command);
+            return false;
+        }
+
+        return true;
+    }
+
+    void ExecutePlayerAction(Actor const& actor, std::string const& action, std::string const& playerName,
+        std::shared_ptr<WriteJob> const& job)
+    {
+        std::string const command = "api." + action;
+
+        Player* player = ObjectAccessor::FindPlayerByName(playerName);
+        if (!player || !player->GetSession())
+        {
+            WriteAudit(actor, command, playerName, "", 0, "target_not_found");
+            job->Finish(http::status::not_found, R"({"error":"target_not_found"})");
+            return;
+        }
+
+        WorldSession* session = player->GetSession();
+        uint64 const guid = player->GetGUID().GetRawValue();
+        std::string const name = player->GetName();
+
+        if (session->GetAccountId() == actor.accountId)
+        {
+            WriteAudit(actor, command, playerName, name, guid, "cannot_target_self");
+            job->Finish(http::status::conflict, R"({"error":"cannot_target_self"})");
+            return;
+        }
+
+        if (AccountMgr::GetSecurity(session->GetAccountId(), realm.Id.Realm) >= actor.security)
+        {
+            WriteAudit(actor, command, playerName, name, guid, "forbidden_target_security");
+            job->Finish(http::status::forbidden, R"({"error":"forbidden"})");
+            return;
+        }
+
+        if (action == "kick")
+        {
+            session->KickPlayer("GM API");
+        }
+        else
+        {
+            if (player->IsInFlight() || player->IsInCombat())
+            {
+                WriteAudit(actor, command, playerName, name, guid, "player_busy");
+                job->Finish(http::status::conflict, R"({"error":"player_busy"})");
+                return;
+            }
+
+            if (!player->TeleportTo(player->m_homebindMapId, player->m_homebindX, player->m_homebindY,
+                    player->m_homebindZ, player->GetOrientation()))
+            {
+                WriteAudit(actor, command, playerName, name, guid, "teleport_failed");
+                job->Finish(http::status::internal_server_error, R"({"error":"teleport_failed"})");
+                return;
+            }
+        }
+
+        if (!WriteAudit(actor, command, playerName, name, guid, "success"))
+        {
+            job->Finish(http::status::internal_server_error, R"({"error":"audit_failed"})");
+            return;
+        }
+
+        job->Finish(http::status::ok, R"({"status":"ok"})");
+    }
+
 }
 
 class GmApiServer
 {
 public:
     GmApiServer(std::string bindAddress, uint16 port, std::string secret, int32 maxSkew,
-        int32 nonceTtl, int32 rateLimit)
+        int32 nonceTtl, int32 rateLimit, bool allowWrites,
+        std::function<bool(std::shared_ptr<WriteJob>, std::function<void()>)> postToWorld)
         : _bindAddress(std::move(bindAddress)), _port(port), _secret(std::move(secret)),
-          _maxSkew(maxSkew), _nonceTtl(nonceTtl), _rateLimit(rateLimit) { }
+          _maxSkew(maxSkew), _nonceTtl(nonceTtl), _rateLimit(rateLimit), _allowWrites(allowWrites),
+          _postToWorld(std::move(postToWorld)) { }
 
     ~GmApiServer() { Stop(); }
 
@@ -208,11 +387,8 @@ private:
     http::response<http::string_body> Process(http::request<http::string_body> const& request,
         std::string const& remoteIp)
     {
-        if (request.method() != http::verb::get)
-            return MakeResponse(request, http::status::method_not_allowed,
-                R"({"error":"method_not_allowed"})", "GET");
-
-        http::status authStatus = Authorize(request, remoteIp);
+        std::string actor;
+        http::status const authStatus = Authorize(request, remoteIp, actor);
         if (authStatus != http::status::ok)
         {
             std::string error = "unauthorized";
@@ -225,13 +401,95 @@ private:
         }
 
         std::string_view const target = request.target();
+        bool const isGet = request.method() == http::verb::get;
+
         if (target == "/api/v1/status")
+        {
+            if (!isGet)
+                return MethodNotAllowed(request, "GET");
             return MakeResponse(request, http::status::ok, R"({"status":"ok"})");
+        }
 
         if (target == "/api/v1/audit" || target.starts_with("/api/v1/audit?"))
+        {
+            if (!isGet)
+                return MethodNotAllowed(request, "GET");
             return MakeResponse(request, http::status::ok, AuditJson(GmApiAuth::ParseLimit(target)));
+        }
+
+        std::string action;
+        std::string playerName;
+        if (GmApiAuth::ParsePlayerTarget(target, action, playerName))
+        {
+            if (request.method() != http::verb::post)
+                return MethodNotAllowed(request, "POST");
+            return HandleWrite(request, actor, action, playerName);
+        }
 
         return MakeResponse(request, http::status::not_found, R"({"error":"not_found"})");
+    }
+
+    static http::response<http::string_body> MethodNotAllowed(
+        http::request<http::string_body> const& request, std::string_view allow)
+    {
+        return MakeResponse(request, http::status::method_not_allowed,
+            R"({"error":"method_not_allowed"})", allow);
+    }
+
+    http::response<http::string_body> HandleWrite(http::request<http::string_body> const& request,
+        std::string const& actorHeader, std::string const& action, std::string const& playerName)
+    {
+        if (!_allowWrites)
+            return MakeResponse(request, http::status::forbidden, R"({"error":"writes_disabled"})");
+
+        if (actorHeader.empty())
+            return MakeResponse(request, http::status::unauthorized, R"({"error":"actor_required"})");
+
+        Actor actor;
+        if (!ResolveActor(ParseAccountId(actorHeader), actor))
+            return MakeResponse(request, http::status::unauthorized, R"({"error":"unauthorized"})");
+
+        std::string const command = "api." + action;
+
+        if (actor.security <= SEC_PLAYER)
+        {
+            WriteAudit(actor, command, playerName, "", 0, "denied");
+            return MakeResponse(request, http::status::forbidden, R"({"error":"forbidden"})");
+        }
+
+        uint32 const permission = action == "kick"
+            ? rbac::RBAC_PERM_COMMAND_KICK
+            : rbac::RBAC_PERM_COMMAND_UNSTUCK;
+        if (!AccountMgr::HasPermission(actor.accountId, permission, realm.Id.Realm))
+        {
+            WriteAudit(actor, command, playerName, "", 0, "denied");
+            return MakeResponse(request, http::status::forbidden, R"({"error":"forbidden"})");
+        }
+
+        if (!WriteAudit(actor, command, playerName, "", 0, "pending"))
+            return MakeResponse(request, http::status::internal_server_error,
+                R"({"error":"audit_failed"})");
+
+        auto job = std::make_shared<WriteJob>();
+        if (!_postToWorld(job, [actor, action, playerName, job]()
+            {
+                ExecutePlayerAction(actor, action, playerName, job);
+            }))
+        {
+            WriteAudit(actor, command, playerName, "", 0, "world_unavailable");
+            return MakeResponse(request, http::status::service_unavailable,
+                R"({"error":"world_unavailable"})");
+        }
+
+        if (!job->Wait(std::chrono::seconds(5)))
+        {
+            job->Cancel();
+            WriteAudit(actor, command, playerName, "", 0, "world_timeout");
+            return MakeResponse(request, http::status::service_unavailable,
+                R"({"error":"world_unavailable"})");
+        }
+
+        return MakeResponse(request, job->status, job->body);
     }
 
     static http::response<http::string_body> MakeResponse(
@@ -303,7 +561,8 @@ private:
         GmApiServer& _server;
     };
 
-    http::status Authorize(http::request<http::string_body> const& request, std::string const& remoteIp)
+    http::status Authorize(http::request<http::string_body> const& request, std::string const& remoteIp,
+        std::string& actor)
     {
         if (!RateAllowed(remoteIp))
             return http::status::too_many_requests;
@@ -313,6 +572,14 @@ private:
         auto const signatureHeader = request["X-GM-Signature"];
         if (timestampHeader.empty() || nonceHeader.empty() || signatureHeader.empty())
             return http::status::unauthorized;
+
+        auto const actorHeader = request["X-GM-Actor"];
+        if (!actorHeader.empty())
+        {
+            actor = std::string(actorHeader);
+            if (!GmApiAuth::ValidActor(actor))
+                return http::status::unauthorized;
+        }
 
         std::string const timestamp{ timestampHeader };
         if (timestamp.empty() || timestamp.front() == '-')
@@ -334,7 +601,7 @@ private:
             return http::status::unauthorized;
 
         std::string const canonical = GmApiAuth::Canonical(
-            timestamp, nonce, request.method_string(), request.target());
+            timestamp, nonce, request.method_string(), request.target(), actor);
         std::string const expected = GmApiAuth::Signature(_secret, canonical);
 
         if (!ConstantTimeEqual(GmApiAuth::ToLower(std::string(signatureHeader)), expected))
@@ -415,6 +682,8 @@ private:
     int32 _maxSkew;
     int32 _nonceTtl;
     int32 _rateLimit;
+    bool _allowWrites;
+    std::function<bool(std::shared_ptr<WriteJob>, std::function<void()>)> _postToWorld;
 
     std::atomic<uint32> _activeSessions{ 0 };
 
@@ -474,19 +743,68 @@ public:
             return;
         }
 
+        bool const allowWrites = sConfigMgr->GetOption<bool>("GmApi.AllowWrites", false);
+        if (allowWrites)
+            LOG_INFO("module.gm-api", "GM API write endpoints enabled (kick, unstuck).");
+
         _server = std::make_unique<GmApiServer>(
             sConfigMgr->GetOption<std::string>("GmApi.BindAddress", "127.0.0.1"),
-            static_cast<uint16>(port), secret, maxSkew, nonceTtl, rateLimit);
+            static_cast<uint16>(port), secret, maxSkew, nonceTtl, rateLimit, allowWrites,
+            [this](std::shared_ptr<WriteJob> job, std::function<void()> action)
+            {
+                return Post(std::move(job), std::move(action));
+            });
         _server->Start();
+    }
+
+    void OnUpdate(uint32 /*diff*/) override
+    {
+        std::deque<QueuedJob> jobs;
+        {
+            std::lock_guard<std::mutex> lock(_queueMutex);
+            jobs.swap(_jobs);
+        }
+
+        for (auto& job : jobs)
+            if (!job.job->cancelled)
+                job.action();
     }
 
     void OnShutdown() override
     {
+        std::deque<QueuedJob> jobs;
+        {
+            std::lock_guard<std::mutex> lock(_queueMutex);
+            _shuttingDown = true;
+            jobs.swap(_jobs);
+        }
+
+        for (auto& job : jobs)
+            job.job->Finish(http::status::service_unavailable, R"({"error":"world_unavailable"})");
+
         _server.reset();
     }
 
 private:
+    bool Post(std::shared_ptr<WriteJob> job, std::function<void()> action)
+    {
+        {
+            std::lock_guard<std::mutex> lock(_queueMutex);
+            if (!_shuttingDown)
+            {
+                _jobs.push_back({ std::move(job), std::move(action) });
+                return true;
+            }
+        }
+
+        job->Finish(http::status::service_unavailable, R"({"error":"world_unavailable"})");
+        return false;
+    }
+
     std::unique_ptr<GmApiServer> _server;
+    std::mutex _queueMutex;
+    std::deque<QueuedJob> _jobs;
+    bool _shuttingDown = false;
 };
 
 void Addmod_gm_apiScripts()

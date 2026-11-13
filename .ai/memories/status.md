@@ -1,6 +1,6 @@
 ---
 description: Current project status, last verified commit, known issues, open decisions, and next tasks. Read after overview on any task.
-last-verified: 2026-11-13 (tree at 783784eb6; run git log -1 for the current commit)
+last-verified: 2026-11-13 (feat/post-phase4-hardening; cpp, docs, smoke, client GM, and test-realm start checks passed)
 ---
 
 # Status
@@ -8,10 +8,11 @@ last-verified: 2026-11-13 (tree at 783784eb6; run git log -1 for the current com
 ## Where we are
 
 - Phase 0–4 are complete for the current scope: foundation, tooling, test realm, backups, DBeaver,
-  RBAC presets, command audit, command index, read-only GM API, in-game GM addon.
+  RBAC presets, command audit, command index, GM API read endpoints, in-game GM addon.
+- Phase 5 started: the GM API has audited `kick` and `unstuck` writes behind
+  `GmApi.AllowWrites`, a signed `X-GM-Actor`, RBAC, and `gm_audit_log`.
 - The long-term visual layer is the future server website. No in-repo web UI exists.
-- Branch: `local-server-setup`.
-- Working tree: clean at the last verification; confirm with `git status`.
+- Branch: `feat/post-phase4-hardening`. Confirm with `git status`.
 - Website work has not started. Shop and new content remain out of scope.
 
 ## Built and verified
@@ -21,27 +22,36 @@ last-verified: 2026-11-13 (tree at 783784eb6; run git log -1 for the current com
 - Test realm ports 3824/8185; local ports 3724/8085.
 - `make doctor`, `make verify-docs`, `make verify-sql`, `make verify-cpp`, `make verify-smoke`,
   `make verify-full`.
-- Last full gate: exit 0. Docs 131, command index 657, cppcheck clean, 5982 unit tests, SQL test-realm
-  apply, smoke doctor clean.
-- RBAC, audit, API, and addon live/manual checks were performed. See the runbooks and ADRs.
+- Last gate on this branch: docs 132, command index 657, cppcheck clean, 5985 unit tests, smoke ok
+  with ports free afterwards.
+- `tools/dev/server.sh` and `tools/dev/test-realm.sh` clear the authserver offline flag after start,
+  so the realm shows online. `stop` escalates to `SIGKILL` and `verify-smoke` fails if ports stay
+  bound after stop.
+- GM API manual checks on the local stack: status/audit reads, successful `kick` and `unstuck`,
+  `cannot_target_self`, `forbidden_target_security`, `target_not_found`, and the 401/404/405/409
+  paths. Each write produced the intended `pending` + outcome audit rows.
+- Client and addon checks on the local stack: GM Helper menu, GM mode toggle, visibility buttons,
+  lookups, teleport, and input rendering. Confirmed by the human on 2026-11-13.
+- Test realm start verified 2026-11-13: `acore_test_auth.realmlist.flag` is 0 after start, so the
+  authserver offline bit is cleared correctly.
+- Remaining untested API branches are deferred to the future GM dashboard; see known issues.
+- RBAC, audit, and API live/manual checks were performed. See the runbooks and ADRs.
 
 ## Known issues
 
-1. **Realm offline after start.** `authserver` sets the offline flag after `worldserver` clears it.
-   Clear it after starting:
-   `UPDATE acore_test_auth.realmlist SET flag = flag & ~2 WHERE id = 1;`
-   Fix belongs in `tools/dev/server.sh` and `tools/dev/test-realm.sh`.
-2. **Smoke can leave a local worldserver running.** Seen more than once after `make verify-full`;
-   `make status` then `make stop`. Reproduce and fix `verify-smoke`.
-3. **SQL linter does not scan `data/sql/custom/`.** Custom SQL is applied by the updater but not
+1. **SQL linter does not scan `data/sql/custom/`.** Custom SQL is applied by the updater but not
    linted by `apps/codestyle/codestyle-sql.py`.
-4. **Fork CI has not been observed on GitHub.** Push and confirm once.
-5. **GM API is read-only.** One shared HMAC secret, no caller identity. Write endpoints need signed
-   actor identity, RBAC, and audit. Audit query uses the shared sync DB pool; audit search is
-   newest-N only; structured request logging is planned.
-6. **Addon final UX was not client-tested** after the GM-mode toggle and explicit visibility buttons.
-7. **cppcheck suppressions target 2.22.** Pin or document the supported version.
-8. **DBeaver production access is read-only via SSH tunnel.** No production host chosen yet.
+2. **Fork CI has not been observed on GitHub.** Push and confirm once.
+3. **GM API write coverage is partial.** `kick` and `unstuck` are audited writes. Item grant, mail,
+   ban, RBAC, and server control are not built. Manual branch coverage is partial: successful
+   kick/unstuck, `cannot_target_self`, `forbidden_target_security`, `target_not_found`, and the
+   401/404/405/409 paths are tested. `player_busy`, `teleport_failed`, `audit_failed`,
+   `writes_disabled`, rate limiting, and timeout/shutdown paths are not. The API still uses one shared
+   HMAC secret for transport; `X-GM-Actor` identifies the human but the BFF remains the only holder of
+   the secret. Audit query uses the shared sync DB pool; audit search is newest-N only; structured
+   request logging is planned.
+4. **cppcheck suppressions target 2.22.** Pin or document the supported version.
+5. **DBeaver production access is read-only via SSH tunnel.** No production host chosen yet.
 
 ## Open decisions
 
@@ -53,13 +63,13 @@ last-verified: 2026-11-13 (tree at 783784eb6; run git log -1 for the current com
 
 ## Next tasks, in order
 
-1. Fix the realm-flag and smoke-process bugs.
-2. Correct stale docs after Phase 4.
-3. Decide production host and finish the deploy runbook.
-4. Decide website auth and write the OpenAPI contract for the existing GM API.
-5. Build the website read-only MVP through an admin BFF.
-6. Add audited write endpoints with caller identity and RBAC.
-7. Shop and new content only after their decisions.
+1. Decide production host and finish the deploy runbook.
+2. Decide website auth and write the OpenAPI contract for the GM API, including `X-GM-Actor`.
+3. Build the website read-only MVP through an admin BFF.
+4. Exercise the remaining GM API branches (`player_busy`, `teleport_failed`, `audit_failed`,
+   `writes_disabled`, rate limit, timeout/shutdown) through the GM dashboard.
+5. Add the remaining audited writes (item grant, mail, ban, RBAC) with caller identity and RBAC.
+6. Shop and new content only after their decisions.
 
 ## New session checklist
 

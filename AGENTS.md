@@ -85,7 +85,9 @@ Read the matching doc(s) BEFORE starting the task:
 - Backing up or restoring → `runbook/operation/backup-restore.md`.
 - Starting, stopping, or monitoring the server → `runbook/operation/start-stop.md`,
   `runbook/operation/health-check.md`, and `runbook/operation/logs-and-monitoring.md`.
-- GM tooling or RBAC → `runbook/gm/command-handbook.md` and `runbook/gm/rbac-roles.md`.
+- GM tooling or RBAC → `runbook/gm/command-handbook.md` and `runbook/gm/rbac-roles.md`;
+  API, audit, addon, or command index work → `runbook/gm/gm-api.md`, `runbook/gm/audit.md`,
+  `runbook/gm/addon.md`, and `runbook/gm/command-index.md`.
 - Reviewing a changeset or PR → `.agents/docs/code-review.md` and `.agents/docs/self-review-rules.md`.
 - Changing live e2e, and only when the user asked or an existing test broke → `e2e/README.md` and
   `.agents/docs/e2e-policy.md`.
@@ -187,8 +189,9 @@ New content is currently out of scope. When it returns:
   never does.
 - Web auth is separate from game SRP6. Link a web identity to a game account; do not reuse game
   session keys.
-- Public, account, and GM dashboard zones are separate. The read-only API uses one shared HMAC
-  secret. Write endpoints must add caller identity, RBAC, and audit before shipping.
+- Public, account, and GM dashboard zones are separate. The read API uses one shared HMAC secret.
+  Write endpoints additionally require a signed `X-GM-Actor` game account id, an RBAC permission
+  check, and an audit row; no write endpoint ships without all three.
 - Visuals use basic HTML/CSS/JS first. New local JavaScript servers may use Bun after a pinned pilot.
 
 ## Modules

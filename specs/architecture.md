@@ -54,9 +54,9 @@ browser -> website BFF -> mod-gm-api -> worldserver
 
 - The admin BFF owns the web session and the GM API secret. The browser never gets the secret.
 - Web identity is separate from game SRP6 auth and links to a game account.
-- The read-only API uses one shared HMAC secret and has no caller identity. Write endpoints must
-  add signed actor identity, RBAC, and audit before shipping. The website is a client, not a
-  source of authority.
+- The read API uses one shared HMAC secret. Write endpoints add a signed `X-GM-Actor` game account
+  id, an RBAC permission check, and an audit row. The website is a client, not a source of
+  authority.
 - Public, account, and GM dashboard zones stay separate.
 - See [ADR-010](../decisions/ADR-010-website-as-visual-interface.md).
 

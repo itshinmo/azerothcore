@@ -16,6 +16,43 @@ TEST(GmApiAuthTest, SignatureKnownValue)
         "8e0c392080b60b7b31980af50079b3f11da28a36425f5f21f767b1dd46ae66f9");
 }
 
+TEST(GmApiAuthTest, CanonicalStringWithActor)
+{
+    EXPECT_EQ(GmApiAuth::Canonical("1700000000", "0123456789abcdef", "POST",
+                  "/api/v1/players/Thrall/kick", "42"),
+        "1700000000\n0123456789abcdef\nPOST\n/api/v1/players/Thrall/kick\n42");
+}
+
+TEST(GmApiAuthTest, ActorValidation)
+{
+    EXPECT_FALSE(GmApiAuth::ValidActor(""));
+    EXPECT_FALSE(GmApiAuth::ValidActor("0"));
+    EXPECT_FALSE(GmApiAuth::ValidActor("12a"));
+    EXPECT_FALSE(GmApiAuth::ValidActor("4294967296"));
+    EXPECT_TRUE(GmApiAuth::ValidActor("1"));
+    EXPECT_TRUE(GmApiAuth::ValidActor("4294967295"));
+}
+
+TEST(GmApiAuthTest, PlayerTargetParsing)
+{
+    std::string action;
+    std::string player;
+
+    EXPECT_TRUE(GmApiAuth::ParsePlayerTarget("/api/v1/players/Thrall/kick", action, player));
+    EXPECT_EQ(action, "kick");
+    EXPECT_EQ(player, "Thrall");
+
+    EXPECT_TRUE(GmApiAuth::ParsePlayerTarget("/api/v1/players/Jaina2/unstuck", action, player));
+    EXPECT_EQ(action, "unstuck");
+    EXPECT_EQ(player, "Jaina2");
+
+    EXPECT_FALSE(GmApiAuth::ParsePlayerTarget("/api/v1/players//kick", action, player));
+    EXPECT_FALSE(GmApiAuth::ParsePlayerTarget("/api/v1/players/Thrall/ban", action, player));
+    EXPECT_FALSE(GmApiAuth::ParsePlayerTarget("/api/v1/players/Thrall", action, player));
+    EXPECT_FALSE(GmApiAuth::ParsePlayerTarget("/api/v1/players/Th r/all/kick", action, player));
+    EXPECT_FALSE(GmApiAuth::ParsePlayerTarget("/api/v1/status", action, player));
+}
+
 TEST(GmApiAuthTest, TimestampWindow)
 {
     EXPECT_TRUE(GmApiAuth::TimestampInWindow(1000, 1000, 60));

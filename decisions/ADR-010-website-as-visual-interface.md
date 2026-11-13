@@ -34,10 +34,10 @@ tools, and future player services.
    - The website never reuses game session keys.
 6. Public site, account/identity, and the GM dashboard are separate security zones. The GM dashboard
    is behind VPN/SSO or a separate admin origin. Public and admin sessions are not shared.
-7. Server-side authorization is mandatory. The current read-only API has one shared HMAC secret and
-   no caller identity. Before write endpoints ship, the API must accept a signed actor/service
-   identity and enforce the linked account's RBAC roles plus audit. A website login alone grants no
-   GM rights.
+7. Server-side authorization is mandatory. The read API uses one shared HMAC secret. Write endpoints
+   must accept a signed actor identity and enforce the linked account's RBAC roles plus audit; the
+   built `kick` and `unstuck` writes do this with a signed `X-GM-Actor`. A website login alone grants
+   no GM rights.
 8. Visuals use basic HTML/CSS/JS first. No SPA framework unless a demonstrated need appears.
 9. Runtime choice for the website is separate from the current tooling. New local JavaScript servers
    may use Bun after a pinned pilot; existing Node tooling stays until a deliberate migration.

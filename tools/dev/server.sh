@@ -17,7 +17,9 @@ session_name() { printf 'ac-%s-%s' "$(basename "$ROOT")" "$1"; }
 screen_running() {
     local name="$1" session
     session="$(session_name "$name")"
-    [ -n "$SCREEN_BIN" ] && "$SCREEN_BIN" -list 2>/dev/null | grep -F ".${session}" >/dev/null
+    [ -n "$SCREEN_BIN" ] || return 1
+    "$SCREEN_BIN" -wipe >/dev/null 2>&1 || true
+    "$SCREEN_BIN" -list 2>/dev/null | grep -F ".${session}" >/dev/null
 }
 
 pid_of() {
@@ -47,6 +49,15 @@ running() {
         return $?
     fi
     [ -n "$(pid_of "$name")" ]
+}
+
+pid_matches() {
+    local name="$1" pid="$2" command
+    command="$(ps -p "$pid" -o command= 2>/dev/null || true)"
+    case "$command" in
+        "$BIN_DIR/$name"*) return 0 ;;
+    esac
+    return 1
 }
 
 start_one() {
@@ -91,11 +102,22 @@ realm_flag() {
     mysql_from_info "$info" "$db" "SELECT flag FROM realmlist WHERE id = $realm" 2>/dev/null | tr -d '[:space:]'
 }
 
+clear_realm_offline() {
+    local info db realm
+    info="$(config_value 'LoginDatabaseInfo' "$AUTH_CONF")"
+    db="$(db_field "$info" 5)"
+    realm="$(config_value 'RealmID' "$WORLD_CONF")"
+    [ -n "$realm" ] || realm=1
+    mysql_from_info "$info" "$db" "UPDATE realmlist SET flag = flag & ~2 WHERE id = $realm"
+}
+
+# The offline bit (2) and version-mismatch bit (1) must both be clear; the realm list query excludes
+# rows with flag 3.
 wait_for_realm() {
     local flag i
     for ((i = 0; i < 30; i++)); do
         flag="$(realm_flag)"
-        if [ -n "$flag" ] && [ $((flag & 1)) -eq 0 ]; then
+        if [ -n "$flag" ] && [ $((flag & 3)) -eq 0 ]; then
             return 0
         fi
         sleep 1
@@ -106,6 +128,7 @@ wait_for_realm() {
 stop_one() {
     local name="$1" file pid session i
     file="$(pid_file "$name")"
+    session="$(session_name "$name")"
     pid="$(pid_of "$name")"
     if [ -z "$pid" ] && [ -f "$file" ]; then
         pid="$(cat "$file")"
@@ -113,9 +136,17 @@ stop_one() {
     if [ -z "$pid" ] || ! kill -0 "$pid" 2>/dev/null; then
         printf '%s is not running\n' "$name"
         rm -f "$file"
+        if screen_running "$name"; then
+            printf 'screen session %s exists without a matching pid; inspect it\n' "$session" >&2
+            return 1
+        fi
         return 0
     fi
-    session="$(session_name "$name")"
+    if ! pid_matches "$name" "$pid"; then
+        printf 'pid %s does not match %s; refusing to signal it\n' "$pid" "$BIN_DIR/$name" >&2
+        rm -f "$file"
+        return 1
+    fi
     printf 'stopping %s (pid %s) ...\n' "$name" "$pid"
     kill -TERM "$pid" 2>/dev/null || true
     for ((i = 0; i < 30; i++)); do
@@ -125,7 +156,17 @@ stop_one() {
         sleep 1
     done
     if kill -0 "$pid" 2>/dev/null; then
-        printf '%s did not stop within 30s; inspect it before using kill -9\n' "$name" >&2
+        printf '%s ignored SIGTERM for 30s; sending SIGKILL\n' "$name" >&2
+        kill -KILL "$pid" 2>/dev/null || true
+        for ((i = 0; i < 5; i++)); do
+            if ! kill -0 "$pid" 2>/dev/null; then
+                break
+            fi
+            sleep 1
+        done
+    fi
+    if kill -0 "$pid" 2>/dev/null; then
+        printf '%s did not stop after SIGKILL; pid file and screen session kept\n' "$name" >&2
         return 1
     fi
     rm -f "$file"
@@ -149,10 +190,20 @@ case "${1:-status}" in
         # every realm has flag 3 (VERSION_MISMATCH | OFFLINE). Wait for worldserver to finish.
         start_one worldserver 8085
         if ! wait_for_realm; then
-            printf 'worldserver is listening but the realm flag is still offline; not starting authserver\n' >&2
+            printf 'worldserver is listening but the realm flag still has offline or mismatch bits; not starting authserver\n' >&2
             exit 1
         fi
         start_one authserver 3724
+        # authserver marks every realm offline on boot. The worldserver is already up, so clear the
+        # offline bit for this realm and confirm the realm list accepts it.
+        if ! clear_realm_offline; then
+            printf 'could not clear the realm offline flag after starting authserver\n' >&2
+            exit 1
+        fi
+        if ! wait_for_realm; then
+            printf 'realm flag is still offline after authserver start\n' >&2
+            exit 1
+        fi
         ;;
     stop)
         stop_one authserver || true

@@ -47,7 +47,8 @@ feature spec.
 
 - Built in phase 1: `.github/workflows/fork-ci.yml` runs on this fork.
 - On push/PR: docs check, SQL lint, C++ lint, build, unit tests.
-- E2E smoke on label or manual dispatch is not wired yet.
+- E2E smoke on label or manual dispatch is not wired into `fork-ci.yml`. Live e2e dispatches with
+  `.github/workflows/e2e-live.yml`; see `e2e/README.md`.
 - No upstream-repository guard.
 - Actions pinned by full SHA with version comments.
 

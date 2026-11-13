@@ -119,6 +119,14 @@ Put local values in `tools/dev/config.env` (ignored); the template is
 ## Verification
 
 - The test realm appears in the realm list.
+- After `start`, `realmlist.flag` for the test realm is `0`:
+
+  ```bash
+  mysql -u acore_test -p acore_test_auth -e "SELECT id, flag FROM realmlist;"
+  ```
+
+  `start` clears the offline bit that authserver sets on boot. A logged-in client can still see the
+  realm as offline until authserver refreshes its cached list (`RealmsStateUpdateDelay`, default 20s).
 - A test GM account logs in.
 - `Warden.Enabled=0` is confirmed.
 - The production databases have no new rows from the test run.

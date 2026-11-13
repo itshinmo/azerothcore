@@ -29,6 +29,19 @@ permission set.
 Group IDs are allocated from the misc range `950000–959999` in the auth database; they do not collide
 with world content IDs. `content-tester` has no `.npc delete`; temporary spawns disappear on restart.
 
+## GM API permissions
+
+GM API writes use the same command permission constants as the in-game commands:
+
+| Endpoint | Permission |
+|----------|------------|
+| `POST /api/v1/players/<name>/kick` | `RBAC_PERM_COMMAND_KICK` (510) |
+| `POST /api/v1/players/<name>/unstuck` | `RBAC_PERM_COMMAND_UNSTUCK` (534) |
+
+The API also requires the actor account to have security above `SEC_PLAYER` (a non-player
+`account_access.gmlevel`). In the preset roles, `support` can unstuck but not kick. Grant the command
+permission to the role, not a separate API permission; there is no second permission system.
+
 ## Presets
 
 Tracked SQL: `data/sql/custom/db_auth/gm_rbac_presets.sql`. The examples below use `acore_auth`;

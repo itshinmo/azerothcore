@@ -10,7 +10,7 @@ The contract is [specs/database.md](../../specs/database.md). Schema guide:
 
 ## Three databases
 
-- `acore_auth` — accounts, account access, realm list, bans, session keys, logs.
+- `acore_auth` — accounts, account access, realm list, bans, session keys, logs, GM audit log.
 - `acore_characters` — characters, inventory, quests, mail, guilds, arena teams, achievements.
 - `acore_world` — static content: creature/item/quest/gameobject templates, spawns, loot, SmartAI,
   conditions, instance templates.

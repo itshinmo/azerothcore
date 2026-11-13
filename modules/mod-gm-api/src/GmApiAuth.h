@@ -25,10 +25,13 @@ namespace GmApiAuth
     }
 
     inline std::string Canonical(std::string_view timestamp, std::string_view nonce,
-        std::string_view method, std::string_view target)
+        std::string_view method, std::string_view target, std::string_view actor = {})
     {
-        return std::string(timestamp) + "\n" + std::string(nonce) + "\n"
+        std::string canonical = std::string(timestamp) + "\n" + std::string(nonce) + "\n"
             + std::string(method) + "\n" + std::string(target);
+        if (!actor.empty())
+            canonical += "\n" + std::string(actor);
+        return canonical;
     }
 
     inline std::string Signature(std::string_view secret, std::string_view canonical)
@@ -46,6 +49,51 @@ namespace GmApiAuth
     inline bool ValidNonce(std::string_view nonce)
     {
         return nonce.size() >= 8 && nonce.size() <= 128;
+    }
+
+    /// Actor is a numeric game account id. It is signed as the last canonical line.
+    inline bool ValidActor(std::string_view actor)
+    {
+        if (actor.empty() || actor.size() > 10)
+            return false;
+
+        uint64 value = 0;
+        for (char c : actor)
+        {
+            if (!std::isdigit(static_cast<unsigned char>(c)))
+                return false;
+            value = value * 10 + static_cast<uint64>(c - '0');
+        }
+
+        return value > 0 && value <= 0xFFFFFFFFull;
+    }
+
+    /// Splits /api/v1/players/<name>/<kick|unstuck> into the action and target name.
+    inline bool ParsePlayerTarget(std::string_view target, std::string& action, std::string& player)
+    {
+        constexpr std::string_view prefix = "/api/v1/players/";
+        if (!target.starts_with(prefix))
+            return false;
+
+        std::string_view rest = target.substr(prefix.size());
+        std::size_t const slash = rest.rfind('/');
+        if (slash == std::string_view::npos || slash == 0)
+            return false;
+
+        std::string_view const name = rest.substr(0, slash);
+        std::string_view const verb = rest.substr(slash + 1);
+        if (verb != "kick" && verb != "unstuck")
+            return false;
+        if (name.size() > 24)
+            return false;
+
+        for (char c : name)
+            if (!std::isalnum(static_cast<unsigned char>(c)))
+                return false;
+
+        action = std::string(verb);
+        player = std::string(name);
+        return true;
     }
 
     inline uint32 ParseLimit(std::string_view target)

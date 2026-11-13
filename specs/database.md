@@ -18,7 +18,7 @@ Direct client access is in [runbook/database/dbeaver.md](../runbook/database/dbe
 
 ### Databases
 
-- `acore_auth` — accounts, `account_access`, `realmlist`, bans, session keys, logs.
+- `acore_auth` — accounts, `account_access`, `realmlist`, bans, session keys, logs, `gm_audit_log`.
 - `acore_characters` — characters, inventory, quests, mail, guilds, arena teams, achievements.
 - `acore_world` — static content: creature/item/quest/gameobject templates, spawns, loot, SmartAI,
   conditions, instance templates.

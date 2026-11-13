@@ -1,9 +1,9 @@
 # GM tools
 
-> Status: phase 4 complete for the current scope. RBAC role presets, the command audit module, the
-> command index, the read-only GM API, and the in-game addon are built. The long-term visual layer is
-> the future server website ([ADR-010](../decisions/ADR-010-website-as-visual-interface.md)); no
-> in-repo web UI.
+> Status: phase 4 complete for the current scope; phase 5 started for the GM API. RBAC role presets,
+> the command audit module, the command index, the GM API (read endpoints plus audited kick and
+> unstuck writes), and the in-game addon are built. The long-term visual layer is the future server
+> website ([ADR-010](../decisions/ADR-010-website-as-visual-interface.md)); no in-repo web UI.
 
 ## Purpose
 
@@ -54,11 +54,14 @@ Owns the GM workflow and tooling. Does not own the game commands themselves; the
 - `modules/mod-gm-audit` implements `AllCommandScript::OnTryExecuteCommand`.
 - Records actor account, player, command, redacted arguments, and timestamp in
   `acore_auth.gm_audit_log`.
-- The command hook records attempts before execution; `result` is `NULL` until the website or a future
-  post-execute hook writes an outcome.
+- The command hook records attempts before execution; `result` is `NULL` for command-hook rows.
 - Password-bearing command forms are redacted. A non-fatal audit write failure aborts the command;
   schema errors are fatal by core policy.
-- Website actions record the outcome directly.
+- GM API write endpoints insert a `pending` row before dispatch and an outcome row after:
+  `command` is `api.kick` or `api.unstuck`, and `result` is `success`, `denied`, `target_not_found`,
+  `player_busy`, `forbidden_target_security`, `cannot_target_self`, `teleport_failed`,
+  `world_unavailable`, or `world_timeout`. A failed pending insert aborts the action; a failed
+  outcome insert returns `500` and logs the error after the action ran.
 - High/critical actions additionally record before/after state where practical.
 - Logs go to a dedicated table or structured file, never to a public channel.
 - Procedure and queries: [runbook/gm/audit.md](../runbook/gm/audit.md).
@@ -67,16 +70,18 @@ Owns the GM workflow and tooling. Does not own the game commands themselves; the
 
 - Long-term visual layer: the server website. No in-repo web UI exists now; see
   [ADR-010](../decisions/ADR-010-website-as-visual-interface.md).
-- Backend: `modules/mod-gm-api/` inside `worldserver`. Read-only API built.
+- Backend: `modules/mod-gm-api/` inside `worldserver`. Read endpoints and audited kick/unstuck writes
+  built; more writes planned.
 - Browser architecture: browser -> admin website BFF -> GM API. Only the admin BFF holds the API
   secret; the public BFF and browser never see it. The website uses its own web identity, not the game SRP6 session.
 - Transport: HTTP on localhost or a private VPN interface; HMAC-signed requests with a nonce and
   timestamp; replay window; per-address rate limit.
-- Implemented read-only endpoints: server status, audit rows. Planned: account, character, online
-  players, instance info.
-- Safe writes: item grant, mail, unstuck, kick. Not built.
+- Implemented read-only endpoints: server status, audit rows. Implemented writes: kick, unstuck,
+  gated by `GmApi.AllowWrites`, a signed `X-GM-Actor` game account id, RBAC, and audit. Planned read
+  endpoints: account, character, online players, instance info. Planned writes: item grant, mail.
 - Admin writes: ban, RBAC, server control. Human approval required. Not built.
-- Every endpoint validates input and calls game logic; no direct SQL writes.
+- Every endpoint validates input and calls game logic; no endpoint writes game tables directly. The
+  module writes its own audit rows.
 - Procedure: [runbook/gm/gm-api.md](../runbook/gm/gm-api.md).
 
 ### In-game addon
@@ -111,9 +116,12 @@ Owns the GM workflow and tooling. Does not own the game commands themselves; the
 
 ## Test plan
 
-- Unit: HMAC canonicalization/signature, timestamp window, nonce length, limit parsing.
-- Manual API: skew, nonce replay, rate limit, input validation.
-- Integration: test realm with each role; read endpoint, safe write, denied write, audit.
+- Unit: HMAC canonicalization/signature (with and without actor), actor validation, player target
+  parsing, timestamp window, nonce length, limit parsing.
+- Manual API: skew, nonce replay, rate limit, input validation, actor missing/unknown, RBAC denial,
+  target offline, self-target, busy target.
+- Integration: test realm with each role; read endpoint, kick/unstuck write, denied write, audit row
+  with the outcome.
 - Manual: in-game addon install, command execution, audit review.
 - Negative: expired signature, replayed nonce, wrong role, offline target, audit failure.
 
