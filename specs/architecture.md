@@ -60,6 +60,25 @@ browser -> website BFF -> mod-gm-api -> worldserver
 - Public, account, and GM dashboard zones stay separate.
 - See [ADR-010](../decisions/ADR-010-website-as-visual-interface.md).
 
+## World data (public)
+
+The public catalog and the content audit are one pipeline with two consumers
+([ADR-011](../decisions/ADR-011-world-data-and-content-verification.md)):
+
+```text
+acore_world (read-only)
+        -> extractor (project tool)
+        -> static JSON artifacts -> public BFF -> browser
+        -> audit report   -> release gate
+```
+
+- The website never queries MySQL. It reads exported artifacts with freshness metadata.
+- The same extractor output feeds the audit; a page and a finding cannot disagree about what
+  exists.
+- "Spawned in the database" and "alive now" are separate facts. Live state is read through
+  `mod-gm-api` behind the BFF, never directly by the browser.
+- Contract: [specs/world-data.md](world-data.md).
+
 ## Core modules
 
 | Area | Path |

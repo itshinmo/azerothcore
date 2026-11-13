@@ -91,15 +91,18 @@ human approves it and then the reviewer agent approves it. See
 
 ## Branches and worktrees
 
-`master` tracks upstream AzerothCore. One task gets one branch and one worktree beside the clone:
+`master` mirrors upstream AzerothCore and fast-forwards only. `local-server-setup` is the integration
+branch where project work lands. One task gets one branch and one worktree beside the clone:
 
 ```bash
-git worktree add -b feat/<slug> ../azerothcore-worktrees/feat-<slug> master
+git worktree add -b feat/<slug> ../azerothcore-worktrees/feat-<slug> local-server-setup
 cd ../azerothcore-worktrees/feat-<slug>
 ```
 
-The main checkout stays on `master`. Never edit, reset, or clean another worktree. A worktree and its
-branch are removed only when a human asks, after the work is merged or abandoned.
+The main checkout may hold `local-server-setup`; never commit project work on `master`. Never edit,
+reset, or clean another worktree. A worktree and its branch are removed only when a human asks, after
+the work is merged or abandoned. Procedure:
+[runbook/development/worktrees-and-branches.md](runbook/development/worktrees-and-branches.md).
 
 ## Roles
 

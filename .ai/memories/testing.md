@@ -17,6 +17,9 @@ The contract is [specs/testing-and-release.md](../../specs/testing-and-release.m
   MySQL stack. Use only when the user asked or an existing test broke.
 - **SQL/data checks** — apply to a test database, verify row counts and sample rows. No e2e for
   static data.
+- **Static content** — the content audit against `acore_world`: dangling references, quest chain
+  integrity, SmartAI validity, and script registry cross-checks. Read-only, no server. Contract:
+  [specs/content-pipeline.md](../../specs/content-pipeline.md#verification).
 - **Manual in-game** — GM commands and a real client. Required for player-visible behavior the
   automated suites cannot express.
 
@@ -27,6 +30,8 @@ The contract is [specs/testing-and-release.md](../../specs/testing-and-release.m
 - `cppcheck --force --inline-suppr --suppressions-list=./.suppress.cppcheck src/`
 - Build with `-Werror`.
 - `make verify-docs` for markdown links, structure, and the generated command index.
+- Content audit (planned): checks C-01 to C-12, run before a release and after any incoming data
+  merge. It gates T1 for content data, not the default local loop.
 
 ## Test realm
 
@@ -40,7 +45,7 @@ The contract is [specs/testing-and-release.md](../../specs/testing-and-release.m
 | Tier | Applies to | Must pass |
 |------|------------|-----------|
 | T0 | docs | link check, command index check, reviewer |
-| T1 | SQL/tooling | SQL lint; auto test-realm apply when configured and SQL files are pending; row checks, backup; `VERIFY_SQL_APPLY=0` disables |
+| T1 | SQL/tooling | SQL lint; content audit clean or waived once the tool exists; auto apply when configured; row checks, backup; `VERIFY_SQL_APPLY=0` disables |
 | T2 | C++/scripts | codestyle, cppcheck, `-Werror` build, unit tests |
 | T3 | player-visible | T2 + startup smoke + manual checklist + clean errors; live e2e when asked |
 | T4 | production | T3 + backup + staging + rollback plan + human approval |

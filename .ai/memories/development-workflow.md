@@ -27,12 +27,14 @@ is local configuration and ignored.
 ## Worktrees
 
 - One task, one branch, one worktree beside the clone.
+- Branch from `local-server-setup`, the integration branch. `master` mirrors upstream and
+  fast-forwards only; never commit project work on it.
 - Look first: `git worktree list`. If a worktree already holds the task's branch, continue there.
 - Never edit, reset, or clean another worktree.
 - Remove a worktree or branch only when a human asks, after merge or abandonment.
 
 ```bash
-git worktree add -b feat/<slug> ../azerothcore-worktrees/feat-<slug> master
+git worktree add -b feat/<slug> ../azerothcore-worktrees/feat-<slug> local-server-setup
 ```
 
 ## Gates

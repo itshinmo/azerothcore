@@ -12,7 +12,7 @@ Produce a copy-pasteable PR title and body for the current changes, using
 
 "The changes" is the union of:
 
-- committed branch work: `git diff <master-ref>...HEAD`, where `<master-ref>` is `origin/master`;
+- committed branch work: `git diff <base-ref>...HEAD`, where `<base-ref>` is `local-server-setup`;
 - staged and unstaged changes;
 - the branch's commit messages (context only).
 

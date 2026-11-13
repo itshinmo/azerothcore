@@ -7,7 +7,7 @@ description: Use when reviewing a local diff, a commit, or a pull request. Findi
 
 ## Prerequisites
 
-- The diff: `git diff`, `git diff master...HEAD`, or a PR.
+- The diff: `git diff`, `git diff local-server-setup...HEAD`, or a PR.
 - The spec, ADR, runbook, and issue the change claims to implement.
 - The matching verification evidence.
 

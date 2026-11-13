@@ -392,11 +392,13 @@ cppcheck --force --inline-suppr --suppressions-list=.suppress.cppcheck src/ --ou
 
 ```bash
 git worktree list
-git worktree add -b feat/<slug> ../azerothcore-worktrees/feat-<slug> master
+git worktree add -b feat/<slug> ../azerothcore-worktrees/feat-<slug> local-server-setup
 ```
 
-One task, one branch, one worktree. The main checkout stays on `master`. Never edit another worktree.
-Never commit, push, or deploy without human and reviewer approval.
+One task, one branch, one worktree. Branch from `local-server-setup`. `master` mirrors upstream and
+fast-forwards only; never commit project work on it. Never edit another worktree. Never commit, push,
+or deploy without human and reviewer approval. Topology and upstream sync:
+[worktrees-and-branches.md](worktrees-and-branches.md).
 
 ## CI
 

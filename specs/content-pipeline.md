@@ -86,6 +86,55 @@ recorded there before use.
 - After a client patch, run the extractors for `maps/`, `vmaps/`, `mmaps/`, and update `DataDir`.
 - Reuse existing assets until the client-patch pipeline is documented and approved.
 
+### Verification
+
+Static content checks run against the database, not against a running world. They are read-only,
+deterministic, and fast enough to run before every release. The extractor and the public catalog
+share one query layer; see [world-data.md](world-data.md).
+
+**Check catalog v1**
+
+| ID | Check | Severity |
+|----|-------|----------|
+| C-01 | Quest starter or ender references a missing creature or gameobject | blocker |
+| C-02 | Quest objective has no spawn on the required map | blocker |
+| C-03 | Quest chain broken: prerequisite cycle, unreachable quest, or min-level mismatch | blocker |
+| C-04 | Quest required item missing, or no source exists for it | blocker |
+| C-05 | SmartAI row with an invalid event, action, or target type, or out-of-range parameters | major |
+| C-06 | SmartAI `link` chain broken, or a phase no event can reach | major |
+| C-07 | `AIName='SmartAI'` with zero rows, or rows present without `AIName` | major |
+| C-08 | Database `ScriptName` not registered in `src/server/scripts` | blocker |
+| C-09 | Instance without a registered `InstanceScript`, or a boss without an encounter row | blocker |
+| C-10 | Spawn with unknown map, coordinates outside map bounds, duplicate guid, or spawnmask mismatch | major |
+| C-11 | Vendor or trainer flag without stock or spells, or stock and spells pointing at missing entries | major |
+| C-12 | Loot, conditions, or other cross-references pointing at missing rows | major |
+
+Severity meaning:
+
+- **blocker** — content cannot be reached or completed, or a scripted encounter cannot run.
+- **major** — content is playable but visibly wrong.
+- **minor** — data hygiene only.
+
+**Report**
+
+- Markdown for humans, JSON for the tool and CI.
+- Each finding carries: check id, severity, entity kind, entity id, location, and one line of cause.
+- The report is ordered by severity, then entity id, so two runs diff cleanly.
+- A clean run prints zero findings and exits zero. Any unwaived blocker exits non-zero.
+
+**Waivers**
+
+- Tracked file `tools/dev/content-audit-waivers.json`.
+- Each waiver carries the check id, entity id, reason, and the person who accepted it.
+- A waiver for a removed entity is itself reported, so the file cannot rot silently.
+
+**Coverage metric**
+
+- Coverage is the share of quests in a level band that have a spawned starter and resolvable
+  objectives, divided by the quests defined for that band.
+- Reported per band (1-20, 21-40, 41-60, 61-70, 71-80) and overall.
+- The number is published. It is the QA scoreboard, not an internal vanity metric.
+
 ## Errors and edge cases
 
 - A `SpellScript` without `spell_script_names` is inert.

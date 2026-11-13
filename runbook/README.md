@@ -19,7 +19,7 @@ I do it"; behavior lives in `specs/`.
 - [build-and-install.md](development/build-and-install.md) — CMake options, build, install, tools.
 - [database-bootstrap.md](development/database-bootstrap.md) — create and populate the three databases.
 - [config-changes.md](development/config-changes.md) — server and tool configuration.
-- [worktrees-and-branches.md](development/worktrees-and-branches.md) — one task, one worktree.
+- [worktrees-and-branches.md](development/worktrees-and-branches.md) — branch topology, one task per worktree, upstream sync.
 - [commands.md](development/commands.md) — every build, test, server, database, and verification command.
 
 ### Operation

@@ -21,14 +21,14 @@ description: Use before starting any task in this repository. One task, one bran
    ```
 
 2. If a worktree already holds the task's branch, continue there. Do not create a second one.
-3. Otherwise create a branch and worktree beside the clone:
+3. Otherwise create a branch and worktree beside the clone, based on the integration branch:
 
    ```bash
-   git worktree add -b <type>/<slug> ../azerothcore-worktrees/<type>-<slug> master
+   git worktree add -b <type>/<slug> ../azerothcore-worktrees/<type>-<slug> local-server-setup
    cd ../azerothcore-worktrees/<type>-<slug>
    ```
 
-4. Work only in that directory. Keep the main checkout on `master`.
+4. Work only in that directory. Do not edit the main checkout or another worktree.
 5. Record the worktree path in the hand-off.
 
 ## Constraints
@@ -43,7 +43,7 @@ description: Use before starting any task in this repository. One task, one bran
 
 ```bash
 git worktree list
-git worktree add -b <type>/<slug> ../azerothcore-worktrees/<type>-<slug> master
+git worktree add -b <type>/<slug> ../azerothcore-worktrees/<type>-<slug> local-server-setup
 git worktree remove <path>
 git branch -d <branch>
 ```

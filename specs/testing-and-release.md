@@ -23,6 +23,7 @@ feature spec.
 | Integration | `src/test/` | multiple components, no client login |
 | Live e2e | `e2e/` | protocol/client-observed behavior on a running stack |
 | SQL/data | test database | row counts, constraints, sample rows |
+| Static content | `acore_world` via the content audit | dangling references, quest chains, SmartAI, script registry |
 | Manual | test realm | player-visible behavior the harness cannot express |
 
 ### Tiers
@@ -30,7 +31,7 @@ feature spec.
 | Tier | Applies to | Must pass |
 |------|------------|-----------|
 | T0 docs | Markdown, ADRs, runbooks | link check, command index check, reviewer |
-| T1 SQL/tooling | SQL, RBAC, schema | SQL lint; auto test-realm apply when configured and SQL files are pending; row checks, backup; `VERIFY_SQL_APPLY=0` disables |
+| T1 SQL/tooling | SQL, RBAC, schema, content data | SQL lint; content audit clean or waived once the audit tool exists; auto test-realm apply when configured and SQL files are pending; row checks, backup; `VERIFY_SQL_APPLY=0` disables |
 | T2 C++/scripts | core, modules, scripts | codestyle, cppcheck, `-Werror` build, unit tests |
 | T3 player-visible | GM tools, DB writes, behavior | T2 + startup smoke + manual checklist + clean errors; live e2e when the change needs it and the user asked |
 | T4 production | deploy, config, DB | T3 + backup + staging + rollback plan + human approval |
@@ -56,6 +57,8 @@ feature spec.
 
 - Local build and install.
 - Test realm verification.
+- Content audit report attached, with zero unwaived blockers, once the audit tool exists; the
+  coverage number is recorded when available.
 - Production: Ubuntu 24.04, native binaries, systemd, MySQL on the same host.
 - Backup before deploy; rollback plan; health check after.
 - Production writes are human-only.

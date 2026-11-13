@@ -24,5 +24,7 @@ decision supersedes one and both link each other.
 | [ADR-008](ADR-008-database-access-with-dbeaver.md) | accepted | DBeaver for local/test; read-only production via SSH tunnel |
 | [ADR-009](ADR-009-rbac-command-permission-precedence.md) | accepted | core RBAC permissions override legacy `command.security` |
 | [ADR-010](ADR-010-website-as-visual-interface.md) | accepted | future server website is the long-term visual layer; API-first, separate web auth |
+| [ADR-011](ADR-011-world-data-and-content-verification.md) | accepted | one read-only extractor feeds the public catalog and the content audit; playerbots rejected |
+| [ADR-012](ADR-012-progression-rates.md) | accepted | default 3x experience, everything else 1x, per-account override intended |
 
 Open questions: [OPEN-QUESTIONS.md](OPEN-QUESTIONS.md).

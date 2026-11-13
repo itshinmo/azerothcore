@@ -1,6 +1,6 @@
 ---
 description: Current project status, last verified commit, known issues, open decisions, and next tasks. Read after overview on any task.
-last-verified: 2026-11-13 (feat/post-phase4-hardening; cpp, docs, smoke, client GM, and test-realm start checks passed)
+last-verified: 2026-11-14 (docs/world-data-and-verification; docs check passed, 135 files, 657 commands)
 ---
 
 # Status
@@ -12,8 +12,38 @@ last-verified: 2026-11-13 (feat/post-phase4-hardening; cpp, docs, smoke, client 
 - Phase 5 started: the GM API has audited `kick` and `unstuck` writes behind
   `GmApi.AllowWrites`, a signed `X-GM-Actor`, RBAC, and `gm_audit_log`.
 - The long-term visual layer is the future server website. No in-repo web UI exists.
-- Branch: `feat/post-phase4-hardening`. Confirm with `git status`.
+- Branch: `local-server-setup` is the integration branch; this docs task runs on
+  `docs/world-data-and-verification`. Confirm with `git status`.
 - Website work has not started. Shop and new content remain out of scope.
+
+## Decisions recorded 2026-11-14
+
+- [ADR-011](../../decisions/ADR-011-world-data-and-content-verification.md): one read-only
+  extractor feeds both the public world catalog and the content audit; the audit is a release gate.
+  Playerbots were considered and rejected; the rejection and its revisit condition are recorded in
+  the ADR.
+- [ADR-012](../../decisions/ADR-012-progression-rates.md): default 3x experience, everything else
+  1x, per-account override intended but not implemented.
+- Branch topology: `master` mirrors upstream and fast-forwards only; `local-server-setup` is the
+  integration branch; task branches are created from it. Procedure updated in
+  [runbook/development/worktrees-and-branches.md](../../runbook/development/worktrees-and-branches.md).
+- Rates applied to `src/server/apps/worldserver/worldserver.conf.dist`. Existing local, test, and
+  production configuration files keep their previous values until regenerated or edited.
+
+## Next tasks
+
+1. Upstream sync dry run: add the `upstream` remote, fast-forward `master`, merge into
+   `local-server-setup`, confirm the conflict surface against
+   [runbook/development/worktrees-and-branches.md](../../runbook/development/worktrees-and-branches.md).
+2. Content audit tool v1: checks C-01 to C-12 from `specs/content-pipeline.md`, read-only, wired to
+   `make content-audit`.
+3. Baseline audit run, waiver file, and triage by severity.
+4. World data export artifacts per `specs/world-data.md`.
+5. Public read API and static spawn map page. The live spawn overlay is deferred until a secretless
+   public read surface is designed.
+6. Coverage metric wired into CI.
+
+No playerbots work is planned.
 
 ## Built and verified
 
@@ -56,6 +86,9 @@ last-verified: 2026-11-13 (feat/post-phase4-hardening; cpp, docs, smoke, client 
 ## Open decisions
 
 - Production provider, region, and budget.
+- Per-account experience override mechanism (module command versus GM-only).
+- Map imagery source for the public spawn pages.
+- Shop product list revision before shop work starts.
 - Website web-auth model: passkeys, OAuth, or Argon2id password hash.
 - Shop delivery trust model.
 - Client patch pipeline and timing for genuinely new zones/assets.
