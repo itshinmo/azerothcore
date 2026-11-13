@@ -73,8 +73,8 @@ Owns access control and secret handling. Does not own game balance or individual
   re-authentication.
 - Public pages, account/identity pages, and the GM dashboard are separate security zones. The GM
   dashboard is behind VPN/SSO or a separate admin origin.
-- The read-only API uses one shared HMAC secret and has no caller identity. Write endpoints must add
-  signed actor identity, RBAC, and audit; website login alone grants no GM rights.
+- The read API uses one shared HMAC secret. Write endpoints add a signed `X-GM-Actor` game account
+  id, an RBAC permission check, and an audit row; website login alone grants no GM rights.
 - The website and BFF never write directly to the database.
 
 ### Secrets

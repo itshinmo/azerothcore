@@ -57,9 +57,14 @@ is security-sensitive and the client cannot reliably read the server state.
 5. Enter combat and click **GM mode**; the label must stay unchanged.
 6. Click **Visible to players**, then **Hidden from players**; run `.gm visible` to confirm each state.
 7. Look up an item; it works for `support` and above.
-8. Try a command the role does not have, such as `.additem` from `support`; the server denies it.
-9. Confirm attempts in `acore_test_auth.gm_audit_log` on the test realm (or `acore_auth` locally),
-   or via the GM API.
+8. Type into each lookup and teleport field; the full input box and text must be visible.
+9. Try a command the role does not have, such as `.additem` from `support`; the server denies it.
+10. Confirm attempts in `acore_test_auth.gm_audit_log` on the test realm (or `acore_auth` locally),
+    or via the GM API.
+
+Checked on the local realm on 2026-11-13: menu, GM mode toggle, visibility buttons, lookups,
+teleport, and input rendering. Test realm client login remains unverified; use the local realm for
+client checks.
 
 ## Security
 

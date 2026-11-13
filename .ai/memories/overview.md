@@ -1,6 +1,6 @@
 ---
 description: What this repository is, its current state, the scope of work, and where to start. Read first on any task.
-last-verified: 2026-11-12 (foundation phase start; local build and databases verified 2026-11-11)
+last-verified: 2026-11-13 (phase 4 complete; phase 5 GM writes started; local build, databases, and test realm verified 2026-11-12)
 ---
 
 # Overview
@@ -28,11 +28,13 @@ stable. The content policy and ID ranges are documented so future work does not 
 
 - Build: `build/`, Release, Apple clang, `SCRIPTS=static`, `MODULES=static`, PCH on.
 - Install prefix: `env/dist/` with `bin/authserver`, `bin/worldserver`, `etc/`, `logs/`.
-- MySQL 8.4 is used. Databases `acore_auth`, `acore_characters`, and `acore_world` are imported.
+- MySQL 8.4 is used. Databases `acore_auth`, `acore_characters`, and `acore_world` are imported;
+  isolated test databases are `acore_test_auth`, `acore_test_characters`, `acore_test_world`.
 - Client data: `DataDir` points to a local `Data/` tree with `dbc/`, `maps/`, `vmaps/`, `mmaps/`.
-- Ports: authserver 3724, worldserver 8085.
-- Test realm: planned; production: not deployed. Warden is on in the local config and must be off on
-  the dedicated e2e test realm.
+- Ports: local authserver 3724, worldserver 8085; test realm authserver 3824, worldserver 8185.
+- Test realm: built and usable with `make test-realm CMD=setup|start|stop|status|reset`; see
+  [runbook/operation/test-realm.md](../../runbook/operation/test-realm.md). Production: not deployed.
+  Warden is on in the local config and must be off on the dedicated e2e test realm.
 
 ## Where things are
 

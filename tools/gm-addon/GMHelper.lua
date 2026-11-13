@@ -102,12 +102,28 @@ local function Input(label, prefix, y)
     caption:SetPoint("TOPLEFT", frame, "TOPLEFT", 18, -y)
     caption:SetText(label)
 
-    local box = CreateFrame("EditBox", nil, frame, "InputBoxTemplate")
+    -- Plain EditBox with an explicit backdrop; InputBoxTemplate's middle texture does not render
+    -- reliably here, which left only the left and right end caps visible.
+    local box = CreateFrame("EditBox", nil, frame)
     box:SetWidth(190)
-    box:SetMaxLetters(200)
-    box:SetHeight(20)
-    box:SetPoint("TOPLEFT", frame, "TOPLEFT", 130, -y + 6)
+    box:SetHeight(22)
+    box:SetPoint("TOPLEFT", frame, "TOPLEFT", 130, -y + 5)
     box:SetAutoFocus(false)
+    box:SetMaxLetters(200)
+    box:SetFontObject(ChatFontNormal)
+    box:SetTextColor(1, 1, 1)
+    box:SetJustifyH("LEFT")
+    box:SetTextInsets(6, 6, 0, 0)
+    box:SetBackdrop({
+        bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
+        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+        tile = true,
+        tileSize = 8,
+        edgeSize = 8,
+        insets = { left = 1, right = 1, top = 1, bottom = 1 },
+    })
+    box:SetBackdropColor(0, 0, 0, 0.8)
+    box:SetBackdropBorderColor(0.55, 0.45, 0.25, 1)
     box:SetScript("OnEscapePressed", function(self) self:ClearFocus() end)
     box:SetScript("OnEnterPressed", function(self)
         local text = self:GetText()

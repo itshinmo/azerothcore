@@ -47,7 +47,7 @@ I do it"; behavior lives in `specs/`.
 - [command-index.md](gm/command-index.md) — generated command and RBAC permission index.
 - [rbac-roles.md](gm/rbac-roles.md) — least-privilege roles.
 - [audit.md](gm/audit.md) — GM command audit table, queries, redaction, failure behavior.
-- [gm-api.md](gm/gm-api.md) — read-only GM API, HMAC auth, endpoints.
+- [gm-api.md](gm/gm-api.md) — GM API, HMAC auth, actor identity, RBAC, audit, endpoints.
 - [addon.md](gm/addon.md) — in-game GM command menu.
 - [item-grant-refund.md](gm/item-grant-refund.md) — grants, mail, refunds.
 - [ban-appeal.md](gm/ban-appeal.md) — ban and appeal procedure.

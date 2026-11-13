@@ -15,7 +15,8 @@ The current work is infrastructure and polish, not new game content:
 - agent and human knowledge layer under `.ai/`, `specs/`, `decisions/`, and `runbook/`
 - local development, test realm, backup, and verification tooling
 - a documented database access workflow using DBeaver
-- GM workflow: command handbook, least-privilege roles, audit, read-only GM API, in-game addon
+- GM workflow: command handbook, least-privilege roles, audit, GM API with read and audited write
+  endpoints, in-game addon
 - future server website as the long-term visual layer; no in-repo web UI for now
 - current status, known issues, and next tasks: [.ai/memories/status.md](.ai/memories/status.md)
 

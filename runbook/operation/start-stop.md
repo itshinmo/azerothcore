@@ -36,6 +36,16 @@ Starting the local or test stack, restarting after a config change, or shutting 
    start while every realm has flag 3 (`VERSION_MISMATCH | OFFLINE`). `make start` runs both in the
    background inside detached `screen` sessions.
 
+   authserver marks every realm offline on boot, after the worldserver has already cleared that bit.
+   `make start` and `make test-realm CMD=start` clear the offline bit for this realm after authserver
+   starts and check the database row. authserver caches the realm list and refreshes it every
+   `RealmsStateUpdateDelay` seconds (default 20), so a client can still see the realm as offline for
+   up to that long. For a manual start, run:
+
+   ```sql
+   UPDATE acore_auth.realmlist SET flag = flag & ~2 WHERE id = <realm id>;
+   ```
+
    `screen` is required: the servers read console input from stdin, and with `/dev/null` they spin on
    EOF and write `AC> ` forever. Attach to the worldserver console with `make console`; detach with
    `Ctrl-A d`.
@@ -53,6 +63,10 @@ Then confirm ports are free:
 lsof -nP -iTCP:3724 -sTCP:LISTEN
 lsof -nP -iTCP:8085 -sTCP:LISTEN
 ```
+
+`make stop` sends SIGTERM and waits 30 seconds per server. If a process ignores SIGTERM, it sends
+SIGKILL, which skips the normal shutdown path: online character state may not be saved and the
+session-end row is not written. Use SIGKILL only as a last resort and check the logs afterwards.
 
 ## Restart
 

@@ -12,10 +12,13 @@ Reviewing privileged actions, investigating a player report, or checking that a 
 - player name and GUID
 - command and arguments
 - timestamp
-- `result`: `NULL` for command-hook rows; reserved for website outcomes
+- `result`: `NULL` for command-hook rows; GM API writes use `pending` for the pre-dispatch row and
+  then `success`, `denied`, `target_not_found`, `player_busy`, `forbidden_target_security`,
+  `cannot_target_self`, `teleport_failed`, `world_unavailable`, or `world_timeout` for the outcome
 
 Console commands, accounts with security above player, and accounts with any direct RBAC grant
-beyond the default permission set are audited.
+beyond the default permission set are audited. GM API writes record the actor from the signed
+`X-GM-Actor` header, not the console.
 
 Password-bearing commands are redacted: `account create`, `account password`,
 `account set password`, `account set 2fa`, `account set email`, and `account 2fa`. Stored arguments
@@ -72,10 +75,16 @@ or parse error is a schema error: the core treats it as fatal and shuts the serv
 
 The server log gets a `module.gm-audit` error when the insert fails.
 
+GM API audit inserts use local escaping and assume the default `sql_mode` (`NO_BACKSLASH_ESCAPES`
+is not set). The core does not set it. Do not enable that mode on the auth database.
+
 ## Limits
 
-- The hook runs before command execution. It records the attempt, not whether the handler succeeded.
-- `result` stays `NULL` until the website or a future post-execute hook writes it.
+- The command hook runs before command execution. It records the attempt, not whether the handler
+  succeeded.
+- GM API writes insert a `pending` row before the action, then an outcome row. If the pending insert
+  fails, the action does not run. If the outcome insert fails, the API returns `500` and logs it; the
+  action has already run and the `pending` row remains.
 - The table contains account names, player names, and command arguments. Treat it as sensitive; do
   not paste rows into chat, issues, or commits without redaction.
 - Redaction covers known password-bearing commands. Do not add new secret-bearing command forms

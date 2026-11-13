@@ -4981,7 +4981,7 @@ Cluster.IsCrossrealm=0
 
 #
 #    GmApi.Enable
-#        Description: Starts the read-only GM API inside worldserver.
+#        Description: Starts the GM API inside worldserver.
 #        Default:     0 - (Disabled)
 
 GmApi.Enable = 0
@@ -5021,6 +5021,14 @@ GmApi.NonceTtl = 120
 #        Description: Requests per minute per source address. The future website BFF shares one bucket.
 
 GmApi.RateLimit = 120
+
+#
+#    GmApi.AllowWrites
+#        Description: Enables POST write endpoints. Each request must carry a signed X-GM-Actor
+#                     game account id; RBAC and the audit log are enforced on every action.
+#        Default:     0 - (Disabled)
+
+GmApi.AllowWrites = 0
 
 ###################################################################################################
 #                                                                                                 #

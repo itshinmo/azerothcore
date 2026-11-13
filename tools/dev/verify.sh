@@ -81,9 +81,10 @@ run_sql() {
         return 1
     fi
 
-    local stamp backup_dir
+    local old_umask stamp backup_dir
     stamp="$(date +%Y%m%d-%H%M%S)"
     backup_dir="$BACKUP_DIR/verify/$stamp"
+    old_umask="$(umask)"
     umask 077
     mkdir -p "$backup_dir"
     chmod 700 "$backup_dir"
@@ -93,6 +94,7 @@ run_sql() {
         -u "$(db_field "$test_world" 3)" --single-transaction --routines --triggers \
         --no-tablespaces --databases "$(db_field "$test_auth" 5)" "$(db_field "$test_char" 5)" "$(db_field "$test_world" 5)" \
         >"$backup_dir/test.sql"
+    umask "$old_umask"
 
     printf 'applying SQL updates to the test realm with worldserver -d ...\n'
     "$BIN_DIR/worldserver" -d -c "$TEST_WORLD_CONF" >"$RUN_DIR/worldserver-test-apply.log" 2>&1
@@ -133,6 +135,18 @@ run_cpp() {
     cmake --install "$VERIFY_BUILD"
 }
 
+stop_stack() {
+    "$ROOT/tools/dev/server.sh" stop >/dev/null 2>&1 || true
+    local i
+    for ((i = 0; i < 5; i++)); do
+        if ! port_listening 3724 && ! port_listening 8085; then
+            return 0
+        fi
+        sleep 1
+    done
+    return 1
+}
+
 run_smoke() {
     printf '\n== smoke ==\n'
     local started=0 status
@@ -145,7 +159,7 @@ run_smoke() {
         printf 'partial server stack; run `make stop` then `make start` before smoke\n' >&2
         return 1
     else
-        trap '"$ROOT/tools/dev/server.sh" stop >/dev/null 2>&1 || true' EXIT
+        trap 'stop_stack || true' EXIT
         "$ROOT/tools/dev/server.sh" start
         started=1
     fi
@@ -155,7 +169,10 @@ run_smoke() {
     fi
     "$ROOT/tools/dev/doctor.sh" --expect-running
     if [ "$started" -eq 1 ]; then
-        "$ROOT/tools/dev/server.sh" stop
+        if ! stop_stack; then
+            printf 'smoke cleanup failed: ports 3724 and 8085 must be free after stop\n' >&2
+            return 1
+        fi
         trap - EXIT
     fi
 }
