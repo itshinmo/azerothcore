@@ -46,7 +46,7 @@ approved, and tested on a copy of the client.
 Proposed API order: account lookup, character summary, online players, instance info, audit search.
 Website pages follow the API. Writes follow after the read path is proven.
 
-**Blocks:** phase 4 implementation detail.
+**Blocks:** website implementation detail.
 **Owner:** implementer + db-admin, confirmed by human.
 **Record:** ADR-010 update.
 

@@ -17,6 +17,7 @@ The current work is infrastructure and polish, not new game content:
 - a documented database access workflow using DBeaver
 - GM workflow: command handbook, least-privilege roles, audit, read-only GM API, in-game addon
 - future server website as the long-term visual layer; no in-repo web UI for now
+- current status, known issues, and next tasks: [.ai/memories/status.md](.ai/memories/status.md)
 
 New zones, quests, dungeons, and shop features are out of scope until the foundation is stable. The
 content policy and ID ranges are documented so future work does not collide with upstream IDs.

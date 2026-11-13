@@ -103,7 +103,8 @@ substitute `acore_test_auth` on the test realm.
 
 The five roles were live-tested on the test realm on 2026-11-12. Support, content-tester, economy,
 and admin allowed and denied the expected commands. Superadmin was spot-checked with safe commands.
-The audit module is still pending, so no audit entries were produced.
+The command audit module is built; role tests should also confirm the audit rows. Automated role
+account setup and a repeatable permission matrix test are still open.
 
 ## References
 

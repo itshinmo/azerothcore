@@ -44,6 +44,7 @@ Load only what the task needs.
 ### Memories
 
 - [`overview.md`](memories/overview.md) — what this repo is, current state, scope. Read first.
+- [`status.md`](memories/status.md) — current phase, known issues, open decisions, next tasks.
 - [`architecture.md`](memories/architecture.md) — runtime, core modules, content pipeline. Before
   changing structure.
 - [`conventions.md`](memories/conventions.md) — C++, SQL, Node, IDs, secrets, logging. Before writing

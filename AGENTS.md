@@ -70,7 +70,7 @@ text and never submits an approval.
 
 Read the matching doc(s) BEFORE starting the task:
 
-- Any task → this file, then `.ai/memories/overview.md`.
+- Any task → this file, then `.ai/memories/overview.md` and `.ai/memories/status.md`.
 - Compiling, configuring, or running the server → `.agents/docs/build.md` and
   `runbook/development/build-and-install.md`.
 - Writing or modifying C++ → `.agents/docs/cpp-guidelines.md`.
