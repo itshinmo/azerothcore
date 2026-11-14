@@ -1,6 +1,6 @@
 ---
 description: Current project status, last verified commit, known issues, open decisions, and next tasks. Read after overview on any task.
-last-verified: 2026-11-14 (docs/world-data-and-verification; docs check passed, 135 files, 657 commands)
+last-verified: 2026-11-14 (docs check 135 files / 657 commands; upstream sync build green)
 ---
 
 # Status
@@ -47,6 +47,11 @@ No playerbots work is planned.
 
 ## Built and verified
 
+- Upstream sync 2026-11-14: `upstream` remote added (official AzerothCore); `master`
+  fast-forwarded to `upstream/master` `2948c203f`; merged into `local-server-setup` as `4346c29d2`
+  (8 upstream commits). One conflict, `.agents/skills` symlink versus upstream directory; resolved
+  by keeping the symlink to `../.ai/skills`. `make verify-docs` and `make build` passed. Safety tag
+  `backup/pre-upstream-sync-2026-11-14`.
 - Local build and install under `env/dist/`.
 - Local databases `acore_auth`, `acore_characters`, `acore_world`; test databases `acore_test_*`.
 - Test realm ports 3824/8185; local ports 3724/8085.
