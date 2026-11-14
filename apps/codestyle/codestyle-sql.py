@@ -19,6 +19,10 @@ base_directory = glob.glob(base_pattern)
 archive_pattern = os.path.join(base_dir, 'data/sql/archive/db_*')
 archive_directory = glob.glob(archive_pattern)
 
+# Get files from custom dir (project-specific, re-applicable SQL)
+custom_pattern = os.path.join(base_dir, 'data/sql/custom/db_*')
+custom_directory = glob.glob(custom_pattern)
+
 # Global variables
 error_handler = False
 results = {
@@ -200,7 +204,7 @@ def insert_delete_safety_check(file: io, file_path: str) -> None:
 
     # Parse all the file
     for line_number, line in enumerate(file, start = 1):
-        if line.strip().startswith("--"):
+        if line.strip().startswith("--") or not line.strip():
             continue
         if "INSERT" in line and "DELETE" not in previous_line:
             print(f"❌ No DELETE keyword found before the INSERT in {file_path} at line {line_number}\nIf this error is intended, please notify a maintainer")
@@ -516,6 +520,10 @@ def semicolon_check(file: io, file_path: str) -> None:
                     if not stripped_line.endswith(','):
                         print(f"❌ Missing comma in {file_path} at line {line_number}")
                         check_failed = True
+                elif next_line and next_line.strip().upper().startswith('ON DUPLICATE'):
+                    # The statement continues after the VALUES block; a later line closes it.
+                    inside_values_block = False
+                    query_open = True
                 else:
                     # Expect semicolon if this is the final row
                     if not stripped_line.endswith(';'):
@@ -639,7 +647,7 @@ def non_innodb_engine_check(file: io, file_path: str) -> None:
         results["Table engine check"] = "Failed"    
 
 # Collect all files from matching directories
-all_files = collect_files_from_directories(src_directory) + collect_files_from_directories(base_directory) + collect_files_from_directories(archive_directory)
+all_files = collect_files_from_directories(src_directory) + collect_files_from_directories(base_directory) + collect_files_from_directories(archive_directory) + collect_files_from_directories(custom_directory)
 
 # Main function
 parsing_file(all_files)

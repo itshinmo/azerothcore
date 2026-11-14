@@ -31,7 +31,7 @@ Each command has a one-line purpose so a human can choose the right one without 
 | `make world-api` | Serve the exported catalog on loopback; see [world-api.md](../operation/world-api.md). |
 | `make verify-docs` | Checks knowledge-layer Markdown links and the generated command index. |
 | `make verify-sql` | Runs the SQL linter; applies pending/custom SQL to the test realm when configured. |
-| `make verify-cpp` | C++ codestyle, cppcheck, `-Werror` build, unit tests. |
+| `make verify-cpp` | C++ codestyle, cppcheck (2.22.x), `-Werror` build, unit tests. |
 | `make verify-smoke` | Starts the local stack, health-checks it, stops it. |
 | `make verify-full` | Runs docs, C++, SQL, and smoke in order. |
 | `make start` | Starts worldserver then authserver inside `screen`. |

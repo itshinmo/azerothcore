@@ -46,8 +46,12 @@ feature spec.
 
 ### Fork CI
 
-- Built in phase 1: `.github/workflows/fork-ci.yml` runs on this fork.
-- On push/PR: docs check, SQL lint, C++ lint, build, unit tests.
+- Built in phase 1: `.github/workflows/fork-ci.yml` runs on this fork. Pushes to `master` and
+  `local-server-setup` and every pull request trigger it.
+- On push/PR: docs check, tool unit tests, SQL lint (pending and custom style checks; base and
+  archive get the directory check on changed files), C++ lint, build, unit tests.
+- The content audit and its coverage number need a database. They are a release gate, not a CI job:
+  run `make content-audit` and record the number in the release notes.
 - E2E smoke on label or manual dispatch is not wired into `fork-ci.yml`. Live e2e dispatches with
   `.github/workflows/e2e-live.yml`; see `e2e/README.md`.
 - No upstream-repository guard.

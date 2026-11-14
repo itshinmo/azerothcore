@@ -1,6 +1,6 @@
 ---
 description: Current project status, last verified commit, known issues, open decisions, and next tasks. Read after overview on any task.
-last-verified: 2026-11-14 (docs check 137 files / 657 commands; upstream sync build green)
+last-verified: 2026-11-14 (docs check 139 files / 657 commands; tool tests 42; upstream sync build green)
 ---
 
 # Status
@@ -29,14 +29,26 @@ last-verified: 2026-11-14 (docs check 137 files / 657 commands; upstream sync bu
 - Rates applied to `src/server/apps/worldserver/worldserver.conf.dist`. Existing local, test, and
   production configuration files keep their previous values until regenerated or edited.
 
+## Built since the last update
+
+- World data export (`make world-export`): 140,650 files, 566 MB, 17.6 s; counts npc 29,945 /
+  item 46,096 / quest 9,464 / object 21,580 / 33,318 spawn sets. Read API (`make world-api`) serves
+  the artifacts on loopback; 42 tool tests.
+- Fork CI now runs tool unit tests and triggers on `local-server-setup`; SQL lint covers
+  `data/sql/custom/`. The first GitHub run is pending a push.
+
 ## Next tasks
 
-1. Triage of the audit majors, part 1, is done: 0 blocker, 0 major, 1,972 minor, 1 waiver. Next content
-   work is the export pipeline; the minors stay visible in every report.
-2. World data export artifacts per `specs/world-data.md`.
-3. Public read API and static spawn map page. The live spawn overlay is deferred until a secretless
-   public read surface is designed.
-4. Coverage metric wired into CI (`make content-audit`).
+1. Static spawn map page. Blocked on the map imagery decision in `decisions/OPEN-QUESTIONS.md`.
+2. Decide the production host and finish the deploy runbook.
+3. Decide website auth and write the OpenAPI contract for the GM API, including `X-GM-Actor`.
+4. Build the website read-only MVP through the admin BFF.
+5. Exercise the remaining GM API branches (`player_busy`, `teleport_failed`, `audit_failed`,
+   `writes_disabled`, rate limit, timeout/shutdown) and add the remaining audited writes.
+6. Audit v2: map-bounds validation, conditions audit, C-06 phase reachability.
+7. Triage the 1,972 minors when content work starts; they are cosmetic or expected data.
+8. Confirm the first fork CI run after a push.
+9. Shop and new content only after their decisions.
 
 No playerbots work is planned.
 
@@ -74,10 +86,9 @@ No playerbots work is planned.
 
 ## Known issues
 
-1. **SQL linter does not scan `data/sql/custom/`.** Custom SQL is applied by the updater but not
-   linted by `apps/codestyle/codestyle-sql.py`.
-2. **Fork CI has not been observed on GitHub.** Push and confirm once.
-3. **GM API write coverage is partial.** `kick` and `unstuck` are audited writes. Item grant, mail,
+1. **Fork CI has not been observed on GitHub.** It now triggers on pushes to `local-server-setup`
+   as well as `master`; the first run is pending a push.
+2. **GM API write coverage is partial.** `kick` and `unstuck` are audited writes. Item grant, mail,
    ban, RBAC, and server control are not built. Manual branch coverage is partial: successful
    kick/unstuck, `cannot_target_self`, `forbidden_target_security`, `target_not_found`, and the
    401/404/405/409 paths are tested. `player_busy`, `teleport_failed`, `audit_failed`,
@@ -85,8 +96,9 @@ No playerbots work is planned.
    HMAC secret for transport; `X-GM-Actor` identifies the human but the BFF remains the only holder of
    the secret. Audit query uses the shared sync DB pool; audit search is newest-N only; structured
    request logging is planned.
-4. **cppcheck suppressions target 2.22.** Pin or document the supported version.
-5. **DBeaver production access is read-only via SSH tunnel.** No production host chosen yet.
+3. **cppcheck suppressions target 2.22.** Local Homebrew has 2.22.0. The GitHub runner may package a
+   different version; quote `cppcheck --version` in any CI failure before changing a suppression.
+4. **DBeaver production access is read-only via SSH tunnel.** No production host chosen yet.
 
 ## Open decisions
 
@@ -98,16 +110,6 @@ No playerbots work is planned.
 - Shop delivery trust model.
 - Client patch pipeline and timing for genuinely new zones/assets.
 - Windows development path (WSL2 or Docker).
-
-## Next tasks, in order
-
-1. Decide production host and finish the deploy runbook.
-2. Decide website auth and write the OpenAPI contract for the GM API, including `X-GM-Actor`.
-3. Build the website read-only MVP through an admin BFF.
-4. Exercise the remaining GM API branches (`player_busy`, `teleport_failed`, `audit_failed`,
-   `writes_disabled`, rate limit, timeout/shutdown) through the GM dashboard.
-5. Add the remaining audited writes (item grant, mail, ban, RBAC) with caller identity and RBAC.
-6. Shop and new content only after their decisions.
 
 ## New session checklist
 
