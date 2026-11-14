@@ -44,3 +44,4 @@ through the strict gate or left open with an owner.
 | Date | Scope | Report |
 |------|-------|--------|
 | 2026-11-12 | foundation: agent layer, dev tooling, test realm, backups, fork CI | [2026-11-12-foundation.md](2026-11-12-foundation.md) |
+| 2026-11-14 | content audit baseline and the Baron Longshore `ScriptName` fix | [2026-11-14-content-audit.md](2026-11-14-content-audit.md) |

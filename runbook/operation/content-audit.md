@@ -109,3 +109,4 @@ changing content data.
 - [specs/content-pipeline.md](../../specs/content-pipeline.md#verification)
 - [decisions/ADR-011-world-data-and-content-verification.md](../../decisions/ADR-011-world-data-and-content-verification.md)
 - [runbook/operation/test-realm.md](test-realm.md)
+- Findings history: [runbook/audits/README.md](../audits/README.md)

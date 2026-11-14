@@ -1,6 +1,6 @@
 ---
 description: Current project status, last verified commit, known issues, open decisions, and next tasks. Read after overview on any task.
-last-verified: 2026-11-14 (docs check 135 files / 657 commands; upstream sync build green)
+last-verified: 2026-11-14 (docs check 137 files / 657 commands; upstream sync build green)
 ---
 
 # Status
@@ -31,8 +31,9 @@ last-verified: 2026-11-14 (docs check 135 files / 657 commands; upstream sync bu
 
 ## Next tasks
 
-1. Triage the baseline content audit: 3 blockers first, then the 167 majors. Waivers only for known
-   data, with a reason and an owner.
+1. Triage the remaining 153 majors: 135 C-11, 9 C-07, 5 C-10, 3 C-06, 1 C-05. Waivers only for
+   known data, with a reason and an owner. Baseline:
+   [runbook/audits/2026-11-14-content-audit.md](../../runbook/audits/2026-11-14-content-audit.md).
 2. World data export artifacts per `specs/world-data.md`.
 3. Public read API and static spawn map page. The live spawn overlay is deferred until a secretless
    public read surface is designed.
@@ -42,9 +43,11 @@ No playerbots work is planned.
 
 ## Built and verified
 
-- Content audit v1 (`make content-audit`, read-only): 2,032 findings against `acore_world`
-  (3 blockers, 167 major, 1,862 minor); coverage 74-85% per level band; 15 unit tests pass.
-  Procedure: [runbook/operation/content-audit.md](../../runbook/operation/content-audit.md).
+- Content audit v1 (`make content-audit`, read-only): baseline 1,993 findings against `acore_world`;
+  after the first blocker fix, 0 blockers, 153 major, 1,837 minor; coverage 78.89% overall; 20 unit
+  tests pass. Procedure: [runbook/operation/content-audit.md](../../runbook/operation/content-audit.md).
+- Content audit blocker fixed: three Baron Longshore spawns carried a numeric `ScriptName`.
+  Evidence, fix, and verification: [runbook/audits/2026-11-14-content-audit.md](../../runbook/audits/2026-11-14-content-audit.md).
 - Upstream sync 2026-11-14: `upstream` remote added (official AzerothCore); `master`
   fast-forwarded to `upstream/master` `2948c203f`; merged into `local-server-setup` as `4346c29d2`
   (8 upstream commits). One conflict, `.agents/skills` symlink versus upstream directory; resolved
