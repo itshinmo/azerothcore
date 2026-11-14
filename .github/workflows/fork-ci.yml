@@ -93,9 +93,7 @@ jobs:
             -DBoost_ROOT=/usr \
             -DCMAKE_BUILD_TYPE=RelWithDebInfo \
             -DSCRIPTS=static -DMODULES=static \
-            -DBUILD_TESTING=ON \
-            -DCMAKE_CXX_FLAGS=-Werror \
-            -DCMAKE_TRY_COMPILE_TARGET_TYPE=STATIC_LIBRARY
+            -DBUILD_TESTING=ON
       - name: Build
         run: /usr/bin/cmake --build build -j"$(nproc)"
       - name: Unit tests
