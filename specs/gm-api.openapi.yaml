@@ -274,7 +274,8 @@ components:
           schema:
             $ref: "#/components/schemas/Error"
     WriteConflict:
-      description: Actor targets themselves, or the player cannot be actioned now
+      description: Nonce replayed (`replayed_nonce`), actor targets themselves (`cannot_target_self`),
+        or the player cannot be actioned now (`player_busy`).
       content:
         application/json:
           schema:

@@ -47,7 +47,10 @@ account must exist and have security above `SEC_PLAYER`. A write refuses to targ
 account or a session with security at or above the actor's. Actions run on the world thread and call
 game logic; the API does not write game tables directly.
 
-Not built: item grant, mail, ban, RBAC, server control.
+Not built: item grant, mail, ban, RBAC, and server control. Their live error branches will be
+exercised through the admin BFF/dashboard on a live stack before these endpoints ship. The cheap
+branches (`writes_disabled`, `rate_limited`, `audit_failed`) are reachable with the curl recipe
+below today.
 
 ## Signing
 

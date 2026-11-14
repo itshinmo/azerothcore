@@ -34,6 +34,10 @@ last-verified: 2026-11-14 (docs check 139 files / 657 commands; tool tests 43; f
 - World data export (`make world-export`): 140,650 files, 566 MB, 17.6 s; counts npc 29,945 /
   item 46,096 / quest 9,464 / object 21,580 / 33,318 spawn sets. Read API (`make world-api`) serves
   the artifacts on loopback; 43 tool tests.
+- GM API wire contract (`specs/gm-api.openapi.yaml`): four implemented endpoints, HMAC signing,
+  actor identity, all error codes and statuses.
+- Content audit C-13: gossip-menu, gossip-option, and quest-available conditions validated against
+  the rows the server loads; 5,931 rows, 0 findings.
 - Fork CI now runs tool unit tests and triggers on `local-server-setup`; SQL lint covers
   `data/sql/custom/`. First green run: run `43597124091` on `881b11f19`, 5/5 jobs, 29 minutes total.
 
@@ -41,10 +45,12 @@ last-verified: 2026-11-14 (docs check 139 files / 657 commands; tool tests 43; f
 
 1. Static spawn map page. Blocked on the map imagery decision in `decisions/OPEN-QUESTIONS.md`.
 2. Decide the production host and finish the deploy runbook.
-3. Decide website auth and write the OpenAPI contract for the GM API, including `X-GM-Actor`.
-4. Build the website read-only MVP through the admin BFF.
-5. Exercise the remaining GM API branches (`player_busy`, `teleport_failed`, `audit_failed`,
-   `writes_disabled`, rate limit, timeout/shutdown) and add the remaining audited writes.
+3. Decide website auth. The GM API wire contract already exists at
+   `specs/gm-api.openapi.yaml`.
+4. Build the admin BFF/dashboard and the read-only website MVP through it.
+5. After the dashboard: remaining GM API writes (item grant, mail, ban, RBAC, server control) and the
+   branches that need an online player. `writes_disabled`, `rate_limited`, and `audit_failed` are
+   reachable now with the documented curl recipe.
 6. Audit v2 remainder: map-bounds validation (blocked on reference data) and C-06 phase
    reachability.
 7. Triage the 1,972 minors when content work starts; they are cosmetic or expected data.
@@ -86,11 +92,12 @@ No playerbots work is planned.
 
 ## Known issues
 
-1. **GM API write coverage is partial.** `kick` and `unstuck` are audited writes. Item grant, mail,
-   ban, RBAC, and server control are not built. Manual branch coverage is partial: successful
-   kick/unstuck, `cannot_target_self`, `forbidden_target_security`, `target_not_found`, and the
-   401/404/405/409 paths are tested. `player_busy`, `teleport_failed`, `audit_failed`,
-   `writes_disabled`, rate limiting, and timeout/shutdown paths are not. The API still uses one shared
+1. **GM API coverage is partial and gated on the dashboard.** `kick` and `unstuck` are the only
+   audited writes. Item grant, mail, ban, RBAC, and server control are not built, and several error
+   branches (`player_busy`, `teleport_failed`, `audit_failed`, `writes_disabled`, rate limit,
+   timeout/shutdown) are untested. The new writes and the branches that need an online player will be
+   exercised through the admin BFF/dashboard before they ship; `writes_disabled`, `rate_limited`,
+   and `audit_failed` are reachable with the documented curl recipe now. The API still uses one shared
    HMAC secret for transport; `X-GM-Actor` identifies the human but the BFF remains the only holder of
    the secret. Audit query uses the shared sync DB pool; audit search is newest-N only; structured
    request logging is planned.

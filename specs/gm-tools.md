@@ -78,8 +78,10 @@ Owns the GM workflow and tooling. Does not own the game commands themselves; the
   timestamp; replay window; per-address rate limit.
 - Implemented read-only endpoints: server status, audit rows. Implemented writes: kick, unstuck,
   gated by `GmApi.AllowWrites`, a signed `X-GM-Actor` game account id, RBAC, and audit. Planned read
-  endpoints: account, character, online players, instance info. Planned writes: item grant, mail.
-- Admin writes: ban, RBAC, server control. Human approval required. Not built.
+  endpoints: account, character, online players, instance info.
+- Item grant, mail, ban, RBAC, and server control are not built. They and the live error branches
+  will be exercised through the admin BFF/dashboard before they ship; the cheap branches
+  (`writes_disabled`, `rate_limited`, `audit_failed`) are reachable with the curl recipe today.
 - Every endpoint validates input and calls game logic; no endpoint writes game tables directly. The
   module writes its own audit rows.
 - Wire contract: [gm-api.openapi.yaml](gm-api.openapi.yaml).
