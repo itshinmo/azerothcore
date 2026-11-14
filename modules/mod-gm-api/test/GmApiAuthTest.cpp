@@ -53,8 +53,7 @@ TEST(GmApiAuthTest, PlayerTargetParsing)
     EXPECT_FALSE(GmApiAuth::ParsePlayerTarget("/api/v1/status", action, player));
 }
 
-TEST(GmApiAuthTest, TimestampWindow)
-{
+TEST(GmApiAuthTest, TimestampWindow){
     EXPECT_TRUE(GmApiAuth::TimestampInWindow(1000, 1000, 60));
     EXPECT_TRUE(GmApiAuth::TimestampInWindow(1000, 940, 60));
     EXPECT_TRUE(GmApiAuth::TimestampInWindow(1000, 1060, 60));

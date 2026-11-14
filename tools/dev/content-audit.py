@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Read-only content audit for the AzerothCore world database.
 
-Implements checks C-01 to C-12 from specs/content-pipeline.md. It never writes
+Implements checks C-01 to C-13 from specs/content-pipeline.md. It never writes
 to the database: every query is a SELECT and the database name must end in
 "_world" (production or test).
 
@@ -548,9 +548,28 @@ def check_c12(data: dict) -> list[Finding]:
     return findings
 
 
+def check_c13(data: dict) -> list[Finding]:
+    findings = []
+    for source, group, entry in data["conditions"]:
+        if source == 14:
+            if (group, entry) not in data["gossip_menus"]:
+                findings.append(Finding("C-13", "major", "gossip_menu", group,
+                                        "conditions", f"condition for missing gossip_menu "
+                                        f"MenuID {group} TextID {entry}"))
+        elif source == 15:
+            if (group, entry) not in data["gossip_options"]:
+                findings.append(Finding("C-13", "major", "gossip_option", group,
+                                        "conditions", f"condition for missing gossip_menu_option "
+                                        f"MenuID {group} OptionID {entry}"))
+        elif source == 19 and entry not in data["quest_ids"]:
+            findings.append(Finding("C-13", "major", "quest", entry, "conditions",
+                                    "QUEST_AVAILABLE condition references missing quest"))
+    return findings
+
+
 CHECKS = (
     check_c01, check_c02, check_c03, check_c04, check_c05, check_c06,
-    check_c07, check_c08, check_c09, check_c10, check_c11, check_c12,
+    check_c07, check_c08, check_c09, check_c10, check_c11, check_c12, check_c13,
 )
 
 
@@ -577,6 +596,17 @@ def load_data(db: Db, root: Path, data_dir: Path | None) -> dict:
     data["go_spawn_map"] = {int(guid): int(entry) for guid, entry in
                             db.query("SELECT guid, id FROM gameobject")}
     data["reference_entries"] = db.integers("SELECT Entry FROM reference_loot_template")
+    data["gossip_menus"] = {
+        (int(row[0]), int(row[1])) for row in
+        db.query("SELECT DISTINCT gm.MenuID, gm.TextID FROM gossip_menu gm "
+                 "JOIN npc_text nt ON nt.ID = gm.TextID AND nt.ID <> 0")}
+    data["gossip_options"] = {
+        (int(row[0]), int(row[1])) for row in
+        db.query("SELECT DISTINCT MenuID, OptionID FROM gossip_menu_option")}
+    data["conditions"] = {
+        (int(row[0]), int(row[1]), int(row[2])) for row in
+        db.query("SELECT SourceTypeOrReferenceId, SourceGroup, SourceEntry FROM conditions "
+                 "WHERE SourceTypeOrReferenceId IN (14, 15, 19)")}
 
     data["starters"] = {}
     data["enders"] = {}

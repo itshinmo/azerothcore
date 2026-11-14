@@ -79,6 +79,18 @@ The 1,972 minors are four classes: 809 objective targets without a spawn, 935 re
 no known source, 135 vendor or trainer flags, and 93 quests whose `MinLevel` exceeds `QuestLevel`.
 They stay visible.
 
+## Part 2 — audit v2
+
+- Added C-13: conditions for gossip menus (source 14), gossip menu options (15), and quest-available
+  (19) must reference existing rows. Semantics verified in `ConditionMgr::LoadConditions`; the check
+  is deliberately limited to those three source types.
+- Result on `acore_world`: 0 C-13 findings. The table is consistent for those sources.
+- Still open by design:
+  - Map-bounds validation: `map_dbc` is empty and `Map.dbc` carries no bounds, so there is no
+    reference data to validate against yet.
+  - C-06 phase reachability: requires modeling which SmartAI events can switch phases; only link
+    chains and cycles are checked.
+
 ## What was checked
 
 - `make verify-sql`: SQL lint passed, test-realm apply passed, backup written

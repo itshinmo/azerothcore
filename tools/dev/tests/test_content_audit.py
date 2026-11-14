@@ -94,6 +94,23 @@ class CheckC05Test(unittest.TestCase):
         self.assertIn("event_phase_mask 4096", causes)
 
 
+class CheckC13Test(unittest.TestCase):
+    def test_flags_missing_gossip_and_quest_sources(self):
+        data = {
+            "conditions": [(14, 10, 20), (14, 11, 21), (15, 10, 2), (19, 0, 99), (19, 0, 98)],
+            "gossip_menus": {(10, 20)},
+            "gossip_options": set(),
+            "quest_ids": {99},
+        }
+        findings = audit.check_c13(data)
+        kinds = sorted(finding.entity_kind for finding in findings)
+        self.assertEqual(kinds, ["gossip_menu", "gossip_option", "quest"])
+        causes = " ".join(finding.cause for finding in findings)
+        self.assertIn("TextID 21", causes)
+        self.assertIn("OptionID 2", causes)
+        self.assertIn("missing quest", causes)
+
+
 class CheckC11Test(unittest.TestCase):
     def test_flags_flags_missing_stock_and_missing_spells(self):
         data = {

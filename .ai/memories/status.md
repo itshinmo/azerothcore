@@ -1,6 +1,6 @@
 ---
 description: Current project status, last verified commit, known issues, open decisions, and next tasks. Read after overview on any task.
-last-verified: 2026-11-14 (docs check 139 files / 657 commands; tool tests 42; fork CI green on 881b11f19)
+last-verified: 2026-11-14 (docs check 139 files / 657 commands; tool tests 43; fork CI green on 881b11f19)
 ---
 
 # Status
@@ -33,7 +33,7 @@ last-verified: 2026-11-14 (docs check 139 files / 657 commands; tool tests 42; f
 
 - World data export (`make world-export`): 140,650 files, 566 MB, 17.6 s; counts npc 29,945 /
   item 46,096 / quest 9,464 / object 21,580 / 33,318 spawn sets. Read API (`make world-api`) serves
-  the artifacts on loopback; 42 tool tests.
+  the artifacts on loopback; 43 tool tests.
 - Fork CI now runs tool unit tests and triggers on `local-server-setup`; SQL lint covers
   `data/sql/custom/`. First green run: run `43597124091` on `881b11f19`, 5/5 jobs, 29 minutes total.
 
@@ -45,7 +45,8 @@ last-verified: 2026-11-14 (docs check 139 files / 657 commands; tool tests 42; f
 4. Build the website read-only MVP through the admin BFF.
 5. Exercise the remaining GM API branches (`player_busy`, `teleport_failed`, `audit_failed`,
    `writes_disabled`, rate limit, timeout/shutdown) and add the remaining audited writes.
-6. Audit v2: map-bounds validation, conditions audit, C-06 phase reachability.
+6. Audit v2 remainder: map-bounds validation (blocked on reference data) and C-06 phase
+   reachability.
 7. Triage the 1,972 minors when content work starts; they are cosmetic or expected data.
 8. Shop and new content only after their decisions.
 

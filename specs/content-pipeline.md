@@ -92,7 +92,7 @@ Static content checks run against the database, not against a running world. The
 deterministic, and fast enough to run before every release. The extractor and the public catalog
 share one query layer; see [world-data.md](world-data.md).
 
-**Check catalog v1**
+**Check catalog**
 
 | ID | Check | Severity |
 |----|-------|----------|
@@ -108,10 +108,12 @@ share one query layer; see [world-data.md](world-data.md).
 | C-10 | Spawn of a missing template (blocker); `spawnMask` of 0 (major) | blocker / major |
 | C-11 | Vendor/trainer flag without stock or assignment (minor; cosmetic, needs content review); vendor sells a missing item (blocker); trainer spell missing (major) | blocker / major / minor |
 | C-12 | Loot referencing a missing item (blocker) or a missing reference loot table (major) | blocker / major |
+| C-13 | Conditions: gossip menu/option and quest-available source rows referencing missing rows | major |
 
 v1 limits: map-bounds validation is skipped because `map_dbc` is empty; trainer spells are checked
-against `Spell.dbc` from `DataDir`, never the `spell_dbc` override table; conditions are not audited
-yet.
+against `Spell.dbc` from `DataDir`, never the `spell_dbc` override table; conditions are audited only
+for the three source types with verified semantics (14 gossip menu, 15 gossip menu option, 19 quest
+available), and C-06 phase reachability is not checked.
 
 Severity meaning:
 
