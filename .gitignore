@@ -22,6 +22,9 @@
 !/env/dist/.gitkeep
 /env/test/*
 !/env/test/.gitkeep
+/env/export/*
+/env/export.tmp/*
+/env/export.old/*
 /env/user/*
 /.env*
 /e2e/.env

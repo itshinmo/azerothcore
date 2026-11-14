@@ -8,8 +8,9 @@ and the optional live spawn overlay. The decision is
 
 ## Scope
 
-Exported JSON for items, NPCs, quests, gameobjects, spells, vendors, trainers, and loot; spawn sets;
-coordinate conversion for map display; endpoint shapes; freshness and staleness; live spawn state.
+Exported JSON for items, NPCs, quests, gameobjects, spawn sets, coordinate inputs, freshness, and
+the search index. Vendor, trainer, loot, condition, and SmartAI data stay in the content audit for
+v1.
 
 ## Boundary
 
@@ -28,17 +29,15 @@ Read-only, from `acore_world`:
 - `quest_template`, `quest_template_addon` — quests.
 - `item_template` — items.
 - `gameobject_template`, `gameobject` — objects and spawns.
-- `npc_vendor`, `npc_trainer` — vendor stock and trainer spells.
-- `*_loot_template` — loot.
+- `creature_queststarter` / `creature_questender` — NPC quest links, with names.
+- `gameobject_queststarter` / `gameobject_questender` — object quest links, with names.
 
-Display-only fields come from client data the server already loads: item icons from
-`ItemDisplayInfo.dbc`, spell school and timing from `Spell.dbc`. The export reads them through the
-existing DBC stores and does not patch the client.
-
-`conditions` and `smart_scripts` are read by the content audit, not by the public catalog.
-`acore_characters` is not read. Player data never leaves the server.
+The content audit additionally reads `npc_vendor`, `npc_trainer`, `trainer_spell`,
+`creature_default_trainer`, `*_loot_template`, `conditions`, and `smart_scripts`. Those are not part
+of the public catalog in v1.
 
 The export runs with a read-only database user. It never writes to any database.
+`acore_characters` is not read. Player data never leaves the server.
 
 ### Artifacts
 
@@ -51,11 +50,14 @@ export/
   item/{id}.json
   quest/{id}.json
   object/{id}.json
-  spell/{id}.json
   spawns/npc/{id}.json
   spawns/object/{id}.json
   search/{bucket}.json
 ```
+
+v1 exports `npc`, `item`, `quest`, `object`, and spawn sets. Spell entities and item icons are v2:
+both need DBC field maps that are not part of this contract yet. `object` has no `flags` column in
+this schema, so the document carries `type`, `aiName`, and `scriptName` only.
 
 `meta.json`:
 
@@ -64,7 +66,9 @@ export/
   "schemaVersion": 1,
   "generatedAt": "2026-11-14T10:00:00Z",
   "sourceDatabaseVersion": "<acore_world.version.db_version>",
-  "counts": { "npc": 0, "item": 0, "quest": 0, "object": 0, "spell": 0 }
+  "counts": { "npc": 0, "item": 0, "quest": 0, "object": 0, "spell": 0, "spawns": 0, "parts": 0 },
+  "buckets": 0,
+  "durationSeconds": 0
 }
 ```
 
@@ -78,11 +82,10 @@ version bump.
 
 | Type | Required fields |
 |------|-----------------|
-| `npc` | `id`, `name`, `subname`, `level`, `faction`, `rank`, `npcFlags`, `questStarter`, `questEnder`, `vendor`, `trainer` |
-| `item` | `id`, `name`, `quality`, `itemLevel`, `requiredLevel`, `class`, `subclass`, `icon`, `stats`, `sellPrice` |
-| `quest` | `id`, `title`, `level`, `minLevel`, `requiredLevel`, `zone`, `type`, `objectives`, `starters`, `enders`, `prerequisites`, `reward` |
-| `object` | `id`, `name`, `type`, `flags`, `questStarter`, `questEnder` |
-| `spell` | `id`, `name`, `rank`, `school`, `castTime`, `cooldown`, `duration`, `description` |
+| `npc` | `id`, `name`, `subname`, `level`, `maxLevel`, `rank`, `faction`, `npcFlags`, `questStarter`, `questEnder`, `vendor`, `trainer`, `aiName`, `scriptName` |
+| `item` | `id`, `name`, `quality`, `itemLevel`, `requiredLevel`, `class`, `subclass`, `displayId`, `sellPrice` |
+| `quest` | `id`, `title`, `level`, `minLevel`, `zone`, `sortCategory`, `type`, `objectives`, `starters`, `enders`, `prerequisites`, `startItem` |
+| `object` | `id`, `name`, `type`, `aiName`, `scriptName` |
 
 `starters` and `enders` reference `{ "kind": "creature" | "object", "id": 0, "name": "" }` so the site
 can link without a second lookup.
