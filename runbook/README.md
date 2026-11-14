@@ -33,6 +33,7 @@ I do it"; behavior lives in `specs/`.
 - [test-realm.md](operation/test-realm.md) — isolated realm for e2e and risky changes.
 - [content-audit.md](operation/content-audit.md) — read-only world content audit and waivers.
 - [world-export.md](operation/world-export.md) — export world data artifacts for the public catalog.
+- [world-api.md](operation/world-api.md) — serve the exported catalog on loopback for development.
 - [production-deploy.md](operation/production-deploy.md) — Linux production target and deploy.
 
 ### Database

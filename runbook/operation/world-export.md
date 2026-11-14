@@ -44,6 +44,14 @@ Read-only. It never writes to the database.
 
    Without `--force`, a non-empty output directory is refused.
 
+3. Point the read API at it:
+
+   ```bash
+   make world-api ARGS="--export env/export --port 8095"
+   ```
+
+   See [world-api.md](world-api.md).
+
 ## Verification
 
 ```bash

@@ -28,6 +28,7 @@ Each command has a one-line purpose so a human can choose the right one without 
 | `make command-index` | Regenerates the GM command index from `cs_*.cpp`. |
 | `make content-audit` | Read-only content audit of the world database; see [content-audit.md](../operation/content-audit.md). |
 | `make world-export` | Export world data artifacts; see [world-export.md](../operation/world-export.md). |
+| `make world-api` | Serve the exported catalog on loopback; see [world-api.md](../operation/world-api.md). |
 | `make verify-docs` | Checks knowledge-layer Markdown links and the generated command index. |
 | `make verify-sql` | Runs the SQL linter; applies pending/custom SQL to the test realm when configured. |
 | `make verify-cpp` | C++ codestyle, cppcheck, `-Werror` build, unit tests. |

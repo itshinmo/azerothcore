@@ -146,7 +146,8 @@ Served by the website BFF, read-only, public zone:
 - `type` is one of `npc`, `item`, `quest`, `object`, `spell`. The literal routes `search` and
   `spawn-state` are reserved and take precedence over `{type}`.
 - `limit` defaults to 20, maximum 100. The response carries a cursor when more results exist.
-- Entity and spawn-set responses are cacheable: `ETag` from `schemaVersion` plus `generatedAt`.
+- Entity and spawn-set responses are cacheable: `ETag` from `schemaVersion`, `generatedAt`, and the
+  request path.
 - `spawn-state` is never cached and never blocks the page. If it fails, the page still renders the
   static spawn set and says the live state is unavailable.
 
