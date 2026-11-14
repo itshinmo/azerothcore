@@ -81,10 +81,16 @@ jobs:
             default-libmysqlclient-dev mysql-client libbz2-dev zlib1g-dev
       - name: Configure
         # Use the distribution CMake 3.28: the runner's preinstalled 3.31 has no FindBoost
-        # module (CMP0167) and fails to resolve Boost components. Keep every cmake call here.
+        # module (CMP0167). Point Boost at the system package configuration explicitly, because
+        # the runner image can carry other Boost CMake files that break the automatic search.
         run: |
           /usr/bin/cmake --version
+          BOOST_DIR="$(dirname "$(find /usr/lib -path '*/cmake/Boost-*/BoostConfig.cmake' | head -1)")"
+          echo "Boost_DIR=${BOOST_DIR:-not found}"
+          find /usr/lib /usr/local -name 'BoostConfig.cmake' 2>/dev/null | head -5
           /usr/bin/cmake -S . -B build \
+            ${BOOST_DIR:+-DBoost_DIR="$BOOST_DIR"} \
+            -DBoost_ROOT=/usr \
             -DCMAKE_BUILD_TYPE=RelWithDebInfo \
             -DSCRIPTS=static -DMODULES=static \
             -DBUILD_TESTING=ON \
