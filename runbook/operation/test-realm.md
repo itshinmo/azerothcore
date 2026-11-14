@@ -55,6 +55,13 @@ make test-realm CMD=status
 make test-realm CMD=stop
 ```
 
+The test realm runs with `Console.Enable=0`. Detached runs have no interactive console, and a
+console prompt on a closed stdin spins forever, filling `worldserver.console.log` with `AC> `
+lines; see [specs/server.md](../../specs/server.md). The local stack keeps its console available
+through `screen`, so it stays at `1`; both stacks rotate their console log on the next start when
+it exceeds 100 MB (override with `MAX_CONSOLE_LOG_BYTES`). Use `status`, the log files, or the GM API
+on the test realm instead.
+
 Put local values in `tools/dev/config.env` (ignored); the template is
 `tools/dev/config.env.example`. The script refuses to reset databases whose names do not contain
 `test`. It backs up nothing by itself; `make verify-sql` backs up the test databases before an apply.
@@ -84,7 +91,7 @@ Put local values in `tools/dev/config.env` (ignored); the template is
    ```
 
 3. Point the test configs at the test databases, test logs, and the same `DataDir`.
-4. Set `Warden.Enabled=0` in the test worldserver config.
+4. Set `Warden.Enabled=0` and `Console.Enable=0` in the test worldserver config.
 5. Set a different realm name/port if both realms run at once.
 6. Start the test worldserver first, then the test authserver; the updater populates the test
    databases. Pass the test config explicitly and keep the test realm out of `tools/dev/server.sh`:

@@ -30,8 +30,9 @@ Owns the process and configuration contract. Does not own gameplay content or da
 - `LogsDir` is writable.
 - `RealmID` matches the `realmlist` row.
 - `Updates.EnableDatabases=7` and `Updates.AutoSetup=1` for automatic schema setup.
-- `Console.Enable=1` for an interactive terminal or a screen/tmux session; `0` for a service with
-  null stdin. With `1` and null stdin, the console thread spins on EOF.
+- `Console.Enable=1` only while an attached terminal or screen/tmux client keeps stdin open; `0`
+  for detached services and the test realm. With `1` and null stdin, the console thread spins on EOF
+  and fills the console log.
 
 ### Local and test
 

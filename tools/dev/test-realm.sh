@@ -25,6 +25,13 @@ TEST_DB_USER="${TEST_DB_USER:-acore_test}"
 TEST_AUTH_PORT="${TEST_AUTH_PORT:-3824}"
 TEST_WORLD_PORT="${TEST_WORLD_PORT:-8185}"
 TEST_PREFIX="acore_test"
+MAX_CONSOLE_LOG_BYTES="${MAX_CONSOLE_LOG_BYTES:-104857600}"
+case "$MAX_CONSOLE_LOG_BYTES" in
+    ''|*[!0-9]*)
+        printf 'MAX_CONSOLE_LOG_BYTES must be a whole number of bytes.\n' >&2
+        exit 1
+        ;;
+esac
 TEST_AUTH_DB="${TEST_PREFIX}_auth"
 TEST_CHAR_DB="${TEST_PREFIX}_characters"
 TEST_WORLD_DB="${TEST_PREFIX}_world"
@@ -125,7 +132,9 @@ patch_configs() {
     set_config_key "$TEST_WORLD_CONF" CharacterDatabaseInfo "\"$char_info\""
     set_config_key "$TEST_WORLD_CONF" LogsDir "\"$TEST_LOGS\""
     set_config_key "$TEST_WORLD_CONF" Warden.Enabled 0
-    set_config_key "$TEST_WORLD_CONF" Console.Enable 1
+    # Detached runs have no console. With Enable=1 the CLI thread spins on stdin EOF and
+    # fills worldserver.console.log; see specs/server.md.
+    set_config_key "$TEST_WORLD_CONF" Console.Enable 0
 }
 
 create_databases() {
@@ -225,6 +234,16 @@ ensure_stopped() {
     fi
 }
 
+rotate_console_log() {
+    local log="$1" size
+    [ -f "$log" ] || return 0
+    size="$(wc -c <"$log" 2>/dev/null | tr -d '[:space:]')" || size=0
+    if [ "${size:-0}" -ge "$MAX_CONSOLE_LOG_BYTES" ]; then
+        printf 'rotating oversized console log %s (%s bytes)\n' "$log" "$size"
+        mv -f "$log" "$log.1"
+    fi
+}
+
 start_one() {
     local name="$1" port="$2" conf="$3" session pid
     if [ -n "$(pid_of_test "$name" "$conf")" ]; then
@@ -240,6 +259,7 @@ start_one() {
         return 1
     fi
     session="$(session_name "$name")"
+    rotate_console_log "$TEST_LOGS/$name.console.log"
     printf 'starting test %s in screen session %s ...\n' "$name" "$session"
     "$SCREEN_BIN" -dmS "$session" bash -c "cd \"$BIN_DIR\" && exec \"$BIN_DIR/$name\" -c \"$conf\" >>\"$TEST_LOGS/$name.console.log\" 2>&1"
     if wait_for_port "$port" 30; then

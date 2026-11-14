@@ -10,9 +10,26 @@ source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/common.sh"
 ensure_dirs
 LOGS="$(log_dir)"
 SCREEN_BIN="$(command -v screen || true)"
+MAX_CONSOLE_LOG_BYTES="${MAX_CONSOLE_LOG_BYTES:-104857600}"
+case "$MAX_CONSOLE_LOG_BYTES" in
+    ''|*[!0-9]*)
+        printf 'MAX_CONSOLE_LOG_BYTES must be a whole number of bytes.\n' >&2
+        exit 1
+        ;;
+esac
 
 pid_file() { printf '%s/%s.pid' "$RUN_DIR" "$1"; }
 session_name() { printf 'ac-%s-%s' "$(basename "$ROOT")" "$1"; }
+
+rotate_console_log() {
+    local log="$1" size
+    [ -f "$log" ] || return 0
+    size="$(wc -c <"$log" 2>/dev/null | tr -d '[:space:]')" || size=0
+    if [ "${size:-0}" -ge "$MAX_CONSOLE_LOG_BYTES" ]; then
+        printf 'rotating oversized console log %s (%s bytes)\n' "$log" "$size"
+        mv -f "$log" "$log.1"
+    fi
+}
 
 screen_running() {
     local name="$1" session
@@ -80,6 +97,7 @@ start_one() {
         return 1
     fi
     session="$(session_name "$name")"
+    rotate_console_log "$LOGS/$name.console.log"
     printf 'starting %s in screen session %s ...\n' "$name" "$session"
     "$SCREEN_BIN" -dmS "$session" bash -c "cd \"$BIN_DIR\" && exec \"$BIN_DIR/$name\" >>\"$LOGS/$name.console.log\" 2>&1"
     if wait_for_port "$port" 30; then
