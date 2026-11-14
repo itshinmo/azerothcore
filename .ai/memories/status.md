@@ -12,8 +12,7 @@ last-verified: 2026-11-14 (docs check 135 files / 657 commands; upstream sync bu
 - Phase 5 started: the GM API has audited `kick` and `unstuck` writes behind
   `GmApi.AllowWrites`, a signed `X-GM-Actor`, RBAC, and `gm_audit_log`.
 - The long-term visual layer is the future server website. No in-repo web UI exists.
-- Branch: `local-server-setup` is the integration branch; this docs task runs on
-  `docs/world-data-and-verification`. Confirm with `git status`.
+- Branch: `local-server-setup` is the integration branch. Confirm with `git status`.
 - Website work has not started. Shop and new content remain out of scope.
 
 ## Decisions recorded 2026-11-14
@@ -32,21 +31,20 @@ last-verified: 2026-11-14 (docs check 135 files / 657 commands; upstream sync bu
 
 ## Next tasks
 
-1. Upstream sync dry run: add the `upstream` remote, fast-forward `master`, merge into
-   `local-server-setup`, confirm the conflict surface against
-   [runbook/development/worktrees-and-branches.md](../../runbook/development/worktrees-and-branches.md).
-2. Content audit tool v1: checks C-01 to C-12 from `specs/content-pipeline.md`, read-only, wired to
-   `make content-audit`.
-3. Baseline audit run, waiver file, and triage by severity.
-4. World data export artifacts per `specs/world-data.md`.
-5. Public read API and static spawn map page. The live spawn overlay is deferred until a secretless
+1. Triage the baseline content audit: 3 blockers first, then the 167 majors. Waivers only for known
+   data, with a reason and an owner.
+2. World data export artifacts per `specs/world-data.md`.
+3. Public read API and static spawn map page. The live spawn overlay is deferred until a secretless
    public read surface is designed.
-6. Coverage metric wired into CI.
+4. Coverage metric wired into CI (`make content-audit`).
 
 No playerbots work is planned.
 
 ## Built and verified
 
+- Content audit v1 (`make content-audit`, read-only): 2,032 findings against `acore_world`
+  (3 blockers, 167 major, 1,862 minor); coverage 74-85% per level band; 15 unit tests pass.
+  Procedure: [runbook/operation/content-audit.md](../../runbook/operation/content-audit.md).
 - Upstream sync 2026-11-14: `upstream` remote added (official AzerothCore); `master`
   fast-forwarded to `upstream/master` `2948c203f`; merged into `local-server-setup` as `4346c29d2`
   (8 upstream commits). One conflict, `.agents/skills` symlink versus upstream directory; resolved

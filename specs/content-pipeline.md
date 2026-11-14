@@ -97,17 +97,21 @@ share one query layer; see [world-data.md](world-data.md).
 | ID | Check | Severity |
 |----|-------|----------|
 | C-01 | Quest starter or ender references a missing creature or gameobject | blocker |
-| C-02 | Quest objective has no spawn on the required map | blocker |
-| C-03 | Quest chain broken: prerequisite cycle, unreachable quest, or min-level mismatch | blocker |
-| C-04 | Quest required item missing, or no source exists for it | blocker |
-| C-05 | SmartAI row with an invalid event, action, or target type, or out-of-range parameters | major |
+| C-02 | Quest objective target has no template (blocker), or no spawn (minor; may be summoned) | blocker / minor |
+| C-03 | Quest chain broken: prerequisite cycle or missing prerequisite (blocker); MinLevel above QuestLevel (minor) | blocker / minor |
+| C-04 | Required item missing (blocker), or no known loot, vendor, or quest source (minor) | blocker / minor |
+| C-05 | SmartAI row with an invalid event, action, or target type, `event_chance` above 100, or a phase mask beyond the supported bits | major |
 | C-06 | SmartAI `link` chain broken, or a phase no event can reach | major |
 | C-07 | `AIName='SmartAI'` with zero rows, or rows present without `AIName` | major |
 | C-08 | Database `ScriptName` not registered in `src/server/scripts` | blocker |
-| C-09 | Instance without a registered `InstanceScript`, or a boss without an encounter row | blocker |
-| C-10 | Spawn with unknown map, coordinates outside map bounds, duplicate guid, or spawnmask mismatch | major |
-| C-11 | Vendor or trainer flag without stock or spells, or stock and spells pointing at missing entries | major |
-| C-12 | Loot, conditions, or other cross-references pointing at missing rows | major |
+| C-09 | Instance without a registered `InstanceScript` | blocker |
+| C-10 | Spawn of a missing template (blocker); `spawnMask` of 0 (major) | blocker / major |
+| C-11 | Vendor sells a missing item (blocker); flag, stock, or trainer spell mismatch (major) | blocker / major |
+| C-12 | Loot referencing a missing item (blocker) or a missing reference loot table (major) | blocker / major |
+
+v1 limits: map-bounds validation is skipped because `map_dbc` is empty; trainer spells are checked
+against `Spell.dbc` from `DataDir`, never the `spell_dbc` override table; conditions are not audited
+yet.
 
 Severity meaning:
 
@@ -119,20 +123,21 @@ Severity meaning:
 
 - Markdown for humans, JSON for the tool and CI.
 - Each finding carries: check id, severity, entity kind, entity id, location, and one line of cause.
-- The report is ordered by severity, then entity id, so two runs diff cleanly.
+- The findings are ordered by severity, then entity id, so their order is stable across runs.
 - A clean run prints zero findings and exits zero. Any unwaived blocker exits non-zero.
 
 **Waivers**
 
 - Tracked file `tools/dev/content-audit-waivers.json`.
-- Each waiver carries the check id, entity id, reason, and the person who accepted it.
+- Each waiver carries the check id, entity id, a non-empty reason, and the person who accepted it.
+- Duplicate waivers for the same finding are rejected.
 - A waiver for a removed entity is itself reported, so the file cannot rot silently.
 
 **Coverage metric**
 
-- Coverage is the share of quests in a level band that have a spawned starter and resolvable
-  objectives, divided by the quests defined for that band.
-- Reported per band (1-20, 21-40, 41-60, 61-70, 71-80) and overall.
+- Coverage is the share of quests in a level band that have a starter row and all objectives
+  resolvable from database data, divided by the quests defined for that band.
+- Reported per band (1-20, 21-40, 41-60, 61-70, 71-80, 81-255) and overall.
 - The number is published. It is the QA scoreboard, not an internal vanity metric.
 
 ## Errors and edge cases

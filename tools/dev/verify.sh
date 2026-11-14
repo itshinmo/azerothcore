@@ -16,6 +16,11 @@ run_docs() {
     python3 "$ROOT/tools/dev/command-index.py" --check
 }
 
+run_tools() {
+    printf '\n== tools ==\n'
+    python3 -m unittest discover -s "$ROOT/tools/dev/tests"
+}
+
 run_sql() {
     printf '\n== sql ==\n'
     python3 "$ROOT/apps/codestyle/codestyle-sql.py"
@@ -179,17 +184,19 @@ run_smoke() {
 
 case "${1:-}" in
     docs) run_docs ;;
+    tools) run_tools ;;
     sql) run_sql ;;
     cpp) run_cpp ;;
     smoke) run_smoke ;;
     full)
         run_docs
+        run_tools
         run_cpp
         run_sql
         run_smoke
         ;;
     *)
-        printf 'usage: %s {docs|sql|cpp|smoke|full}\n' "$0" >&2
+        printf 'usage: %s {docs|tools|sql|cpp|smoke|full}\n' "$0" >&2
         exit 2
         ;;
 esac

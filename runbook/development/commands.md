@@ -24,7 +24,9 @@ Each command has a one-line purpose so a human can choose the right one without 
 | `make build` | Configures if needed, builds, and installs into `env/dist`. |
 | `make install` | Alias of `make build`: builds and installs into `env/dist`. |
 | `make test` | Configures `build-verify`, builds it, runs the unit tests. |
+| `make test-tools` | Runs the Python tool unit tests (`tools/dev/tests`). |
 | `make command-index` | Regenerates the GM command index from `cs_*.cpp`. |
+| `make content-audit` | Read-only content audit of the world database; see [content-audit.md](../operation/content-audit.md). |
 | `make verify-docs` | Checks knowledge-layer Markdown links and the generated command index. |
 | `make verify-sql` | Runs the SQL linter; applies pending/custom SQL to the test realm when configured. |
 | `make verify-cpp` | C++ codestyle, cppcheck, `-Werror` build, unit tests. |

@@ -30,8 +30,9 @@ The contract is [specs/testing-and-release.md](../../specs/testing-and-release.m
 - `cppcheck --force --inline-suppr --suppressions-list=./.suppress.cppcheck src/`
 - Build with `-Werror`.
 - `make verify-docs` for markdown links, structure, and the generated command index.
-- Content audit (planned): checks C-01 to C-12, run before a release and after any incoming data
-  merge. It gates T1 for content data, not the default local loop.
+- Content audit: `make content-audit`, read-only, contract in
+  [specs/content-pipeline.md](../../specs/content-pipeline.md#verification), procedure in
+  [runbook/operation/content-audit.md](../../runbook/operation/content-audit.md).
 
 ## Test realm
 

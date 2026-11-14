@@ -10,14 +10,16 @@ ZLIB_FLAG := $(if $(MACOS_ZLIB),-DMYSQL_EXTRA_LIBRARIES=$(MACOS_ZLIB),)
 MACOS_READLINE := $(shell brew --prefix readline 2>/dev/null)
 READLINE_FLAG := $(if $(MACOS_READLINE),-DREADLINE_INCLUDE_DIR=$(MACOS_READLINE)/include -DREADLINE_LIBRARY=$(MACOS_READLINE)/lib/libreadline.dylib,)
 
-.PHONY: help doctor configure configure-verify build install test command-index verify-docs verify-sql verify-cpp verify-smoke verify-full start stop restart status logs console backup clean
+.PHONY: help doctor configure configure-verify build install test test-tools command-index content-audit verify-docs verify-sql verify-cpp verify-smoke verify-full start stop restart status logs console backup clean
 
 help:
 	@printf '%s\n' \
 	  'make doctor           check environment' \
 	  'make build            configure if needed, build, install' \
 	  'make test             build the test target and run unit tests' \
+	  'make test-tools       run the Python tool unit tests' \
 	  'make command-index    regenerate the GM command index' \
+	  'make content-audit    read-only content audit of the world database' \
 	  'make verify-docs      markdown link check and command index check' \
 	  'make verify-sql       SQL lint; test-realm apply when configured' \
 	  'make verify-cpp       C++ lint, -Werror build, unit tests' \
@@ -64,8 +66,14 @@ test:
 	cmake --build $(VERIFY_BUILD) -j$(JOBS)
 	./$(VERIFY_BUILD)/src/test/unit_tests
 
+test-tools:
+	@bash tools/dev/verify.sh tools
+
 command-index:
 	@python3 tools/dev/command-index.py
+
+content-audit:
+	@python3 tools/dev/content-audit.py $(ARGS)
 
 verify-docs:
 	@bash tools/dev/verify.sh docs
