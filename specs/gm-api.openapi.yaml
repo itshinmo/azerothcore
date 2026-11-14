@@ -1,0 +1,299 @@
+openapi: 3.1.0
+info:
+  title: GM API
+  version: 1.0.0
+  description: |
+    HTTP API inside `worldserver` (`modules/mod-gm-api`). The browser never calls it: only the
+    admin BFF holds the HMAC secret. Read endpoints need a valid signature; write endpoints also
+    need `GmApi.AllowWrites=1`, a signed `X-GM-Actor`, an RBAC permission, and produce audit rows.
+
+    Signing: canonical string `<timestamp>\n<nonce>\n<METHOD>\n<target>`, plus `\n<actor>` when
+    `X-GM-Actor` is present. `target` includes the query string. The signature is
+    hex HMAC-SHA256 with the shared secret.
+servers:
+  - url: http://127.0.0.1:8090
+    description: Local default. Bind loopback or a private VPN address, never public.
+tags:
+  - name: read
+  - name: write
+paths:
+  /api/v1/status:
+    get:
+      tags: [read]
+      summary: Liveness check
+      parameters:
+        - $ref: "#/components/parameters/Timestamp"
+        - $ref: "#/components/parameters/Nonce"
+        - $ref: "#/components/parameters/Signature"
+      responses:
+        "200":
+          description: API is running
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Ok"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "405":
+          $ref: "#/components/responses/MethodNotAllowed"
+        "409":
+          $ref: "#/components/responses/ReplayedNonce"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+  /api/v1/audit:
+    get:
+      tags: [read]
+      summary: Recent GM audit rows, newest first
+      parameters:
+        - $ref: "#/components/parameters/Timestamp"
+        - $ref: "#/components/parameters/Nonce"
+        - $ref: "#/components/parameters/Signature"
+        - name: limit
+          in: query
+          description: Clamped to 1..200; invalid or missing values use 50.
+          schema:
+            type: integer
+            default: 50
+      responses:
+        "200":
+          description: Audit rows
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AuditEntry"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "405":
+          $ref: "#/components/responses/MethodNotAllowed"
+        "409":
+          $ref: "#/components/responses/ReplayedNonce"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+  /api/v1/players/{name}/kick:
+    post:
+      tags: [write]
+      summary: Kick an online player
+      description: Requires `RBAC_PERM_COMMAND_KICK` (510) and `GmApi.AllowWrites=1`.
+      parameters:
+        - $ref: "#/components/parameters/Name"
+        - $ref: "#/components/parameters/Timestamp"
+        - $ref: "#/components/parameters/Nonce"
+        - $ref: "#/components/parameters/Signature"
+        - $ref: "#/components/parameters/Actor"
+      responses:
+        "200":
+          $ref: "#/components/responses/Ok"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/TargetNotFound"
+        "405":
+          $ref: "#/components/responses/MethodNotAllowed"
+        "409":
+          $ref: "#/components/responses/WriteConflict"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+        "500":
+          $ref: "#/components/responses/WriteFailed"
+        "503":
+          $ref: "#/components/responses/WorldUnavailable"
+  /api/v1/players/{name}/unstuck:
+    post:
+      tags: [write]
+      summary: Teleport an online player to their homebind
+      description: Requires `RBAC_PERM_COMMAND_UNSTUCK` (534) and `GmApi.AllowWrites=1`.
+      parameters:
+        - $ref: "#/components/parameters/Name"
+        - $ref: "#/components/parameters/Timestamp"
+        - $ref: "#/components/parameters/Nonce"
+        - $ref: "#/components/parameters/Signature"
+        - $ref: "#/components/parameters/Actor"
+      responses:
+        "200":
+          $ref: "#/components/responses/Ok"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/TargetNotFound"
+        "405":
+          $ref: "#/components/responses/MethodNotAllowed"
+        "409":
+          $ref: "#/components/responses/WriteConflict"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+        "500":
+          $ref: "#/components/responses/WriteFailed"
+        "503":
+          $ref: "#/components/responses/WorldUnavailable"
+components:
+  parameters:
+    Name:
+      name: name
+      in: path
+      required: true
+      description: Character name, case-insensitive. A name that fails this pattern returns 404
+        `not_found`.
+      schema:
+        type: string
+        pattern: "^[A-Za-z0-9]{1,24}$"
+    Timestamp:
+      name: X-GM-Timestamp
+      in: header
+      required: true
+      description: Unix seconds; must be within GmApi.MaxClockSkew
+      schema:
+        type: string
+        pattern: "^[0-9]+$"
+    Nonce:
+      name: X-GM-Nonce
+      in: header
+      required: true
+      description: Random 8-128 characters, single use within GmApi.NonceTtl
+      schema:
+        type: string
+        minLength: 8
+        maxLength: 128
+    Signature:
+      name: X-GM-Signature
+      in: header
+      required: true
+      description: Hex HMAC-SHA256 of the canonical string
+      schema:
+        type: string
+        pattern: "^[0-9a-fA-F]{64}$"
+    Actor:
+      name: X-GM-Actor
+      in: header
+      required: true
+      description: Numeric game account id of the human performing the action. A missing or invalid
+        value returns 401 `actor_required` or `unauthorized`.
+      schema:
+        type: string
+        pattern: "^[1-9][0-9]{0,9}$"
+  schemas:
+    Ok:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          const: ok
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+          enum:
+            - unauthorized
+            - replayed_nonce
+            - rate_limited
+            - method_not_allowed
+            - not_found
+            - writes_disabled
+            - actor_required
+            - forbidden
+            - target_not_found
+            - cannot_target_self
+            - player_busy
+            - teleport_failed
+            - audit_failed
+            - world_unavailable
+    AuditEntry:
+      type: object
+      required: [id, realm_id, account_name, player_name, command, created_at]
+      properties:
+        id:
+          type: integer
+          description: 64-bit; above 2^53 loses precision in JavaScript clients
+        realm_id:
+          type: integer
+        account_name:
+          type: string
+        player_name:
+          type: string
+        command:
+          type: string
+        arguments:
+          type: string
+          description: Omitted when the row has no arguments
+        result:
+          type: string
+          description: Omitted when the row has no result, for example command-hook rows
+        created_at:
+          type: integer
+          description: Unix seconds; 64-bit
+  responses:
+    Ok:
+      description: Action applied
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Ok"
+    Unauthorized:
+      description: Missing or invalid signature, timestamp outside the window, unknown actor, or a
+        missing `X-GM-Actor` (`actor_required`) on a write.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    Forbidden:
+      description: Writes disabled (`writes_disabled`), actor is a player, actor lacks the required
+        permission, or the target's security is at or above the actor's.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    TargetNotFound:
+      description: 404 `not_found` when the name fails the path pattern, or `target_not_found`
+        when the character is not online.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    MethodNotAllowed:
+      description: Wrong method for this path
+      headers:
+        Allow:
+          schema:
+            type: string
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    ReplayedNonce:
+      description: Nonce was already used within its TTL
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    WriteConflict:
+      description: Actor targets themselves, or the player cannot be actioned now
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    RateLimited:
+      description: Per-source request budget exceeded
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    WriteFailed:
+      description: Audit write failed, or the game action failed
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    WorldUnavailable:
+      description: The world thread did not accept or finish the action in time
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"

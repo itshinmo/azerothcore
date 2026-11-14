@@ -82,6 +82,7 @@ Owns the GM workflow and tooling. Does not own the game commands themselves; the
 - Admin writes: ban, RBAC, server control. Human approval required. Not built.
 - Every endpoint validates input and calls game logic; no endpoint writes game tables directly. The
   module writes its own audit rows.
+- Wire contract: [gm-api.openapi.yaml](gm-api.openapi.yaml).
 - Procedure: [runbook/gm/gm-api.md](../runbook/gm/gm-api.md).
 
 ### In-game addon

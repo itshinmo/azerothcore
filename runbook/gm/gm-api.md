@@ -32,6 +32,9 @@ GmApi.AllowWrites = 0
 
 ## Endpoints
 
+Wire contract: [`specs/gm-api.openapi.yaml`](../../specs/gm-api.openapi.yaml). This table is a
+summary; the YAML is authoritative for bodies, parameters, and error codes.
+
 | Method | Target | Permission | Returns |
 |--------|--------|------------|---------|
 | GET | `/api/v1/status` | none | `{"status":"ok"}` |
@@ -126,9 +129,9 @@ Reusing the same nonce returns `409`.
 |--------|---------|
 | `401` | missing header, bad signature, timestamp outside the skew window, or unknown actor |
 | `403` | writes disabled, actor is a player account, permission denied, or target security too high |
-| `404` | unknown target, unknown player, or player offline |
+| `404` | unknown target or invalid name (`not_found`), or player offline (`target_not_found`) |
 | `405` | wrong method for a known target |
-| `409` | nonce already seen, replay conflict, self-target, or player busy (in flight or in combat) |
+| `409` | nonce already seen (replay), self-target, or player busy (in flight or in combat) |
 | `429` | more than `GmApi.RateLimit` requests per minute from one address |
 | `500` | pending audit row could not be written (action not run), or outcome row failed after it ran |
 | `503` | world thread did not process the write within 5 seconds, or is shutting down |
