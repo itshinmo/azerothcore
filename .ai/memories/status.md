@@ -1,6 +1,6 @@
 ---
 description: Current project status, last verified commit, known issues, open decisions, and next tasks. Read after overview on any task.
-last-verified: 2026-11-14 (docs check 139 files / 657 commands; tool tests 42; upstream sync build green)
+last-verified: 2026-11-14 (docs check 139 files / 657 commands; tool tests 42; fork CI green on 881b11f19)
 ---
 
 # Status
@@ -35,7 +35,7 @@ last-verified: 2026-11-14 (docs check 139 files / 657 commands; tool tests 42; u
   item 46,096 / quest 9,464 / object 21,580 / 33,318 spawn sets. Read API (`make world-api`) serves
   the artifacts on loopback; 42 tool tests.
 - Fork CI now runs tool unit tests and triggers on `local-server-setup`; SQL lint covers
-  `data/sql/custom/`. The first GitHub run is pending a push.
+  `data/sql/custom/`. First green run: run `43597124091` on `881b11f19`, 5/5 jobs, 29 minutes total.
 
 ## Next tasks
 
@@ -47,8 +47,7 @@ last-verified: 2026-11-14 (docs check 139 files / 657 commands; tool tests 42; u
    `writes_disabled`, rate limit, timeout/shutdown) and add the remaining audited writes.
 6. Audit v2: map-bounds validation, conditions audit, C-06 phase reachability.
 7. Triage the 1,972 minors when content work starts; they are cosmetic or expected data.
-8. Confirm the first fork CI run after a push.
-9. Shop and new content only after their decisions.
+8. Shop and new content only after their decisions.
 
 No playerbots work is planned.
 
@@ -86,9 +85,7 @@ No playerbots work is planned.
 
 ## Known issues
 
-1. **Fork CI has not been observed on GitHub.** It now triggers on pushes to `local-server-setup`
-   as well as `master`; the first run is pending a push.
-2. **GM API write coverage is partial.** `kick` and `unstuck` are audited writes. Item grant, mail,
+1. **GM API write coverage is partial.** `kick` and `unstuck` are audited writes. Item grant, mail,
    ban, RBAC, and server control are not built. Manual branch coverage is partial: successful
    kick/unstuck, `cannot_target_self`, `forbidden_target_security`, `target_not_found`, and the
    401/404/405/409 paths are tested. `player_busy`, `teleport_failed`, `audit_failed`,
@@ -96,12 +93,14 @@ No playerbots work is planned.
    HMAC secret for transport; `X-GM-Actor` identifies the human but the BFF remains the only holder of
    the secret. Audit query uses the shared sync DB pool; audit search is newest-N only; structured
    request logging is planned.
-3. **cppcheck suppressions target 2.22.** Local Homebrew has 2.22.0. The GitHub runner may package a
-   different version; quote `cppcheck --version` in any CI failure before changing a suppression.
-4. **DBeaver production access is read-only via SSH tunnel.** No production host chosen yet.
-5. **CI build pins the distribution CMake 3.28.** The GitHub runner's CMake 3.31 has no FindBoost
-   module (CMP0167) and fails to resolve Boost 1.83 components. Revisit when the Boost lookup is
-   modernized; local macOS builds use CMake 4.4.5 and work.
+2. **cppcheck suppressions target 2.22.** Local Homebrew has 2.22.0; the runner's packaged version is
+   unrecorded. A green cpp-lint job does not prove the version, because unmatched suppressions are not
+   errors. Quote `cppcheck --version` in any CI failure before changing a suppression.
+3. **DBeaver production access is read-only via SSH tunnel.** No production host chosen yet.
+4. **CI build pins the distribution CMake 3.28 and a system Boost_DIR.** The runner's CMake 3.31 has
+   no FindBoost module, and the image's automatic Boost search points at the wrong tree. Configure
+   now resolves `/usr/lib/*/cmake/Boost-*/BoostConfig.cmake` explicitly. Revisit when the Boost and
+   CMake toolchains on the runner are modernized.
 
 ## Open decisions
 
