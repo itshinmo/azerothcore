@@ -80,14 +80,17 @@ jobs:
             build-essential cmake libboost-all-dev libssl-dev libreadline-dev \
             default-libmysqlclient-dev mysql-client libbz2-dev zlib1g-dev
       - name: Configure
+        # Use the distribution CMake 3.28: the runner's preinstalled 3.31 has no FindBoost
+        # module (CMP0167) and fails to resolve Boost components. Keep every cmake call here.
         run: |
-          cmake -S . -B build \
+          /usr/bin/cmake --version
+          /usr/bin/cmake -S . -B build \
             -DCMAKE_BUILD_TYPE=RelWithDebInfo \
             -DSCRIPTS=static -DMODULES=static \
             -DBUILD_TESTING=ON \
             -DCMAKE_CXX_FLAGS=-Werror \
             -DCMAKE_TRY_COMPILE_TARGET_TYPE=STATIC_LIBRARY
       - name: Build
-        run: cmake --build build -j"$(nproc)"
+        run: /usr/bin/cmake --build build -j"$(nproc)"
       - name: Unit tests
         run: ./build/src/test/unit_tests

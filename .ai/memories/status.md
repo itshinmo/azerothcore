@@ -99,6 +99,9 @@ No playerbots work is planned.
 3. **cppcheck suppressions target 2.22.** Local Homebrew has 2.22.0. The GitHub runner may package a
    different version; quote `cppcheck --version` in any CI failure before changing a suppression.
 4. **DBeaver production access is read-only via SSH tunnel.** No production host chosen yet.
+5. **CI build pins the distribution CMake 3.28.** The GitHub runner's CMake 3.31 has no FindBoost
+   module (CMP0167) and fails to resolve Boost 1.83 components. Revisit when the Boost lookup is
+   modernized; local macOS builds use CMake 4.4.5 and work.
 
 ## Open decisions
 
