@@ -47,8 +47,10 @@ The tool reads credentials from the config. Override with `CONTENT_AUDIT_DB_HOST
 3. Read the report. Severity:
 
    - **blocker** — content cannot be reached or runs with a missing script or item.
-   - **major** — content is playable but visibly wrong.
-   - **minor** — data hygiene, or a static check that may not reflect runtime behaviour.
+   - **major** — content is playable but visibly wrong, or a data mismatch that needs a content
+     decision.
+   - **minor** — data hygiene or cosmetic: flags without matching data, static checks that may not
+     reflect runtime behaviour.
 
    Coverage is a static lower bound: a quest counts as covered only when it has a starter row and
    every objective resolves from database data. Summoned and scripted targets lower the number

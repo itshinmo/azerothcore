@@ -509,8 +509,11 @@ def check_c10(data: dict) -> list[Finding]:
 
 def check_c11(data: dict) -> list[Finding]:
     findings = []
+    # A flag without stock or assignment is cosmetic: the core opens an empty vendor window or
+    # nothing for a trainer. Editing NPC flags without sniffs risks breaking scripted vendors, so
+    # it is data hygiene, not breakage.
     for entry in sorted(data["vendor_flag"] - data["vendor_rows"]):
-        findings.append(Finding("C-11", "major", "creature", entry,
+        findings.append(Finding("C-11", "minor", "creature", entry,
                                 "creature_template.npcflag",
                                 "vendor flag set but npc_vendor has no rows"))
     for entry, item in data["vendor_items"]:
@@ -521,7 +524,7 @@ def check_c11(data: dict) -> list[Finding]:
     trainer_ready = {creature for creature, trainer in data["creature_trainer"].items()
                      if trainer in data["trainer_rows"]}
     for entry in sorted(data["trainer_flag"] - trainer_ready):
-        findings.append(Finding("C-11", "major", "creature", entry,
+        findings.append(Finding("C-11", "minor", "creature", entry,
                                 "creature_template.npcflag",
                                 "trainer flag set but no creature_default_trainer or trainer_spell rows"))
     for trainer, spell in data["trainer_spells"]:

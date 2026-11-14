@@ -106,7 +106,7 @@ share one query layer; see [world-data.md](world-data.md).
 | C-08 | Database `ScriptName` not registered in `src/server/scripts` | blocker |
 | C-09 | Instance without a registered `InstanceScript` | blocker |
 | C-10 | Spawn of a missing template (blocker); `spawnMask` of 0 (major) | blocker / major |
-| C-11 | Vendor sells a missing item (blocker); flag, stock, or trainer spell mismatch (major) | blocker / major |
+| C-11 | Vendor/trainer flag without stock or assignment (minor; cosmetic, needs content review); vendor sells a missing item (blocker); trainer spell missing (major) | blocker / major / minor |
 | C-12 | Loot referencing a missing item (blocker) or a missing reference loot table (major) | blocker / major |
 
 v1 limits: map-bounds validation is skipped because `map_dbc` is empty; trainer spells are checked

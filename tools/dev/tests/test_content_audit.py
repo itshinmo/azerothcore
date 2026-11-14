@@ -102,11 +102,14 @@ class CheckC11Test(unittest.TestCase):
             "trainer_spells": [(2, 777)], "spell_entries": {1},
             "item_entries": {1},
         }
-        causes = " ".join(finding.cause for finding in audit.check_c11(data))
-        self.assertIn("vendor flag set but npc_vendor has no rows", causes)
-        self.assertIn("vendor sells missing item_template", causes)
-        self.assertIn("trainer flag set but no creature_default_trainer", causes)
-        self.assertIn("trainer teaches missing Spell.dbc", causes)
+        findings = audit.check_c11(data)
+        by_cause = {finding.cause: finding.severity for finding in findings}
+        self.assertEqual(by_cause["vendor flag set but npc_vendor has no rows"], "minor")
+        self.assertEqual(by_cause["vendor sells missing item_template entry"], "blocker")
+        self.assertEqual(
+            by_cause["trainer flag set but no creature_default_trainer or trainer_spell rows"],
+            "minor")
+        self.assertEqual(by_cause["trainer teaches missing Spell.dbc spell 777"], "major")
 
 
 class DatabaseNameTest(unittest.TestCase):

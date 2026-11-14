@@ -31,9 +31,8 @@ last-verified: 2026-11-14 (docs check 137 files / 657 commands; upstream sync bu
 
 ## Next tasks
 
-1. Triage the remaining 153 majors: 135 C-11, 9 C-07, 5 C-10, 3 C-06, 1 C-05. Waivers only for
-   known data, with a reason and an owner. Baseline:
-   [runbook/audits/2026-11-14-content-audit.md](../../runbook/audits/2026-11-14-content-audit.md).
+1. Triage of the audit majors, part 1, is done: 0 blocker, 0 major, 1,972 minor, 1 waiver. Next content
+   work is the export pipeline; the minors stay visible in every report.
 2. World data export artifacts per `specs/world-data.md`.
 3. Public read API and static spawn map page. The live spawn overlay is deferred until a secretless
    public read surface is designed.
@@ -43,9 +42,9 @@ No playerbots work is planned.
 
 ## Built and verified
 
-- Content audit v1 (`make content-audit`, read-only): baseline 1,993 findings against `acore_world`;
-  after the first blocker fix, 0 blockers, 153 major, 1,837 minor; coverage 78.89% overall; 20 unit
-  tests pass. Procedure: [runbook/operation/content-audit.md](../../runbook/operation/content-audit.md).
+- Content audit v1 (`make content-audit`, read-only): after part 1 triage, 0 blocker, 0 major,
+  1,972 minor; coverage 78.89% overall; 20 unit tests pass. Procedure:
+  [runbook/operation/content-audit.md](../../runbook/operation/content-audit.md).
 - Content audit blocker fixed: three Baron Longshore spawns carried a numeric `ScriptName`.
   Evidence, fix, and verification: [runbook/audits/2026-11-14-content-audit.md](../../runbook/audits/2026-11-14-content-audit.md).
 - Upstream sync 2026-11-14: `upstream` remote added (official AzerothCore); `master`
