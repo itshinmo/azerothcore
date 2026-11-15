@@ -24,6 +24,7 @@ Owns access control and secret handling. Does not own game balance or individual
 - A secret in a commit, log, chat, or error message.
 - A player or compromised account reaching a GM path.
 - A bad write corrupting player data.
+- A modified client that changes local collision, animation, or data files.
 
 ### Accounts and RBAC
 
@@ -31,6 +32,26 @@ Owns access control and secret handling. Does not own game balance or individual
 - Roles are least-privilege permission sets, not broad `gmlevel` grants.
 - High/critical actions require human approval and an audit entry.
 - Production GM accounts are separate from test accounts.
+
+### Client trust and anti-cheat
+
+- The authserver authenticates the account and accepts only a configured client build (12340). By
+  default it does not verify the executable checksum. `StrictVersionCheck=1` adds a SHA1 executable
+  proof using the hashes in `build_info`. MPQ files are not hashed at login.
+- Warden is a runtime anti-cheat: memory, Lua, driver/module, and the configured MPQ entries from
+  `warden_checks`. It is not a full client file-integrity scan. It only covers `Win` clients:
+  `WorldSession::InitWarden` creates `WardenWin` for `Win` and leaves the `OSX` branch disabled
+  because it crashed the client, so a macOS client gets no checks even with `Warden.Enabled=1`.
+  Warden is enabled on local and production configurations and disabled on the e2e test realm. When
+  enabled, the worldserver also rejects an account whose stored OS is not `Win` or `OSX` before the
+  session starts (`network`: invalid client OS).
+- The client is authoritative for rendering, local collision, and animation. The server validates
+  movement packets and some limits, and applies world state such as underwater and breath from the
+  map and VMap liquid. A modified client can skip the swim animation or walk underwater; the server
+  does not force the animation.
+- Server-side water movement validation (swim flag vs `GetLiquidData()` status, swim-speed
+  enforcement) is not implemented. Adding it is a hardening task, not current behavior.
+- The test realm is not an anti-cheat environment. Do not judge cheat detection there.
 
 ### Database users
 
@@ -112,5 +133,7 @@ Owns access control and secret handling. Does not own game balance or individual
 - [specs/database.md](database.md)
 - [specs/gm-tools.md](gm-tools.md)
 - [.ai/memories/security.md](../.ai/memories/security.md)
+- [runbook/troubleshooting/stormwind-water.md](../runbook/troubleshooting/stormwind-water.md)
+- [runbook/troubleshooting/test-realm-stops.md](../runbook/troubleshooting/test-realm-stops.md)
 - [runbook/database/dbeaver.md](../runbook/database/dbeaver.md)
 - [runbook/gm/rbac-roles.md](../runbook/gm/rbac-roles.md)

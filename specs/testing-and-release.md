@@ -40,6 +40,7 @@ feature spec.
 
 - Separate databases or a documented reset.
 - `Warden.Enabled=0` for AzerothGhost.
+- Start and stop explicitly; the realm is not tied to a client session.
 - Dedicated GM accounts per role.
 - Unique character prefixes; cleanup after each e2e test.
 - Never point at production.

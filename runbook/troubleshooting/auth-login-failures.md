@@ -40,8 +40,12 @@ session.
 
 6. **Build info:** `acore_auth.build_info` must contain the client build.
 
-7. **Warden:** on a test realm with AzerothGhost, `Warden.Enabled=0`. On production, keep it on. A
-   Warden OS mismatch can reject a valid login.
+7. **Warden, OS, and client build:** auth accepts only the configured client build (12340); by
+   default it does not verify the executable checksum (`StrictVersionCheck=1` adds a SHA1 proof from
+   `build_info`), and MPQs are not hashed at login. With Warden enabled, the worldserver rejects an
+   account whose stored OS is not `Win` or `OSX` before the session starts (`network`: invalid client
+   OS). Test realm: `Warden.Enabled=0`; production: keep it on. Contract:
+   [specs/security.md](../../specs/security.md).
 
 ## Common causes
 
@@ -53,7 +57,7 @@ session.
 | "Account banned" | active ban |
 | "Invalid client build" | `gamebuild`/`build_info` mismatch |
 | Login then disconnect | worldserver down or realm address wrong |
-| Warden rejection | client OS mismatch; test realm only |
+| Warden rejection | invalid client OS or failed runtime check; see the `network`/`warden` logs |
 
 ## Verification
 

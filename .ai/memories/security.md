@@ -1,6 +1,6 @@
 ---
 description: RBAC, database users, DBeaver access, GM API, secrets, and audit. Read before adding a tool or permission.
-last-verified: 2026-11-12
+last-verified: 2026-11-14
 ---
 
 # Security
@@ -14,6 +14,18 @@ The contract is [specs/security.md](../../specs/security.md).
 - Production writes are human-only.
 - Every privileged GM or API action is auditable. Direct SQL edits are not audited by the game.
 - Local-only by default; remote access goes through a VPN or SSH tunnel.
+
+## Client trust
+
+- Auth checks the account and accepted client build. `StrictVersionCheck=1` adds an executable SHA1
+  check; MPQs are not checked at login.
+- Warden is runtime anti-cheat (memory, Lua, driver/module, configured MPQ checks), not a full file
+  scan. It is off on the e2e test realm. With Warden on, a non-`Win`/`OSX` account OS is rejected
+  before the session starts.
+- Client collision and animation are not server-authoritative. A modified client can skip the swim
+  animation; the server still applies underwater and breath state from map/VMap liquid. Water
+  movement validation is not implemented. Diagnosis:
+  [stormwind-water.md](../../runbook/troubleshooting/stormwind-water.md).
 
 ## Database users
 

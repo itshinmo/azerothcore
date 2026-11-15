@@ -123,6 +123,13 @@ Put local values in `tools/dev/config.env` (ignored); the template is
 - Keep test accounts separate from player accounts.
 - Delete test characters after a run if they hold unique names.
 
+## Known lifecycle issue
+
+`start` launches both servers in detached `screen` sessions and does not stop them on client
+logout. If `make test-realm CMD=status` reports both stopped after the client exits, capture
+`screen -ls`, `env/test/logs/<name>.supervisor.log`, and the logs before restarting; see
+[test-realm-stops.md](../troubleshooting/test-realm-stops.md).
+
 ## Verification
 
 - The test realm appears in the realm list.
@@ -136,6 +143,8 @@ Put local values in `tools/dev/config.env` (ignored); the template is
   realm as offline until authserver refreshes its cached list (`RealmsStateUpdateDelay`, default 20s).
 - A test GM account logs in.
 - `Warden.Enabled=0` is confirmed.
+- After the client exits, `make test-realm CMD=status` still reports both servers running. If not,
+  see [test-realm-stops.md](../troubleshooting/test-realm-stops.md).
 - The production databases have no new rows from the test run.
 
 ## References
@@ -143,3 +152,4 @@ Put local values in `tools/dev/config.env` (ignored); the template is
 - [specs/testing-and-release.md](../../specs/testing-and-release.md)
 - [e2e/README.md](../../e2e/README.md)
 - [.agents/docs/e2e-policy.md](../../.agents/docs/e2e-policy.md)
+- [test-realm-stops.md](../troubleshooting/test-realm-stops.md)

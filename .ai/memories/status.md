@@ -1,6 +1,6 @@
 ---
 description: Current project status, last verified commit, known issues, open decisions, and next tasks. Read after overview on any task.
-last-verified: 2026-11-14 (docs check 139 files / 657 commands; tool tests 43; fork CI green on 881b11f19)
+last-verified: 2026-11-15 (docs 141/657; canal swim measured; test realm survived a client session)
 ---
 
 # Status
@@ -40,6 +40,40 @@ last-verified: 2026-11-14 (docs check 139 files / 657 commands; tool tests 43; f
   the rows the server loads; 5,931 rows, 0 findings.
 - Fork CI now runs tool unit tests and triggers on `local-server-setup`; SQL lint covers
   `data/sql/custom/`. First green run: run `43597124091` on `881b11f19`, 5/5 jobs, 29 minutes total.
+- Test realm supervisor logging: `tools/dev/test-realm.sh` now wraps each server and appends
+  `start`, `signal=`, and `exit=` lines to `env/test/logs/<name>.supervisor.log`. A normal `stop`
+  logs `exit=0` for both, so a silent death is now visible.
+
+## Investigated 2026-11-14
+
+- Stormwind canal swim: server VMap liquid reports type 13, level 95.47, status 8; the character is
+  on the canal floor 9.58 yards below the surface. GM mode was off. Refined on 2026-11-15 below: the
+  client's swim state fails, not only the animation. See
+  [runbook/troubleshooting/stormwind-water.md](../../runbook/troubleshooting/stormwind-water.md).
+- Test realm lifecycle: after the client exited, both test servers were stopped and the `screen`
+  sessions were dead. The start script does not stop on logout; root cause unconfirmed. See
+  [runbook/troubleshooting/test-realm-stops.md](../../runbook/troubleshooting/test-realm-stops.md).
+- Client trust: auth checks the client build; `StrictVersionCheck=1` adds an executable SHA1 check;
+  MPQs are not checked at login. Warden is runtime anti-cheat with configured checks and is off on
+  the test realm. `specs/security.md` updated.
+
+## Investigated 2026-11-15
+
+- Stormwind canal swim, measured on a clean 3.3.5a build 12340 client with god mode on: server
+  reports liquid entry 13, surface `95.474075`, floor `85.891525`, status 8 (under water); the
+  client reports `IsSwimming()` nil on the floor, sinks straight through when dropped 1 yd under the
+  surface, and its camera renders underwater fog. Terrain water (Eastern Strand) swims normally in
+  the same client and session. The HD patch set is exonerated; the fault is client-side WMO liquid
+  handling. Recipe and data: [stormwind-water.md](../../runbook/troubleshooting/stormwind-water.md).
+- Test realm death did not reproduce: one full client session (login 14:19:58, character list
+  14:52:51, quit) left both servers running for 40+ minutes, and `wineserver -k` on the CrossOver
+  bottle did not stop them either. WoWSilicon's force quit only SIGKILLs Wine-matching PIDs; that
+  predicate matched zero processes and none of the server PIDs. The 2026-11-14 death is still
+  unexplained. Instrumentation, code reference, and log format:
+  [test-realm-stops.md](../../runbook/troubleshooting/test-realm-stops.md).
+- `PacketLogFile` writes nothing useful alone: the file is created on the first packet, but packets
+  are only logged for sessions that enabled `.packetlog on`. Use the client's `IsSwimming()` and
+  `.gps` instead.
 
 ## Next tasks
 
@@ -55,6 +89,14 @@ last-verified: 2026-11-14 (docs check 139 files / 657 commands; tool tests 43; f
    reachability.
 7. Triage the 1,972 minors when content work starts; they are cosmetic or expected data.
 8. Shop and new content only after their decisions.
+9. Canal swim: extract `DBFilesClient/LiquidType.dbc` and the Stormwind WMO liquid data from the
+   played client's MPQs and compare with `DataDir`. Then repeat the probe in a second WMO water body
+   to show whether all WMO liquid fails or only Stormwind.
+10. Test realm death: keep the supervisor log; capture it on the next occurrence, with `screen -ls`
+   and the unified log, before restarting.
+11. Add server-side water movement validation if the cheat risk is accepted: swim flag vs
+    `GetLiquidData()` status, swim-speed enforcement, mismatch logging. Not implemented, and it does
+    not fix the client.
 
 No playerbots work is planned.
 
@@ -109,6 +151,18 @@ No playerbots work is planned.
    no FindBoost module, and the image's automatic Boost search points at the wrong tree. Configure
    now resolves `/usr/lib/*/cmake/Boost-*/BoostConfig.cmake` explicitly. Revisit when the Boost and
    CMake toolchains on the runner are modernized.
+5. **Stormwind canal swim is client-side WMO liquid.** Measured 2026-11-15 on a clean client:
+   server reports water entry 13 at level `95.474075` with status 8, the client reports
+   `IsSwimming()` nil, sinks to the floor, and refuses to rise, while terrain water swims in the same
+   session. The server cannot force swim state. Next step is a client MPQ check of
+   `LiquidType.dbc` and the WMO liquid, plus a second WMO water body. See
+   [stormwind-water.md](../../runbook/troubleshooting/stormwind-water.md).
+6. **Test realm death is unreproduced and instrumented.** The 2026-11-14 double death left no
+   shutdown log, no crash report, and no `.dmp`. On 2026-11-15 the realm survived a full client
+   session and `wineserver -k`; WoWSilicon's force quit only targets Wine-matching PIDs, which
+   excludes the servers. `tools/dev/test-realm.sh` now writes
+   `env/test/logs/<name>.supervisor.log` with `start`, `signal=`, and `exit=` lines to name the
+   signal on the next occurrence. See [test-realm-stops.md](../../runbook/troubleshooting/test-realm-stops.md).
 
 ## Open decisions
 

@@ -38,6 +38,8 @@ Owns the process and configuration contract. Does not own gameplay content or da
 
 - Local: native macOS build in `build/`, install prefix `env/dist/`.
 - Test realm: separate databases or a documented reset; `Warden.Enabled=0` for AzerothGhost e2e.
+- Test realm servers run in detached `screen` sessions. The start script does not tie them to a
+  client session. Start and stop explicitly with `make test-realm CMD=start|stop`.
 - Production: Ubuntu 24.04 LTS, native binaries, MySQL on the same host, systemd, firewall.
 
 ### Lifecycle
@@ -65,7 +67,9 @@ version-mismatch flag; the authserver refuses to start while every realm has fla
 ## Security
 
 - No credentials in the repository.
-- Warden on in production; off only on the test realm.
+- Warden is enabled on local and production configurations and disabled on the e2e test realm. It
+  is runtime anti-cheat, not a full client file-integrity scan. Client-trust details, including the
+  OS and client build checks: [security.md](security.md).
 - SOAP and RA disabled unless explicitly needed and protected.
 - GM accounts are named and least-privilege.
 
@@ -82,3 +86,5 @@ version-mismatch flag; the authserver refuses to start while every realm has fla
 - [runbook/development/build-and-install.md](../runbook/development/build-and-install.md)
 - [runbook/operation/start-stop.md](../runbook/operation/start-stop.md)
 - [runbook/operation/health-check.md](../runbook/operation/health-check.md)
+- [runbook/troubleshooting/stormwind-water.md](../runbook/troubleshooting/stormwind-water.md)
+- [runbook/troubleshooting/test-realm-stops.md](../runbook/troubleshooting/test-realm-stops.md)

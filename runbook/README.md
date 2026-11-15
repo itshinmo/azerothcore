@@ -63,6 +63,10 @@ I do it"; behavior lives in `specs/`.
 - [auth-login-failures.md](troubleshooting/auth-login-failures.md)
 - [map-data-missing.md](troubleshooting/map-data-missing.md)
 - [performance.md](troubleshooting/performance.md)
+- [stormwind-water.md](troubleshooting/stormwind-water.md) — Stormwind canal water and swim
+  animation diagnosis.
+- [test-realm-stops.md](troubleshooting/test-realm-stops.md) — test realm stops after the client
+  exits.
 
 ### Audits
 
