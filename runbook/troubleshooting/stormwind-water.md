@@ -5,9 +5,27 @@
 Jumping into a Stormwind canal makes the character fall to the canal floor. The client shows
 underwater fog and the Breath bar, but the character does not swim and cannot rise. The water
 surface is visible above. Reproduced 2026-11-14 on the patched client and 2026-11-15 on a clean
-3.3.5a build 12340 client.
+3.3.5a build 12340 client on a stock client data set.
 
-## Measured 2026-11-15 (clean client, no HD patches)
+## Root cause and fix (2026-11-15)
+
+The WoWSilicon mod `mods/libSiliconPatch.dll` (an x87 to SSE2 function rewrite) breaks the client's
+WMO liquid lookup. Disabling it restores swimming with no server change:
+
+1. Comment `mods/libSiliconPatch.dll` out in `dlls.txt`.
+2. Relaunch the client and re-enter the canal.
+
+Verified: same client and server, mod off swims, mod on sinks. Players with identical client files
+but without `libSiliconPatch` swim normally. Reported upstream as
+[WoWSilicon#67](https://github.com/WoWSilicon/WoWSilicon/issues/67); the DLL bundled with WoWSilicon
+2.5.3 and 3.2.2 both reproduce.
+
+The client data is not involved: all 246 DBCs and all 5744 map files extracted from the played
+client are byte-identical to the server's `DataDir`. The server is not involved either: its VMap
+reports water entry 13 at `95.474075` over a floor at `85.891525`, and the client renders that
+water.
+
+## Measured 2026-11-15 (stock client data, libSiliconPatch enabled)
 
 Character `Admin`, map 0, Stormwind canals. GM mode was off; `.cheat god` was on to survive
 drowning.
@@ -32,8 +50,8 @@ Liquid level: 95.474075, ground: 85.891525, type: 13, flags 1, status: 8
 
 Conclusion: this client renders the canal water and the server reports deep water, but the client
 never enters swim state in WMO liquid entry 13. Terrain liquid works in the same client and session.
-Movement keys, chat, and the Wine wrapper work. Swim state is client-only; the server only computes
-breath, which is why the Breath bar appears while the character sinks.
+Movement keys and chat work. Swim state is client-only; the server only computes breath, which is
+why the Breath bar appears while the character sinks. The cause is `libSiliconPatch`, see above.
 
 ## First checks
 
@@ -122,9 +140,15 @@ value produces an empty file.
   liquid to "fix" the server. The server's VMap liquid already reports type 13, level 95.47, and
   status 8 at the spot.
 - GM mode was ruled out, and so was the HD patch set: a clean client reproduces.
-- The remaining cause is client-side WMO liquid handling. Either the client's data differs from the
-  server's extracted data at that spot, or the client does not apply swim physics for that liquid
-  entry. The second needs a second WMO water body and a client MPQ check to separate.
+- The cause is the `libSiliconPatch` x87 rewrite, not the data and not the server. Disabling the mod
+  restores swimming, and enabling it brings the sink back, on the same client and server.
+
+## Clean client rule
+
+Behaviour that lives in the client (swimming, collision, animation, spell visuals) is verified on a
+client without performance DLL mods. `libSiliconPatch` altered swim behaviour, so the patched play
+client is not authoritative. Keep a second client copy for verification, for example
+`~/Games/wotlk-test` with `mods/libSiliconPatch.dll` commented out in `dlls.txt`.
 
 ## Security and cheating
 
@@ -144,12 +168,12 @@ value produces an empty file.
 
 ## Next steps
 
-1. Prove or disprove the client-data theory: extract `DBFilesClient/LiquidType.dbc` and the
-   Stormwind WMO liquid data from the played client's MPQs, then compare with the server's
-   extracted copies in `DataDir`. Entry 13 in the server's `LiquidType.dbc` is water (flags 15,
-   type 0); the client's copy is unchecked.
-2. Repeat the probe in a second WMO water body. If that also fails, the client does not swim in WMO
-   liquid at all.
+1. Keep `libSiliconPatch` off until a fixed DLL ships, and re-test after each WoWSilicon update
+   against [issue #67](https://github.com/WoWSilicon/WoWSilicon/issues/67). Keep a second client copy
+   without the mod for behaviour checks, for example `~/Games/wotlk-test` with the line commented out
+   in `dlls.txt`.
+2. The data check is done: the played client's 246 DBCs and 5744 map files are byte-identical to
+   `DataDir`. A vmap comparison is order-sensitive and was inconclusive; it is not needed now.
 3. Separately, decide whether to add server-side water movement validation:
    - validate `MOVEMENTFLAG_SWIMMING` against `GetLiquidData()` status at the reported position;
    - enforce swim speed when the server liquid status is in or under water;
@@ -162,3 +186,4 @@ value produces an empty file.
 - [specs/server.md](../../specs/server.md)
 - [map-data-missing.md](map-data-missing.md)
 - [runbook/gm/command-index.md](../gm/command-index.md)
+- [WoWSilicon issue #67](https://github.com/WoWSilicon/WoWSilicon/issues/67)

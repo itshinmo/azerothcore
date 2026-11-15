@@ -45,6 +45,13 @@ feature spec.
 - Unique character prefixes; cleanup after each e2e test.
 - Never point at production.
 
+### Client-side behaviour
+
+- Behaviour that lives in the client (swimming, collision, animation, spell visuals) is verified on a
+  client without performance DLL mods. `libSiliconPatch` changed swim behaviour while data and server
+  were identical, so a patched play client is not authoritative. Keep a second client copy for these
+  checks; see [stormwind-water.md](../runbook/troubleshooting/stormwind-water.md).
+
 ### Fork CI
 
 - Built in phase 1: `.github/workflows/fork-ci.yml` runs on this fork. Pushes to `master` and

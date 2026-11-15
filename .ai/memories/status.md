@@ -63,8 +63,9 @@ last-verified: 2026-11-15 (docs 141/657; canal swim measured; test realm survive
   reports liquid entry 13, surface `95.474075`, floor `85.891525`, status 8 (under water); the
   client reports `IsSwimming()` nil on the floor, sinks straight through when dropped 1 yd under the
   surface, and its camera renders underwater fog. Terrain water (Eastern Strand) swims normally in
-  the same client and session. The HD patch set is exonerated; the fault is client-side WMO liquid
-  handling. Recipe and data: [stormwind-water.md](../../runbook/troubleshooting/stormwind-water.md).
+  the same client and session. The HD patch set is exonerated; the fault is the client runtime, see
+  the `libSiliconPatch` entry below. Recipe and data:
+  [stormwind-water.md](../../runbook/troubleshooting/stormwind-water.md).
 - Test realm death did not reproduce: one full client session (login 14:19:58, character list
   14:52:51, quit) left both servers running for 40+ minutes, and `wineserver -k` on the CrossOver
   bottle did not stop them either. WoWSilicon's force quit only SIGKILLs Wine-matching PIDs; that
@@ -74,6 +75,13 @@ last-verified: 2026-11-15 (docs 141/657; canal swim measured; test realm survive
 - `PacketLogFile` writes nothing useful alone: the file is created on the first packet, but packets
   are only logged for sessions that enabled `.packetlog on`. Use the client's `IsSwimming()` and
   `.gps` instead.
+- Canal swim root cause: WoWSilicon's `libSiliconPatch.dll` (x87 to SSE2 rewrite) breaks the client's
+  WMO liquid lookup. Disabling it restores swimming on the same client and server; the DLL bundled
+  with 2.5.3 and 3.2.2 both reproduce. Client data is exonerated: 246 DBCs and 5744 map files from
+  the played client are byte-identical to `DataDir`. Reported as
+  [WoWSilicon#67](https://github.com/WoWSilicon/WoWSilicon/issues/67). Client-side behaviour is now
+  verified on a client without performance DLL mods; see
+  [stormwind-water.md](../../runbook/troubleshooting/stormwind-water.md).
 
 ## Next tasks
 
@@ -89,9 +97,8 @@ last-verified: 2026-11-15 (docs 141/657; canal swim measured; test realm survive
    reachability.
 7. Triage the 1,972 minors when content work starts; they are cosmetic or expected data.
 8. Shop and new content only after their decisions.
-9. Canal swim: extract `DBFilesClient/LiquidType.dbc` and the Stormwind WMO liquid data from the
-   played client's MPQs and compare with `DataDir`. Then repeat the probe in a second WMO water body
-   to show whether all WMO liquid fails or only Stormwind.
+9. Keep `libSiliconPatch` off until WoWSilicon#67 is fixed; re-test after each launcher update and
+   keep a second client copy (`~/Games/wotlk-test`) without the mod for client-side behaviour checks.
 10. Test realm death: keep the supervisor log; capture it on the next occurrence, with `screen -ls`
    and the unified log, before restarting.
 11. Add server-side water movement validation if the cheat risk is accepted: swim flag vs
@@ -151,13 +158,7 @@ No playerbots work is planned.
    no FindBoost module, and the image's automatic Boost search points at the wrong tree. Configure
    now resolves `/usr/lib/*/cmake/Boost-*/BoostConfig.cmake` explicitly. Revisit when the Boost and
    CMake toolchains on the runner are modernized.
-5. **Stormwind canal swim is client-side WMO liquid.** Measured 2026-11-15 on a clean client:
-   server reports water entry 13 at level `95.474075` with status 8, the client reports
-   `IsSwimming()` nil, sinks to the floor, and refuses to rise, while terrain water swims in the same
-   session. The server cannot force swim state. Next step is a client MPQ check of
-   `LiquidType.dbc` and the WMO liquid, plus a second WMO water body. See
-   [stormwind-water.md](../../runbook/troubleshooting/stormwind-water.md).
-6. **Test realm death is unreproduced and instrumented.** The 2026-11-14 double death left no
+5. **Test realm death is unreproduced and instrumented.** The 2026-11-14 double death left no
    shutdown log, no crash report, and no `.dmp`. On 2026-11-15 the realm survived a full client
    session and `wineserver -k`; WoWSilicon's force quit only targets Wine-matching PIDs, which
    excludes the servers. `tools/dev/test-realm.sh` now writes
