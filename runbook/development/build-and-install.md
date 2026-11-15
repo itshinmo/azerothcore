@@ -73,8 +73,13 @@ build.
 The `make` configuration passes these automatically when the paths exist:
 
 - If the link fails with `tapi error: malformed file` or `unknown architecture arm64e.x1-macos`, the
-  installed linker cannot read the newest SDK stubs. Configure with
-  `-DCMAKE_OSX_SYSROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk`.
+  installed linker cannot read the newest SDK stubs. `xcrun --show-sdk-path` shows the offending SDK,
+  and a plain `c++ -arch arm64` test link fails the same way. Preferred fix: update the Command Line
+  Tools, or install full Xcode and select it with
+  `sudo xcode-select -s /Applications/Xcode.app`. Offline fallback: configure with
+  `-DCMAKE_OSX_SYSROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk`, using the newest SDK
+  in `ls /Library/Developer/CommandLineTools/SDKs/` that links. The pin only affects a fresh configure
+  and link; an already configured `build/` is unaffected.
 - If `CliRunnable.cpp` fails with `rl_done` or `rl_event_hook` missing, CMake found the SDK's libedit
   instead of GNU readline. Set
   `-DREADLINE_INCLUDE_DIR="$(brew --prefix readline)/include"` and
