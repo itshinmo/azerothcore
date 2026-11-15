@@ -261,7 +261,37 @@ start_one() {
     session="$(session_name "$name")"
     rotate_console_log "$TEST_LOGS/$name.console.log"
     printf 'starting test %s in screen session %s ...\n' "$name" "$session"
-    "$SCREEN_BIN" -dmS "$session" bash -c "cd \"$BIN_DIR\" && exec \"$BIN_DIR/$name\" -c \"$conf\" >>\"$TEST_LOGS/$name.console.log\" 2>&1"
+    # The wrapper records why the server stopped. A missing exit line means the wrapper was killed
+    # too; a signal line means HUP/INT/TERM reached the wrapper and was forwarded as SIGTERM.
+    "$SCREEN_BIN" -dmS "$session" bash -c '
+        name=$1 bin=$2 conf=$3 log=$4 sup=$5
+        stamp() { date +%Y-%m-%dT%H:%M:%S; }
+        record() { printf "%s %s %s\n" "$(stamp)" "$name" "$1" >>"$sup"; }
+        on_signal() { record "signal=$1"; [ -n "${child:-}" ] && kill -TERM "$child" 2>/dev/null; }
+        trap "on_signal HUP" HUP
+        trap "on_signal INT" INT
+        trap "on_signal TERM" TERM
+        record "start pid=$$"
+        cd "$(dirname "$bin")" || exit 1
+        "$bin" -c "$conf" >>"$log" 2>&1 &
+        child=$!
+        # A signal interrupts wait() with 128+N. A zombie still exists, so keep waiting until the
+        # child is reaped and its real status is in status.
+        while :; do
+            wait "$child"
+            status=$?
+            kill -0 "$child" 2>/dev/null || break
+        done
+        # A signal can interrupt wait() after the child was reaped; 127 means it is gone, so keep the
+        # status from the loop.
+        if [ "$status" -gt 128 ]; then
+            wait "$child" 2>/dev/null
+            reaped=$?
+            [ "$reaped" -eq 127 ] || status=$reaped
+        fi
+        record "exit=$status"
+        exit "$status"
+    ' _ "$name" "$BIN_DIR/$name" "$conf" "$TEST_LOGS/$name.console.log" "$TEST_LOGS/$name.supervisor.log"
     if wait_for_port "$port" 30; then
         pid="$(pid_of_test "$name" "$conf")"
         [ -n "$pid" ] && printf '%s\n' "$pid" >"$(pid_file "$name")"
@@ -310,6 +340,7 @@ stop_one() {
     if [ -z "$pid" ]; then
         printf 'test %s is not running\n' "$name"
         rm -f "$(pid_file "$name")"
+        [ -n "$SCREEN_BIN" ] && "$SCREEN_BIN" -S "$session" -X quit >/dev/null 2>&1 || true
         return 0
     fi
     if ! pid_matches "$name" "$pid"; then
