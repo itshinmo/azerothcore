@@ -66,6 +66,18 @@ last-verified: 2026-11-16 (phases: base game, custom content, website, launch; B
   pre-request script computes the HMAC headers; a committed environment example; the real
   environment file is ignored. Validated on 2026-11-16 against a mock server that verified the
   signature independently, in Bruno CLI Safe Mode; a real-stack run is still pending.
+- Per-account XP override (`modules/mod-xp-override`): player `.xp` toggle between 1x and the realm
+  default, per-account `account_xp_override` table, command help row. Merged; local SQL applied and
+  verified. Unit tests written but not run locally (gtest unavailable); module compiled and linked.
+- Content audit C-06 phase reachability: fixpoint model over SmartAI phase actions and timed action
+  lists. 63 tool tests pass; on `acore_world` the real-data phase findings dropped to 16.
+- GM API audited writes and reads implemented and merged: item grant, mail, ban, RBAC
+  grant/deny/revoke, server control behind `GmApi.AllowServerControl`, plus account, character,
+  online players, and instances reads. Contract and runbook updated.
+- Live Bruno run on the local stack: status and audit return `200`; unstuck and kick return
+  `409 cannot_target_self` because the target is the actor's own account. Successful kick/unstuck
+  still needs a lower-security account online. A test-realm/local port collision on GM API 8090 was
+  found and fixed; the runbook records the rule.
 
 ## Investigated 2026-11-14
 
