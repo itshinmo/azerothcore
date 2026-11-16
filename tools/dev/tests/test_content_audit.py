@@ -53,6 +53,7 @@ class SmartLimitsTest(unittest.TestCase):
         enum SMART_EVENT_PHASE
         {
             SMART_EVENT_PHASE_1 = 1,
+            SMART_EVENT_PHASE_COUNT = 12,
         };
         """
         with tempfile.TemporaryDirectory() as directory:
@@ -63,22 +64,179 @@ class SmartLimitsTest(unittest.TestCase):
         self.assertEqual(limits["action"], 3)
         self.assertEqual(limits["target"], 2)
         self.assertEqual(limits["phase_mask"], 2051)
+        self.assertEqual(limits["phase_max"], 12)
 
     def test_missing_file_is_an_audit_error(self):
         with self.assertRaises(audit.AuditError):
             audit.smart_limits(Path("/nonexistent/SmartScriptMgr.h"))
 
 
+def smart_row(entry, row_id, mask=0, action=0, params=(), source_type=0, **extra):
+    """A smart_scripts row shaped like the extractor output."""
+    row = {"entryorguid": entry, "source_type": source_type, "id": row_id, "link": 0,
+           "phase_mask": mask, "action": action, "target": 0, "target_param1": 0}
+    for index in range(1, 7):
+        row[f"param{index}"] = params[index - 1] if index <= len(params) else 0
+    row.update(extra)
+    return row
+
+
 class CheckC06Test(unittest.TestCase):
     def test_cycle_does_not_stop_other_blocks(self):
         data = {"smart": [
-            {"entryorguid": 10, "source_type": 0, "id": 1, "link": 2},
-            {"entryorguid": 10, "source_type": 0, "id": 2, "link": 1},
-            {"entryorguid": 20, "source_type": 0, "id": 1, "link": 9},
+            smart_row(10, 1, link=2),
+            smart_row(10, 2, link=1),
+            smart_row(20, 1, link=9),
         ]}
         causes = " ".join(finding.cause for finding in audit.check_c06(data))
         self.assertIn("link cycle", causes)
         self.assertIn("missing id 9", causes)
+
+    def test_set_event_phase_unlocks_a_phase(self):
+        rows = [smart_row(1, 0, action=22, params=(2,)),
+                smart_row(1, 1, mask=0x2)]
+        self.assertEqual(audit.reachable_phases(rows), {0, 2})
+        self.assertEqual(audit.check_c06({"smart": rows}), [])
+
+    def test_inc_event_phase_chain_unlocks_later_phases(self):
+        rows = [smart_row(1, 0, action=22, params=(1,)),
+                smart_row(1, 1, mask=0x1, action=23, params=(1, 0)),
+                smart_row(1, 2, mask=0x2, action=23, params=(1, 0)),
+                smart_row(1, 3, mask=0x4)]
+        self.assertEqual(audit.reachable_phases(rows), {0, 1, 2, 3})
+        self.assertEqual(audit.check_c06({"smart": rows}), [])
+
+    def test_inc_event_phase_decrements(self):
+        rows = [smart_row(1, 0, action=22, params=(5,)),
+                smart_row(1, 1, mask=0x10, action=23, params=(0, 2)),
+                smart_row(1, 2, mask=0x8, action=23, params=(0, 5))]
+        self.assertEqual(audit.reachable_phases(rows), {0, 3, 5})
+
+    def test_random_phase_actions_unlock_every_option(self):
+        rows = [smart_row(1, 0, action=30, params=(3, 5, 0, 0, 0, 0)),
+                smart_row(1, 1, action=31, params=(7, 9)),
+                smart_row(1, 2, mask=0x80)]
+        self.assertEqual(audit.reachable_phases(rows), {0, 3, 5, 7, 8, 9})
+        self.assertEqual(audit.check_c06({"smart": rows}), [])
+
+    def test_unreachable_mask_is_reported_once_per_row(self):
+        rows = [smart_row(1, 0, mask=0x4), smart_row(1, 1, mask=0x8)]
+        findings = audit.check_c06({"smart": rows})
+        self.assertEqual(len(findings), 2)
+        causes = " ".join(finding.cause for finding in findings)
+        self.assertIn("phase mask 0x4 is not reachable", causes)
+        self.assertIn("phase mask 0x8 is not reachable", causes)
+        self.assertIn("reachable phases: 0", causes)
+
+    def test_action_in_unreachable_row_does_not_unlock(self):
+        rows = [smart_row(1, 0, mask=0x2, action=22, params=(3,)),
+                smart_row(1, 1, mask=0x4)]
+        self.assertEqual(audit.reachable_phases(rows), {0})
+        self.assertEqual(len(audit.check_c06({"smart": rows})), 2)
+
+    def test_mask_zero_always_runs(self):
+        rows = [smart_row(1, 0), smart_row(1, 1, action=22, params=(1,)),
+                smart_row(1, 2, mask=0x1)]
+        self.assertEqual(audit.reachable_phases(rows), {0, 1})
+        self.assertEqual(audit.check_c06({"smart": rows}), [])
+
+    def test_phase_zero_is_the_only_initial_phase(self):
+        self.assertEqual(audit.reachable_phases([]), {0})
+        rows = [smart_row(1, 0, mask=0x800)]
+        self.assertEqual(audit.reachable_phases(rows), {0})
+        self.assertEqual(len(audit.check_c06({"smart": rows})), 1)
+
+    def test_blocks_are_independent(self):
+        rows = [smart_row(10, 0, action=22, params=(2,)),
+                smart_row(20, 0, mask=0x2)]
+        findings = audit.check_c06({"smart": rows})
+        self.assertEqual([finding.location for finding in findings], ["20:0"])
+
+    def test_timed_action_lists_fold_called_phases(self):
+        calls = [smart_row(1, 0, action=80, params=(7,)),
+                 smart_row(1, 1, action=87, params=(8, 9)),
+                 smart_row(1, 2, action=88, params=(10, 11))]
+        script9 = [smart_row(7, 0, source_type=9, action=22, params=(2,)),
+                   smart_row(8, 0, source_type=9, action=22, params=(3,)),
+                   smart_row(9, 0, source_type=9, action=22, params=(4,)),
+                   smart_row(10, 0, source_type=9, action=22, params=(5,)),
+                   smart_row(11, 0, source_type=9, action=22, params=(6,))]
+        masks = [smart_row(1, 10 + phase, mask=1 << (phase - 1)) for phase in range(2, 7)]
+        timed = {row["entryorguid"]: [row] for row in script9}
+        self.assertEqual(audit.reachable_phases(calls, timed=timed),
+                         {0, 2, 3, 4, 5, 6})
+        self.assertEqual(audit.check_c06({"smart": calls + script9 + masks}), [])
+
+    def test_timed_action_list_rows_use_the_caller_phase(self):
+        rows = [smart_row(1, 0, action=80, params=(7,)),
+                smart_row(7, 0, source_type=9, mask=0x2, action=22, params=(3,))]
+        self.assertEqual(audit.reachable_phases(rows[:1], timed={7: rows[1:]}), {0})
+
+    def test_timed_action_list_row_runs_in_reached_caller_phase(self):
+        rows = [smart_row(1, 0, action=22, params=(2,)),
+                smart_row(1, 1, mask=0x2, action=80, params=(7,)),
+                smart_row(7, 0, source_type=9, mask=0x2, action=22, params=(3,))]
+        timed = {7: rows[2:]}
+        self.assertEqual(audit.reachable_phases(rows[:2], timed=timed), {0, 2, 3})
+        self.assertEqual(audit.check_c06({"smart": rows}), [])
+
+    def test_fixed_guid_timed_target_suppresses_target_block(self):
+        rows = [smart_row(1, 0, action=80, target=10, target_param1=55),
+                smart_row(200, 0, mask=0x2)]
+        data = {"smart": rows, "creature_spawn_map": {55: 200}}
+        self.assertEqual(audit.check_c06(data), [])
+
+    def test_fixed_guid_timed_target_does_not_change_caller_phase(self):
+        rows = [smart_row(1, 0, action=80, params=(7,), target=14, target_param1=55),
+                smart_row(1, 1, mask=0x2),
+                smart_row(7, 0, source_type=9, action=22, params=(2,))]
+        data = {"smart": rows, "go_spawn_map": {55: 300}}
+        causes = " ".join(finding.cause for finding in audit.check_c06(data))
+        self.assertIn("id 1 phase mask 0x2 is not reachable", causes)
+
+    def test_script9_fixed_guid_target_suppresses_target_block(self):
+        rows = [smart_row(1, 0, action=80, params=(7,)),
+                smart_row(7, 0, source_type=9, action=80, target=10, target_param1=55),
+                smart_row(200, 0, mask=0x2)]
+        data = {"smart": rows, "creature_spawn_map": {55: 200}}
+        self.assertEqual(audit.check_c06(data), [])
+
+    def test_uninvoked_script9_fixed_guid_target_does_not_suppress(self):
+        rows = [smart_row(1, 0, mask=0x2),
+                smart_row(7, 0, source_type=9, action=80, target=10, target_param1=55),
+                smart_row(200, 0, mask=0x2)]
+        data = {"smart": rows, "creature_spawn_map": {55: 200}}
+        locations = [finding.location for finding in audit.check_c06(data)]
+        self.assertIn("1:0", locations)
+        self.assertIn("200:0", locations)
+
+    def test_timed_action_list_cycle_terminates(self):
+        rows = [smart_row(1, 0, action=80, params=(7,)),
+                smart_row(7, 0, source_type=9, action=80, params=(7,)),
+                smart_row(7, 1, source_type=9, action=22, params=(2,))]
+        self.assertEqual(audit.reachable_phases(rows[:1], timed={7: rows[1:]}), {0, 2})
+        self.assertEqual(audit.check_c06({"smart": rows}), [])
+
+    def test_timed_action_list_blocks_are_not_reported_standalone(self):
+        rows = [smart_row(7, 0, source_type=9, mask=0x4),
+                smart_row(7, 1, source_type=9, link=9)]
+        findings = audit.check_c06({"smart": rows})
+        self.assertEqual([finding.cause for finding in findings],
+                         ["id 1 links to missing id 9"])
+
+    def test_install_ai_template_unlocks_phase_one(self):
+        for template in (1, 5):
+            with self.subTest(template=template):
+                rows = [smart_row(1, 0, action=58, params=(template,)),
+                        smart_row(1, 1, mask=0x1)]
+                self.assertEqual(audit.reachable_phases(rows), {0, 1})
+                self.assertEqual(audit.check_c06({"smart": rows}), [])
+
+    def test_other_ai_templates_do_not_unlock_phase_one(self):
+        rows = [smart_row(1, 0, action=58, params=(2,)),
+                smart_row(1, 1, mask=0x1)]
+        self.assertEqual(audit.reachable_phases(rows), {0})
+        self.assertEqual(len(audit.check_c06({"smart": rows})), 1)
 
 
 class CheckC05Test(unittest.TestCase):

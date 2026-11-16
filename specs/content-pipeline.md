@@ -101,7 +101,7 @@ share one query layer; see [world-data.md](world-data.md).
 | C-03 | Quest chain broken: prerequisite cycle or missing prerequisite (blocker); MinLevel above QuestLevel (minor) | blocker / minor |
 | C-04 | Required item missing (blocker), or no known loot, vendor, or quest source (minor) | blocker / minor |
 | C-05 | SmartAI row with an invalid event, action, or target type, `event_chance` above 100, or a phase mask beyond the supported bits | major |
-| C-06 | SmartAI `link` chain broken, or a phase no event can reach | major |
+| C-06 | SmartAI `link` chain broken, or a phase mask that no reachable phase can enter | major |
 | C-07 | `AIName='SmartAI'` with zero rows, or rows present without `AIName` | major |
 | C-08 | Database `ScriptName` not registered in `src/server/scripts` | blocker |
 | C-09 | Instance without a registered `InstanceScript` | blocker |
@@ -113,7 +113,28 @@ share one query layer; see [world-data.md](world-data.md).
 v1 limits: map-bounds validation is skipped because `map_dbc` is empty; trainer spells are checked
 against `Spell.dbc` from `DataDir`, never the `spell_dbc` override table; conditions are audited only
 for the three source types with verified semantics (14 gossip menu, 15 gossip menu option, 19 quest
-available), and C-06 phase reachability is not checked.
+available).
+
+C-06 phase reachability starts every SmartAI block in phase 0, the phase a script begins in. A row
+runs when its mask is 0 (any phase) or holds the current phase, and its `SET_EVENT_PHASE`,
+`INC_EVENT_PHASE`, `RANDOM_PHASE`, or `RANDOM_PHASE_RANGE` action adds the phases it can switch to.
+`INSTALL_AI_TEMPLATE` adds phase 1 at the start for template ids 1 (caster) and 5 (caged NPC part),
+which install an event that sets it. `CALL_TIMED_ACTIONLIST`, `CALL_RANDOM_TIMED_ACTIONLIST`, and
+`CALL_RANDOM_RANGE_TIMED_ACTIONLIST` fold the phase changes of the referenced `source_type` 9 rows
+into the caller at the caller's phase, with cycle protection. A row whose non-zero mask holds no
+reachable phase is reported once; `source_type` 9 blocks are not reported on their own because they
+only run from a caller.
+
+A timed action list with a fixed-guid target type (10 creature, 14 gameobject) runs on the target's
+own phase, not the caller's, so the caller does not fold it and the target entry's block is not
+reported for an unreachable mask. Fixed-guid calls inside a `source_type` 9 list count when a
+reachable caller starts that list; a list no reachable caller starts cannot suppress anything. That
+suppression is conservative and can hide a real finding.
+
+The model is static: it does not simulate conditions, target types, runtime event ordering, link
+delays, random outcomes, the per-guid script override and the
+`CREATURE_FLAG_EXTRA_DONT_OVERRIDE_ENTRY_SAI` merge, or phase changes made by C++ scripts and the
+core. A script that sets a phase outside `smart_scripts` can still produce a report.
 
 Severity meaning:
 
