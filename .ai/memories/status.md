@@ -9,8 +9,10 @@ last-verified: 2026-11-16 (phases: base game, custom content, website, launch; B
 
 - Phase 0–4 are complete for the current scope: foundation, tooling, test realm, backups, DBeaver,
   RBAC presets, command audit, command index, GM API read endpoints, in-game GM addon.
-- Phase 5 resumed: the GM API has audited `kick` and `unstuck` writes behind `GmApi.AllowWrites`, a
-  signed `X-GM-Actor`, RBAC, and `gm_audit_log`. Manual testing uses the committed Bruno collection
+- Phase 5 resumed: the GM API has audited writes for item grant, mail, account ban, account
+  permissions, server control, `kick`, and `unstuck` behind `GmApi.AllowWrites`, a signed
+  `X-GM-Actor`, RBAC, and `gm_audit_log`; server control also needs `GmApi.AllowServerControl`.
+  Manual testing uses the committed Bruno collection
   ([ADR-014](../../decisions/ADR-014-bruno-api-test-client.md)); it no longer waits for a dashboard.
 - Roadmap for 2026-11-16: base game fully functional and stable, then custom content, then the
   website, then launch ([ADR-013](../../decisions/ADR-013-server-and-client-before-website.md)).
@@ -50,8 +52,9 @@ last-verified: 2026-11-16 (phases: base game, custom content, website, launch; B
 - World data export (`make world-export`): 140,650 files, 566 MB, 17.6 s; counts npc 29,945 /
   item 46,096 / quest 9,464 / object 21,580 / 33,318 spawn sets. Read API (`make world-api`) serves
   the artifacts on loopback (parked until Phase 3); 43 tool tests.
-- GM API wire contract (`specs/gm-api.openapi.yaml`): four implemented endpoints, HMAC signing,
-  actor identity, all error codes and statuses.
+- GM API wire contract (`specs/gm-api.openapi.yaml`): read endpoints and the audited write set
+  (item grant, mail, ban, RBAC, server control, kick, unstuck), HMAC signing, actor identity, all
+  error codes and statuses.
 - Content audit C-13: gossip-menu, gossip-option, and quest-available conditions validated against
   the rows the server loads; 5,931 rows, 0 findings.
 - Fork CI now runs tool unit tests and triggers on `local-server-setup`; SQL lint covers
@@ -112,13 +115,12 @@ content, website, launch. Playtests and a friends-only test VPS can happen betwe
 
 1. Run the Bruno collection once on the local stack: status, audit, kick, unstuck; confirm the audit
    rows and record the result. Procedure: `runbook/gm/gm-api.md`.
-2. Build the remaining GM API writes (item grant, mail, ban, RBAC, server control) and the planned
-   read endpoints (account, character, online players, instance info). Test each through Bruno on a
-   live stack, including the branches that need an online player.
-3. Decide and implement the per-account experience override promised by
-   [ADR-012](../../decisions/ADR-012-progression-rates.md).
-4. Audit v2 remainder: C-06 phase reachability. Map-bounds validation stays blocked on reference
-   data.
+2. Live-test the new GM API writes and reads through Bruno on a live stack, including the branches
+   that need an online player.
+3. Live-test the per-account XP override promised by
+   [ADR-012](../../decisions/ADR-012-progression-rates.md) (`modules/mod-xp-override`).
+4. Audit v2 remainder: map-bounds validation stays blocked on reference data; C-06 phase
+   reachability is implemented.
 5. Build the base-game verification checklist: quest chains, scripted encounters, NPC spawns and
    behavior, client-observed behavior, and stability. Playtest against it.
 6. Triage the 1,972 minors when content work starts; they are cosmetic or expected data.
@@ -185,14 +187,14 @@ No playerbots work is planned.
 
 ## Known issues
 
-1. **GM API coverage is partial.** `kick` and `unstuck` are the only audited writes. Item grant, mail,
-   ban, RBAC, server control, and the planned read endpoints are not built, and several error branches
-   (`player_busy`, `teleport_failed`, `audit_failed`, `writes_disabled`, rate limit, timeout/shutdown)
-   are untested. The committed Bruno collection makes them testable on a live stack without a
-   dashboard; `writes_disabled`, `rate_limited`, and `audit_failed` are reachable now. The API still
-   uses one shared HMAC secret for transport; `X-GM-Actor` identifies the human and the future BFF
-   will be the only holder of the secret. Audit query uses the shared sync DB pool; audit search is
-   newest-N only; structured request logging is planned.
+1. **GM API live branches are partly untested.** The audited writes and the four read endpoints are
+   implemented. Live branches that still need testing: `player_busy`, `teleport_failed`,
+   `inventory_full`, `mailbox_full`, `longer_ban_exists`, RBAC list conflicts,
+   `server_control_disabled`, `audit_failed`, `writes_disabled`, rate limit, timeout/shutdown. They
+   are exercised through the Bruno collection on a live stack. The API still uses one shared HMAC
+   secret for transport; `X-GM-Actor` identifies the human and the Phase 3 BFF will be the only
+   holder of the secret. Audit query uses the shared sync DB pool; audit search is newest-N only;
+   structured request logging is planned.
 2. **cppcheck suppressions target 2.22.** Local Homebrew has 2.22.0; the runner's packaged version is
    unrecorded. A green cpp-lint job does not prove the version, because unmatched suppressions are not
    errors. Quote `cppcheck --version` in any CI failure before changing a suppression.

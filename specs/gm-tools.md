@@ -73,20 +73,20 @@ Owns the GM workflow and tooling. Does not own the game commands themselves; the
 - Long-term visual layer: the server website, built in Phase 3 after the base game and custom content
   ([ADR-013](../decisions/ADR-013-server-and-client-before-website.md)). No in-repo web UI exists now;
   see [ADR-010](../decisions/ADR-010-website-as-visual-interface.md).
-- Backend: `modules/mod-gm-api/` inside `worldserver`. Read endpoints and audited kick/unstuck writes
-  built; more writes planned. API work does not wait for the website.
+- Backend: `modules/mod-gm-api/` inside `worldserver`. Read endpoints and the audited write set are
+  built. API work does not wait for the website.
 - Browser architecture: browser -> admin website BFF -> GM API. Only the admin BFF holds the API
   secret; the public BFF and browser never see it. The website uses its own web identity, not the game SRP6 session.
 - Transport: HTTP on localhost or a private VPN interface; HMAC-signed requests with a nonce and
   timestamp; replay window; per-address rate limit.
-- Implemented read-only endpoints: server status, audit rows. Implemented writes: kick, unstuck,
-  gated by `GmApi.AllowWrites`, a signed `X-GM-Actor` game account id, RBAC, and audit. Planned read
-  endpoints: account, character, online players, instance info.
-- Item grant, mail, ban, RBAC, and server control are not built. They are the next server-side work
-  and are tested against a live stack with the committed Bruno collection
-  ([`tools/api-tests/bruno/`](../tools/api-tests/bruno/README.md)); the website is not required to
-  exercise them. The cheap branches (`writes_disabled`, `rate_limited`, `audit_failed`) are reachable
-  with the same collection or the curl recipe.
+- Implemented read endpoints: server status, audit rows, account, character, online players, active
+  instances. Implemented writes: item grant, mail, account ban, account permission grant/deny/revoke,
+  server control, kick, and unstuck. All writes are gated by `GmApi.AllowWrites`, a signed
+  `X-GM-Actor` game account id, RBAC, and audit; server control also requires
+  `GmApi.AllowServerControl`.
+- Live error branches are exercised through the committed Bruno collection on a live stack; the cheap
+  branches (`writes_disabled`, `rate_limited`, `audit_failed`) are reachable with the same collection
+  or the curl recipe.
 - Every endpoint validates input and calls game logic; no endpoint writes game tables directly. The
   module writes its own audit rows.
 - Wire contract: [gm-api.openapi.yaml](gm-api.openapi.yaml).

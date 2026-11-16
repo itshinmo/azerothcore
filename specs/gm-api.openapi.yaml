@@ -1,11 +1,12 @@
 openapi: 3.1.0
 info:
   title: GM API
-  version: 1.0.0
+  version: 1.1.0
   description: |
     HTTP API inside `worldserver` (`modules/mod-gm-api`). The browser never calls it: only the
     admin BFF holds the HMAC secret. Read endpoints need a valid signature; write endpoints also
     need `GmApi.AllowWrites=1`, a signed `X-GM-Actor`, an RBAC permission, and produce audit rows.
+    Server control additionally needs `GmApi.AllowServerControl=1`.
 
     Signing: canonical string `<timestamp>\n<nonce>\n<METHOD>\n<target>`, plus `\n<actor>` when
     `X-GM-Actor` is present. `target` includes the query string. The signature is
@@ -36,6 +37,8 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "405":
           $ref: "#/components/responses/MethodNotAllowed"
+        "404":
+          $ref: "#/components/responses/NotFound"
         "409":
           $ref: "#/components/responses/ReplayedNonce"
         "429":
@@ -50,7 +53,7 @@ paths:
         - $ref: "#/components/parameters/Signature"
         - name: limit
           in: query
-          description: Clamped to 1..200; invalid or missing values use 50.
+          description: Values above 200 clamp to 200; 0, invalid, or missing values use 50.
           schema:
             type: integer
             default: 50
@@ -131,6 +134,342 @@ paths:
           $ref: "#/components/responses/WriteFailed"
         "503":
           $ref: "#/components/responses/WorldUnavailable"
+  /api/v1/players/{name}/items:
+    post:
+      tags: [write]
+      summary: Add an item to an online player
+      description: |
+        Requires `GmApi.AllowWrites=1`, `RBAC_PERM_COMMAND_ADDITEM` (488), and a signed actor.
+        The item template must exist and the requested count must not exceed `MaxCount`. The item is
+        stored with `Player::AddItem` on the world thread.
+      parameters:
+        - $ref: "#/components/parameters/Name"
+        - $ref: "#/components/parameters/Timestamp"
+        - $ref: "#/components/parameters/Nonce"
+        - $ref: "#/components/parameters/Signature"
+        - $ref: "#/components/parameters/Actor"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ItemGrantRequest"
+      responses:
+        "200":
+          $ref: "#/components/responses/Ok"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/TargetNotFound"
+        "405":
+          $ref: "#/components/responses/MethodNotAllowed"
+        "409":
+          $ref: "#/components/responses/WriteConflict"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+        "500":
+          $ref: "#/components/responses/WriteFailed"
+        "503":
+          $ref: "#/components/responses/WorldUnavailable"
+  /api/v1/mail:
+    post:
+      tags: [write]
+      summary: Send a GM mail to an online or offline character
+      description: |
+        Requires `GmApi.AllowWrites=1` and `RBAC_PERM_COMMAND_SEND_MAIL` (485). Sending attachments
+        also requires `RBAC_PERM_COMMAND_SEND_ITEMS` (484); sending money also requires
+        `RBAC_PERM_COMMAND_SEND_MONEY` (487). Item stacks are split by `MaxStackSize`; after
+        splitting no more than 12 attachments are allowed. The recipient mailbox must contain
+        fewer than 100 mails. The mail is written on the world thread.
+      parameters:
+        - $ref: "#/components/parameters/Timestamp"
+        - $ref: "#/components/parameters/Nonce"
+        - $ref: "#/components/parameters/Signature"
+        - $ref: "#/components/parameters/Actor"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MailRequest"
+      responses:
+        "200":
+          $ref: "#/components/responses/Ok"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/TargetNotFound"
+        "405":
+          $ref: "#/components/responses/MethodNotAllowed"
+        "409":
+          $ref: "#/components/responses/WriteConflict"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+        "500":
+          $ref: "#/components/responses/WriteFailed"
+        "503":
+          $ref: "#/components/responses/WorldUnavailable"
+  /api/v1/accounts/{name}/ban:
+    post:
+      tags: [write]
+      summary: Ban a game account
+      description: |
+        Requires `GmApi.AllowWrites=1` and `RBAC_PERM_COMMAND_BAN_ACCOUNT` (240). A duration of `0`
+        is permanent. The actor cannot ban its own account or an account whose security is at or
+        above the actor's. Uses `sBan->BanAccount` with the actor account name as the author.
+      parameters:
+        - $ref: "#/components/parameters/AccountName"
+        - $ref: "#/components/parameters/Timestamp"
+        - $ref: "#/components/parameters/Nonce"
+        - $ref: "#/components/parameters/Signature"
+        - $ref: "#/components/parameters/Actor"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BanRequest"
+      responses:
+        "200":
+          $ref: "#/components/responses/Ok"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/TargetNotFound"
+        "405":
+          $ref: "#/components/responses/MethodNotAllowed"
+        "409":
+          $ref: "#/components/responses/WriteConflict"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+        "500":
+          $ref: "#/components/responses/WriteFailed"
+        "503":
+          $ref: "#/components/responses/WorldUnavailable"
+  /api/v1/accounts/{name}/permissions:
+    post:
+      tags: [write]
+      summary: Grant, deny, or revoke an account permission
+      description: |
+        Requires `GmApi.AllowWrites=1` and the permission matching the action:
+        `RBAC_PERM_COMMAND_RBAC_ACC_PERM_GRANT` (203), `..._DENY` (204), or `..._REVOKE` (205).
+        The actor cannot modify its own account or an account whose security is at or above the
+        actor's. An online target's session RBAC cache is invalidated after a successful change.
+      parameters:
+        - $ref: "#/components/parameters/AccountName"
+        - $ref: "#/components/parameters/Timestamp"
+        - $ref: "#/components/parameters/Nonce"
+        - $ref: "#/components/parameters/Signature"
+        - $ref: "#/components/parameters/Actor"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PermissionRequest"
+      responses:
+        "200":
+          $ref: "#/components/responses/Ok"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/TargetNotFound"
+        "405":
+          $ref: "#/components/responses/MethodNotAllowed"
+        "409":
+          $ref: "#/components/responses/WriteConflict"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+        "500":
+          $ref: "#/components/responses/WriteFailed"
+        "503":
+          $ref: "#/components/responses/WorldUnavailable"
+  /api/v1/server/control:
+    post:
+      tags: [write]
+      summary: Schedule a shutdown, restart, or cancel the timer
+      description: |
+        Requires `GmApi.AllowWrites=1`, `GmApi.AllowServerControl=1`, and the matching permission:
+        `RBAC_PERM_COMMAND_SERVER_SHUTDOWN` (734), `..._RESTART` (727), or
+        `..._SHUTDOWN_CANCEL` (735). A restart only exits the process with the restart exit code;
+        an external supervisor must start the server again. `delaySeconds` is required for shutdown
+        and restart; it is optional and unused for cancel.
+      parameters:
+        - $ref: "#/components/parameters/Timestamp"
+        - $ref: "#/components/parameters/Nonce"
+        - $ref: "#/components/parameters/Signature"
+        - $ref: "#/components/parameters/Actor"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ServerControlRequest"
+      responses:
+        "200":
+          $ref: "#/components/responses/Ok"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "405":
+          $ref: "#/components/responses/MethodNotAllowed"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/WriteConflict"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+        "500":
+          $ref: "#/components/responses/WriteFailed"
+        "503":
+          $ref: "#/components/responses/WorldUnavailable"
+  /api/v1/accounts/{account}:
+    get:
+      tags: [read]
+      summary: Read an account by name or numeric id
+      description: Requires only a valid signature and headers. Runs on the world thread.
+      parameters:
+        - $ref: "#/components/parameters/AccountRef"
+        - $ref: "#/components/parameters/Timestamp"
+        - $ref: "#/components/parameters/Nonce"
+        - $ref: "#/components/parameters/Signature"
+      responses:
+        "200":
+          description: Account state
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Account"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/TargetNotFound"
+        "405":
+          $ref: "#/components/responses/MethodNotAllowed"
+        "409":
+          $ref: "#/components/responses/ReplayedNonce"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+        "503":
+          $ref: "#/components/responses/WorldUnavailable"
+  /api/v1/characters/{name}:
+    get:
+      tags: [read]
+      summary: Read a character, online or offline
+      description: Requires only a valid signature and headers. Reads the character cache on the
+        world thread.
+      parameters:
+        - $ref: "#/components/parameters/Name"
+        - $ref: "#/components/parameters/Timestamp"
+        - $ref: "#/components/parameters/Nonce"
+        - $ref: "#/components/parameters/Signature"
+      responses:
+        "200":
+          description: Character state
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Character"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/TargetNotFound"
+        "405":
+          $ref: "#/components/responses/MethodNotAllowed"
+        "409":
+          $ref: "#/components/responses/ReplayedNonce"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+        "503":
+          $ref: "#/components/responses/WorldUnavailable"
+  /api/v1/players/online:
+    get:
+      tags: [read]
+      summary: List online players
+      description: Requires only a valid signature and headers. Results are ordered by GUID.
+      parameters:
+        - $ref: "#/components/parameters/Timestamp"
+        - $ref: "#/components/parameters/Nonce"
+        - $ref: "#/components/parameters/Signature"
+        - name: limit
+          in: query
+          description: Values above 500 clamp to 500; 0, invalid, or missing values use 100.
+          schema:
+            type: integer
+            default: 100
+      responses:
+        "200":
+          description: Online players
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/OnlinePlayer"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "405":
+          $ref: "#/components/responses/MethodNotAllowed"
+        "409":
+          $ref: "#/components/responses/ReplayedNonce"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+        "503":
+          $ref: "#/components/responses/WorldUnavailable"
+  /api/v1/instances:
+    get:
+      tags: [read]
+      summary: List active instances
+      description: Requires only a valid signature and headers. Only loaded maps with a non-zero
+        instance id are returned, ordered by instance id.
+      parameters:
+        - $ref: "#/components/parameters/Timestamp"
+        - $ref: "#/components/parameters/Nonce"
+        - $ref: "#/components/parameters/Signature"
+        - name: limit
+          in: query
+          description: Values above 100 clamp to 100; 0, invalid, or missing values use 100.
+          schema:
+            type: integer
+            default: 100
+      responses:
+        "200":
+          description: Active instances
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Instance"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "405":
+          $ref: "#/components/responses/MethodNotAllowed"
+        "409":
+          $ref: "#/components/responses/ReplayedNonce"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+        "503":
+          $ref: "#/components/responses/WorldUnavailable"
 components:
   parameters:
     Name:
@@ -142,6 +481,24 @@ components:
       schema:
         type: string
         pattern: "^[A-Za-z0-9]{1,24}$"
+    AccountName:
+      name: name
+      in: path
+      required: true
+      description: Game account username, case-insensitive. Letters, digits, `_`, `-`, and `.` are
+        accepted; the name is upper-cased before lookup.
+      schema:
+        type: string
+        pattern: "^[A-Za-z0-9_.-]{1,17}$"
+    AccountRef:
+      name: account
+      in: path
+      required: true
+      description: Account username or numeric account id. Numeric values up to 10 digits are
+        treated as ids; other values are treated as usernames.
+      schema:
+        type: string
+        pattern: "^[A-Za-z0-9_.-]{1,17}$"
     Timestamp:
       name: X-GM-Timestamp
       in: header
@@ -205,6 +562,175 @@ components:
             - teleport_failed
             - audit_failed
             - world_unavailable
+            - bad_request
+            - invalid_item
+            - inventory_full
+            - too_many_items
+            - mailbox_full
+            - mail_failed
+            - unknown_permission
+            - already_granted
+            - already_denied
+            - in_denied_list
+            - in_granted_list
+            - not_in_list
+            - longer_ban_exists
+            - server_control_disabled
+    ItemGrantRequest:
+      type: object
+      required: [itemId, count]
+      properties:
+        itemId:
+          type: integer
+          minimum: 1
+        count:
+          type: integer
+          minimum: 1
+          maximum: 1000
+    ItemRequest:
+      type: object
+      required: [itemId, count]
+      properties:
+        itemId:
+          type: integer
+          minimum: 1
+        count:
+          type: integer
+          minimum: 1
+          maximum: 1000
+    MailRequest:
+      type: object
+      required: [recipient]
+      properties:
+        recipient:
+          type: string
+          description: Character name, online or offline.
+          minLength: 1
+          maxLength: 24
+        subject:
+          type: string
+          maxLength: 64
+        text:
+          type: string
+          maxLength: 5000
+        money:
+          type: integer
+          minimum: 0
+          maximum: 2147483646
+        items:
+          type: array
+          maxItems: 12
+          items:
+            $ref: "#/components/schemas/ItemRequest"
+    BanRequest:
+      type: object
+      required: [durationSeconds]
+      properties:
+        durationSeconds:
+          type: integer
+          description: 0 means permanent.
+          minimum: 0
+          maximum: 315360000
+        reason:
+          type: string
+          maxLength: 255
+    PermissionRequest:
+      type: object
+      required: [action, permissionId]
+      properties:
+        action:
+          type: string
+          enum: [grant, deny, revoke]
+        permissionId:
+          type: integer
+          minimum: 1
+        realmId:
+          type: integer
+          description: Current realm id, or -1 for all realms. Defaults to -1; 0 and other realm ids
+            are rejected.
+          default: -1
+          minimum: -1
+    ServerControlRequest:
+      type: object
+      required: [action]
+      properties:
+        action:
+          type: string
+          enum: [shutdown, restart, cancel]
+        delaySeconds:
+          type: integer
+          description: Required for shutdown and restart; optional and unused for cancel.
+          minimum: 0
+          maximum: 3600
+        reason:
+          type: string
+          maxLength: 255
+    Account:
+      type: object
+      required: [id, username, security, online]
+      properties:
+        id:
+          type: integer
+        username:
+          type: string
+        security:
+          type: integer
+          description: Realm security level; 0 is a player.
+        online:
+          type: boolean
+    Character:
+      type: object
+      required: [guid, name, account_id, account_name, level, race, class, online]
+      properties:
+        guid:
+          type: integer
+          description: 64-bit character guid; above 2^53 loses precision in JavaScript clients
+        name:
+          type: string
+        account_id:
+          type: integer
+        account_name:
+          type: string
+        level:
+          type: integer
+        race:
+          type: integer
+        class:
+          type: integer
+        online:
+          type: boolean
+    OnlinePlayer:
+      type: object
+      required: [guid, name, account_id, level, race, class, map, zone]
+      properties:
+        guid:
+          type: integer
+        name:
+          type: string
+        account_id:
+          type: integer
+        level:
+          type: integer
+        race:
+          type: integer
+        class:
+          type: integer
+        map:
+          type: integer
+        zone:
+          type: integer
+    Instance:
+      type: object
+      required: [instance_id, map_id, difficulty, players]
+      properties:
+        instance_id:
+          type: integer
+        map_id:
+          type: integer
+        difficulty:
+          type: integer
+        players:
+          type: integer
     AuditEntry:
       type: object
       required: [id, realm_id, account_name, player_name, command, created_at]
@@ -243,16 +769,26 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/Error"
+    BadRequest:
+      description: Malformed JSON or body (`bad_request`), an unknown item template or an exceeded
+        `MaxCount` (`invalid_item`), or too many attachments after stack splitting
+        (`too_many_items`).
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
     Forbidden:
-      description: Writes disabled (`writes_disabled`), actor is a player, actor lacks the required
-        permission, or the target's security is at or above the actor's.
+      description: Writes disabled (`writes_disabled`), server control disabled
+        (`server_control_disabled`), actor is a player, actor lacks the required permission, or the
+        target's security is at or above the actor's.
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/Error"
     TargetNotFound:
-      description: 404 `not_found` when the name fails the path pattern, or `target_not_found`
-        when the character is not online.
+      description: 404 `not_found` when the path fails its pattern, `target_not_found` when the
+        account or character does not exist, or `unknown_permission` when the permission id is not
+        registered.
       content:
         application/json:
           schema:
@@ -267,6 +803,12 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/Error"
+    NotFound:
+      description: Unknown path, or a query string on a route that does not accept one.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
     ReplayedNonce:
       description: Nonce was already used within its TTL
       content:
@@ -274,8 +816,10 @@ components:
           schema:
             $ref: "#/components/schemas/Error"
     WriteConflict:
-      description: Nonce replayed (`replayed_nonce`), actor targets themselves (`cannot_target_self`),
-        or the player cannot be actioned now (`player_busy`).
+      description: |
+        State conflict for the action: `replayed_nonce`, `cannot_target_self`, `player_busy`,
+        `inventory_full`, `mailbox_full`, `longer_ban_exists`, `already_granted`, `already_denied`,
+        `in_denied_list`, `in_granted_list`, or `not_in_list`.
       content:
         application/json:
           schema:
@@ -287,7 +831,7 @@ components:
           schema:
             $ref: "#/components/schemas/Error"
     WriteFailed:
-      description: Audit write failed, or the game action failed
+      description: Audit write failed, or the game action failed (`mail_failed`)
       content:
         application/json:
           schema:
