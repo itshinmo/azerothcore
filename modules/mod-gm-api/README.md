@@ -1,6 +1,7 @@
 # mod-gm-api
 
-HTTP API inside `worldserver` for the future server website BFF.
+HTTP API inside `worldserver` for the future server website BFF and the committed Bruno test
+collection (`tools/api-tests/bruno/`).
 
 ## Endpoints
 
@@ -52,9 +53,12 @@ GmApi.AllowWrites = 0
 ```
 
 `GmApi.Secret` is required, at least 32 characters. The API does not start otherwise.
-`GmApi.AllowWrites` defaults to `0`; keep it off unless the BFF and the actor mapping are ready.
+`GmApi.AllowWrites` defaults to `0`; enable it only on a local or test stack while testing writes.
 
 ## Test
+
+The primary manual path is the Bruno collection ([README](../../tools/api-tests/bruno/README.md));
+it signs each request. The curl recipe below is the headless fallback.
 
 ```bash
 SECRET='<shared-secret>'

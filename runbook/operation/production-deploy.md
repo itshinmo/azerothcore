@@ -1,5 +1,9 @@
 # Production deploy
 
+> Status: production is the Phase 4 launch target after the website
+> ([ADR-013](../../decisions/ADR-013-server-and-client-before-website.md)). The provider decision is
+> still open; this runbook records the target contract.
+
 ## When to use
 
 After the provider is chosen and the server is ready to go live. The provider decision is still open;

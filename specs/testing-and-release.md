@@ -24,7 +24,7 @@ feature spec.
 | Live e2e | `e2e/` | protocol/client-observed behavior on a running stack |
 | SQL/data | test database | row counts, constraints, sample rows |
 | Static content | `acore_world` via the content audit | dangling references, quest chains, SmartAI, script registry |
-| Manual | test realm | player-visible behavior the harness cannot express |
+| Manual | test realm and `tools/api-tests/bruno/` | player-visible behavior and GM API requests the harness cannot express |
 
 ### Tiers
 
@@ -44,6 +44,9 @@ feature spec.
 - Dedicated GM accounts per role.
 - Unique character prefixes; cleanup after each e2e test.
 - Never point at production.
+- GM API manual checks use the committed Bruno collection ([ADR-014](../decisions/ADR-014-bruno-api-test-client.md)).
+  The collection holds no secret; the local environment file is ignored. Keep it on loopback or a
+  private address.
 
 ### Client-side behaviour
 
@@ -103,3 +106,4 @@ feature spec.
 - [runbook/operation/test-realm.md](../runbook/operation/test-realm.md)
 - [runbook/operation/production-deploy.md](../runbook/operation/production-deploy.md)
 - [decisions/ADR-007-verification-gates-and-fork-ci.md](../decisions/ADR-007-verification-gates-and-fork-ci.md)
+- [decisions/ADR-014-bruno-api-test-client.md](../decisions/ADR-014-bruno-api-test-client.md)

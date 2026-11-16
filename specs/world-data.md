@@ -1,5 +1,8 @@
 # World data
 
+> Status: the export and the content audit stay active. The HTTP serving surface and the public pages
+> wait for Phase 3 — website ([ADR-013](../decisions/ADR-013-server-and-client-before-website.md)).
+
 ## Purpose
 
 Define the public catalog of world data served to the website: entities, spawn locations, freshness,

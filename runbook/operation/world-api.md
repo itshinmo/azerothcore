@@ -1,5 +1,9 @@
 # World data API
 
+> Status: parked until Phase 3 — website ([ADR-013](../../decisions/ADR-013-server-and-client-before-website.md)).
+> The export (`make world-export`) and the content audit stay active; only this HTTP serving surface
+> waits for the website phase.
+
 ## When to use
 
 To browse or test the exported world catalog without a website: entity pages, search, and spawn

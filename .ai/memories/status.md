@@ -1,6 +1,6 @@
 ---
 description: Current project status, last verified commit, known issues, open decisions, and next tasks. Read after overview on any task.
-last-verified: 2026-11-15 (docs 141/657; canal swim measured; test realm survived a client session)
+last-verified: 2026-11-16 (phases: base game, custom content, website, launch; Bruno API collection added)
 ---
 
 # Status
@@ -9,11 +9,27 @@ last-verified: 2026-11-15 (docs 141/657; canal swim measured; test realm survive
 
 - Phase 0–4 are complete for the current scope: foundation, tooling, test realm, backups, DBeaver,
   RBAC presets, command audit, command index, GM API read endpoints, in-game GM addon.
-- Phase 5 started: the GM API has audited `kick` and `unstuck` writes behind
-  `GmApi.AllowWrites`, a signed `X-GM-Actor`, RBAC, and `gm_audit_log`.
-- The long-term visual layer is the future server website. No in-repo web UI exists.
+- Phase 5 resumed: the GM API has audited `kick` and `unstuck` writes behind `GmApi.AllowWrites`, a
+  signed `X-GM-Actor`, RBAC, and `gm_audit_log`. Manual testing uses the committed Bruno collection
+  ([ADR-014](../../decisions/ADR-014-bruno-api-test-client.md)); it no longer waits for a dashboard.
+- Roadmap for 2026-11-16: base game fully functional and stable, then custom content, then the
+  website, then launch ([ADR-013](../../decisions/ADR-013-server-and-client-before-website.md)).
+- Website work has not started and is not part of the current phase. Custom content and shop work
+  remain out of scope until the base game is done.
 - Branch: `local-server-setup` is the integration branch. Confirm with `git status`.
-- Website work has not started. Shop and new content remain out of scope.
+
+## Decisions recorded 2026-11-16
+
+- [ADR-013](../../decisions/ADR-013-server-and-client-before-website.md): Phase 1 base game, Phase 2
+  custom content, Phase 3 website, Phase 4 launch. Website-dependent work is deferred, including the
+  admin BFF/dashboard, website auth, account and character pages, the spawn map page, and the `make
+  world-api` serving surface. The world export and content audit stay active.
+- [ADR-014](../../decisions/ADR-014-bruno-api-test-client.md): the committed Bruno collection in
+  `tools/api-tests/bruno/` is the primary manual GM API test path. Curl stays as the headless
+  fallback. Secrets live only in the ignored local environment file.
+- Base-game verification is now the main work: scripts, quests, NPC spawns and behavior, client
+  behavior, and stability.
+- Open website questions are deferred, not dropped; see `decisions/OPEN-QUESTIONS.md`.
 
 ## Decisions recorded 2026-11-14
 
@@ -33,7 +49,7 @@ last-verified: 2026-11-15 (docs 141/657; canal swim measured; test realm survive
 
 - World data export (`make world-export`): 140,650 files, 566 MB, 17.6 s; counts npc 29,945 /
   item 46,096 / quest 9,464 / object 21,580 / 33,318 spawn sets. Read API (`make world-api`) serves
-  the artifacts on loopback; 43 tool tests.
+  the artifacts on loopback (parked until Phase 3); 43 tool tests.
 - GM API wire contract (`specs/gm-api.openapi.yaml`): four implemented endpoints, HMAC signing,
   actor identity, all error codes and statuses.
 - Content audit C-13: gossip-menu, gossip-option, and quest-available conditions validated against
@@ -43,6 +59,10 @@ last-verified: 2026-11-15 (docs 141/657; canal swim measured; test realm survive
 - Test realm supervisor logging: `tools/dev/test-realm.sh` now wraps each server and appends
   `start`, `signal=`, and `exit=` lines to `env/test/logs/<name>.supervisor.log`. A normal `stop`
   logs `exit=0` for both, so a silent death is now visible.
+- Bruno collection (`tools/api-tests/bruno/`): status, audit, kick, unstuck requests; a collection
+  pre-request script computes the HMAC headers; a committed environment example; the real
+  environment file is ignored. Validated on 2026-11-16 against a mock server that verified the
+  signature independently, in Bruno CLI Safe Mode; a real-stack run is still pending.
 
 ## Investigated 2026-11-14
 
@@ -85,25 +105,48 @@ last-verified: 2026-11-15 (docs 141/657; canal swim measured; test realm survive
 
 ## Next tasks
 
-1. Static spawn map page. Blocked on the map imagery decision in `decisions/OPEN-QUESTIONS.md`.
-2. Decide the production host and finish the deploy runbook.
-3. Decide website auth. The GM API wire contract already exists at
-   `specs/gm-api.openapi.yaml`.
-4. Build the admin BFF/dashboard and the read-only website MVP through it.
-5. After the dashboard: remaining GM API writes (item grant, mail, ban, RBAC, server control) and the
-   branches that need an online player. `writes_disabled`, `rate_limited`, and `audit_failed` are
-   reachable now with the documented curl recipe.
-6. Audit v2 remainder: map-bounds validation (blocked on reference data) and C-06 phase
-   reachability.
-7. Triage the 1,972 minors when content work starts; they are cosmetic or expected data.
-8. Shop and new content only after their decisions.
-9. Keep `libSiliconPatch` off until WoWSilicon#67 is fixed; re-test after each launcher update and
+Order follows [ADR-013](../../decisions/ADR-013-server-and-client-before-website.md): base game, custom
+content, website, launch. Playtests and a friends-only test VPS can happen between phases.
+
+### Phase 1 — base game (now)
+
+1. Run the Bruno collection once on the local stack: status, audit, kick, unstuck; confirm the audit
+   rows and record the result. Procedure: `runbook/gm/gm-api.md`.
+2. Build the remaining GM API writes (item grant, mail, ban, RBAC, server control) and the planned
+   read endpoints (account, character, online players, instance info). Test each through Bruno on a
+   live stack, including the branches that need an online player.
+3. Decide and implement the per-account experience override promised by
+   [ADR-012](../../decisions/ADR-012-progression-rates.md).
+4. Audit v2 remainder: C-06 phase reachability. Map-bounds validation stays blocked on reference
+   data.
+5. Build the base-game verification checklist: quest chains, scripted encounters, NPC spawns and
+   behavior, client-observed behavior, and stability. Playtest against it.
+6. Triage the 1,972 minors when content work starts; they are cosmetic or expected data.
+7. Add server-side water movement validation if the cheat risk is accepted: swim flag vs
+   `GetLiquidData()` status, swim-speed enforcement, mismatch logging. Not implemented, and it does
+   not fix the client.
+8. Keep `libSiliconPatch` off until WoWSilicon#67 is fixed; re-test after each launcher update and
    keep a second client copy (`~/Games/wotlk-test`) without the mod for client-side behaviour checks.
-10. Test realm death: keep the supervisor log; capture it on the next occurrence, with `screen -ls`
+9. Test realm death: keep the supervisor log; capture it on the next occurrence, with `screen -ls`
    and the unified log, before restarting.
-11. Add server-side water movement validation if the cheat risk is accepted: swim flag vs
-    `GetLiquidData()` status, swim-speed enforcement, mismatch logging. Not implemented, and it does
-    not fix the client.
+
+### Phase 2 — custom content
+
+10. Scope hardcore rule-sets and other unique features only after Phase 1 is done. Record each feature
+    in a new ADR before implementation.
+
+### Phase 3 — website
+
+11. Decide website auth (passkeys, OAuth, or Argon2id). Record it in an ADR extending ADR-010.
+12. Build the admin BFF/dashboard and the read-only website MVP through it.
+13. Static spawn map page, after the map imagery decision.
+14. Account and character pages, after their priority decision.
+15. Shop frontend, after the shop decisions.
+
+### Phase 4 — launch
+
+16. Choose the production host, region, and budget.
+17. Finish the deploy runbook, deploy, verify production health and backups, and publish.
 
 No playerbots work is planned.
 
@@ -136,20 +179,20 @@ No playerbots work is planned.
   lookups, teleport, and input rendering. Confirmed by the human on 2026-11-13.
 - Test realm start verified 2026-11-13: `acore_test_auth.realmlist.flag` is 0 after start, so the
   authserver offline bit is cleared correctly.
-- Remaining untested API branches are deferred to the future GM dashboard; see known issues.
+- Remaining untested API branches are exercised through the Bruno collection on a live stack; see
+  known issues.
 - RBAC, audit, and API live/manual checks were performed. See the runbooks and ADRs.
 
 ## Known issues
 
-1. **GM API coverage is partial and gated on the dashboard.** `kick` and `unstuck` are the only
-   audited writes. Item grant, mail, ban, RBAC, and server control are not built, and several error
-   branches (`player_busy`, `teleport_failed`, `audit_failed`, `writes_disabled`, rate limit,
-   timeout/shutdown) are untested. The new writes and the branches that need an online player will be
-   exercised through the admin BFF/dashboard before they ship; `writes_disabled`, `rate_limited`,
-   and `audit_failed` are reachable with the documented curl recipe now. The API still uses one shared
-   HMAC secret for transport; `X-GM-Actor` identifies the human but the BFF remains the only holder of
-   the secret. Audit query uses the shared sync DB pool; audit search is newest-N only; structured
-   request logging is planned.
+1. **GM API coverage is partial.** `kick` and `unstuck` are the only audited writes. Item grant, mail,
+   ban, RBAC, server control, and the planned read endpoints are not built, and several error branches
+   (`player_busy`, `teleport_failed`, `audit_failed`, `writes_disabled`, rate limit, timeout/shutdown)
+   are untested. The committed Bruno collection makes them testable on a live stack without a
+   dashboard; `writes_disabled`, `rate_limited`, and `audit_failed` are reachable now. The API still
+   uses one shared HMAC secret for transport; `X-GM-Actor` identifies the human and the future BFF
+   will be the only holder of the secret. Audit query uses the shared sync DB pool; audit search is
+   newest-N only; structured request logging is planned.
 2. **cppcheck suppressions target 2.22.** Local Homebrew has 2.22.0; the runner's packaged version is
    unrecorded. A green cpp-lint job does not prove the version, because unmatched suppressions are not
    errors. Quote `cppcheck --version` in any CI failure before changing a suppression.
@@ -167,12 +210,25 @@ No playerbots work is planned.
 
 ## Open decisions
 
+Before launch:
+
 - Production provider, region, and budget.
+- Custom content scope (hardcore rule-sets and other unique features) after Phase 1.
+
+Server work:
+
 - Per-account experience override mechanism (module command versus GM-only).
-- Map imagery source for the public spawn pages.
-- Shop product list revision before shop work starts.
+
+Deferred until Phase 3 — website ([ADR-013](../../decisions/ADR-013-server-and-client-before-website.md)):
+
 - Website web-auth model: passkeys, OAuth, or Argon2id password hash.
+- Map imagery source for the public spawn pages.
+- Account and character page priority.
 - Shop delivery trust model.
+- Shop product list revision before shop work starts.
+
+Not blocking now:
+
 - Client patch pipeline and timing for genuinely new zones/assets.
 - Windows development path (WSL2 or Docker).
 

@@ -64,7 +64,9 @@ The contract is [specs/architecture.md](../../specs/architecture.md). This note 
 ## Project tooling
 
 - `tools/dev/` — doctor, server lifecycle, database, verification, logs.
-- `tools/` — project tooling: dev scripts, GM addon. Database access uses DBeaver, not an in-repo
-  server. The long-term visual layer is the server website (ADR-010); no in-repo web UI now.
+- `tools/api-tests/bruno/` — committed Bruno collection for manual GM API testing (ADR-014).
+- `tools/` — project tooling: dev scripts, GM addon, API tests. Database access uses DBeaver, not an
+  in-repo server. The long-term visual layer is the server website (ADR-010), built in Phase 3 after
+  the base game and custom content (ADR-013); no in-repo web UI now.
 - `tools/gm-addon/` — in-game GM command menu (built).
 - `modules/mod-gm-audit/`, `modules/mod-gm-api/` — GM audit and API (phase 4).
