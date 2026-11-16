@@ -32,6 +32,7 @@ and the audit behavior.
 | Ban | `POST /api/v1/accounts/{{targetAccount}}/ban` | Tagged `danger`. Bans the account for 60 seconds. |
 | Permissions | `POST /api/v1/accounts/{{targetAccount}}/permissions` | Tagged `danger`. Grants permission 488 on the target account. |
 | Server cancel | `POST /api/v1/server/control` | Write. Cancels a pending shutdown/restart timer; safe to send. |
+| Server shutdown | `POST /api/v1/server/control` | Tagged `danger`. Schedules shutdown in 30 seconds; `make start` afterwards. |
 | Account read | `GET /api/v1/accounts/1` | Read. Change the numeric id or use an account name. |
 | Character read | `GET /api/v1/characters/{{playerName}}` | Read. |
 | Online players | `GET /api/v1/players/online?limit=100` | Read. |
