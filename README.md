@@ -10,14 +10,19 @@ editing immutable upstream data or losing project-specific work.
 
 ## Current focus
 
-The current work is infrastructure and polish, not new game content:
+The current work is infrastructure and polish, not new game content. Base game first; the website
+comes later:
 
+- base-game verification: scripts, quests, NPC spawns and behavior, client-observed behavior,
+  stability
 - agent and human knowledge layer under `.ai/`, `specs/`, `decisions/`, and `runbook/`
 - local development, test realm, backup, and verification tooling
 - a documented database access workflow using DBeaver
 - GM workflow: command handbook, least-privilege roles, audit, GM API with read and audited write
-  endpoints, in-game addon
-- future server website as the long-term visual layer; no in-repo web UI for now
+  endpoints, in-game addon, Bruno API collection
+- playtests and a friends-only test VPS as needed
+- then custom content, the future server website as the long-term visual layer, and launch; no
+  in-repo web UI for now
 - current status, known issues, and next tasks: [.ai/memories/status.md](.ai/memories/status.md)
 
 New zones, quests, dungeons, and shop features are out of scope until the foundation is stable. The

@@ -7,10 +7,11 @@ confuse the two.
 |------|---------|--------|
 | `dev/` | doctor, server lifecycle, backup, verification | available |
 | `gm-addon/` | in-game GM command menu | available |
+| `api-tests/bruno/` | manual GM API collection | available |
 
 Database access is external: DBeaver, documented in `runbook/database/dbeaver.md`. There is no
-in-repo database GUI server. The long-term GM and server visual layer is the future server website;
-there is no in-repo web UI right now.
+in-repo database GUI server. The long-term GM and server visual layer is the future server website,
+built in Phase 3; there is no in-repo web UI right now.
 
 Rules:
 

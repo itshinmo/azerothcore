@@ -1,6 +1,6 @@
 ---
 description: What this repository is, its current state, the scope of work, and where to start. Read first on any task.
-last-verified: 2026-11-13 (phase 4 complete; phase 5 GM writes started; local build, databases, and test realm verified 2026-11-12)
+last-verified: 2026-11-16 (phases: base game, custom content, website, launch)
 ---
 
 # Overview
@@ -14,15 +14,23 @@ tracked modules, tracked SQL, and project tooling.
 
 ## Current phase
 
-Foundation, not content. The work is:
+Base game first. The phases are: base game fully functional and stable, custom content, website,
+launch. The work now is:
 
+- base-game verification: scripts, quests, NPC spawns and behavior, client-observed behavior,
+  stability
 - agent and human knowledge layer
 - local development, test realm, backup, and verification tooling
 - database access through DBeaver (no in-repo database GUI)
-- GM workflow: handbook, RBAC, audit, GM API, in-game addon; visual layer moves to the future server website
+- GM workflow: handbook, RBAC, audit, GM API, in-game addon; visual layer moves to the future server
+  website in Phase 3
+- playtests and a friends-only test VPS as needed
 
-New zones, quests, dungeons, items, and shop features are out of scope until the foundation is
-stable. The content policy and ID ranges are documented so future work does not collide.
+The website starts after the base game and custom content
+([ADR-013](../../decisions/ADR-013-server-and-client-before-website.md)). API-first still applies
+while it waits. Custom content, new zones, quests, dungeons, items, and shop features are out of
+scope until the base game is stable. The content policy and ID ranges are documented so future work
+does not collide.
 
 ## Verified local state
 

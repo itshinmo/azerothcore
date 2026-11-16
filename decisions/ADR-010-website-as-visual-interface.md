@@ -3,6 +3,7 @@
 - Status: accepted
 - Date: 2026-11-13
 - Amends: [ADR-005](ADR-005-gm-tools-and-rbac.md)
+- Amended by: [ADR-013](ADR-013-server-and-client-before-website.md) (base game, custom content, website, launch)
 
 ## Context
 
@@ -54,7 +55,10 @@ tools, and future player services.
 
 ## Consequences
 
-- No visual GM features until the website starts. CLI and the GM API remain usable.
+- No visual GM features until the website starts. CLI, the GM API, and the Bruno collection remain
+  usable.
 - The GM API is the stable contract; the removed panel is not.
 - Website work must include identity, sessions, CSRF, RBAC, audit, and admin-zone isolation.
 - Every future feature needs an API contract and tests before its website page.
+- Sequencing changed on 2026-11-16: base game, then custom content, then the website, then launch
+  ([ADR-013](ADR-013-server-and-client-before-website.md)).

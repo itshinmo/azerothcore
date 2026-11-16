@@ -3,6 +3,10 @@
 Decisions that are not made yet. Do not implement a blocked area until its question is answered. When
 answered, record the answer in an ADR or spec and remove the entry.
 
+> Sequencing note (2026-11-16): the phases are base game, custom content, website, launch
+> ([ADR-013](ADR-013-server-and-client-before-website.md)). Website-dependent questions below are
+> deferred to Phase 3, not dropped. The production provider is a Phase 4 decision.
+
 ## Shop delivery trust model
 
 **Question:** How does the website grant a purchase on the server?
@@ -14,6 +18,7 @@ Options:
 3. Manual GM grants until automation exists.
 
 **Blocks:** shop implementation, website contract, entitlement schema.
+**Deferred until Phase 3 — website (ADR-013).**
 **Owner:** human.
 **Record:** ADR-006 and a new ADR when chosen.
 
@@ -25,6 +30,7 @@ Candidates: Hetzner Cloud CCX (performance/price), OVHcloud Rise, DigitalOcean P
 LTS, 4 vCPU / 16 GB / NVMe target.
 
 **Blocks:** production deploy runbook finalization, DNS/TLS, backups, monitoring.
+**Phase 4:** production is chosen before launch (ADR-013).
 **Owner:** human.
 **Record:** a new ADR that extends ADR-003.
 
@@ -63,8 +69,21 @@ model and incompatible with a strict no-progression-sales promise. The question 
 shop is actually built; no shop code is in scope now.
 
 **Blocks:** shop implementation.
+**Deferred until Phase 3 — website (ADR-013).**
 **Owner:** human.
 **Record:** a new ADR that extends ADR-006, plus the spec update.
+
+## Website auth model
+
+**Question:** Which web identity does the site use?
+
+Options: passkeys, OAuth, or an Argon2id password hash, linked to a game account. MFA or
+re-authentication is required for destructive GM actions. The game SRP6 session is never reused.
+
+**Blocks:** website authentication, account pages, GM dashboard.
+**Deferred until Phase 3 — website (ADR-013).**
+**Owner:** human.
+**Record:** a new ADR that extends ADR-010.
 
 ## Map imagery for the world data pages
 
@@ -77,6 +96,7 @@ Options:
 3. A non-asset schematic with spawn markers only.
 
 **Blocks:** the public spawn map page, not the exported data.
+**Deferred until Phase 3 — website (ADR-013).**
 **Owner:** human.
 **Record:** a new ADR that extends ADR-011, plus the spec update.
 
@@ -88,6 +108,7 @@ Options: account lookup, character summary, online players, instance info, audit
 only). The world catalog answer covers public entity pages only; account and admin pages remain open.
 
 **Blocks:** the website phase after the catalog.
+**Deferred until Phase 3 — website (ADR-013).**
 **Owner:** implementer + db-admin, confirmed by human.
 **Record:** a new ADR that extends ADR-010.
 

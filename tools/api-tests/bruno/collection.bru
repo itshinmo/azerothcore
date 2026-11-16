@@ -1,0 +1,43 @@
+meta {
+  name: GM API
+}
+
+script:pre-request {
+  // Safe Mode exposes crypto-js and uuid; Node's crypto module is not available.
+  const CryptoJS = require('crypto-js');
+  const uuid = require('uuid');
+
+  const method = req.getMethod().toUpperCase();
+  const path = req.getPath();
+  const query = req.getQueryString();
+  // Pre-request scripts see the URL template, not the resolved variables.
+  const target = bru.interpolate(query ? `${path}?${query}` : path);
+
+  const secret = bru.getEnvVar('gmApiSecret');
+  if (!secret) {
+    throw new Error('gmApiSecret is not set; copy environments/local.bru.example to local.bru and fill it');
+  }
+
+  const timestamp = Math.floor(Date.now() / 1000).toString();
+  const nonce = uuid.v4();
+
+  let canonical = `${timestamp}\n${nonce}\n${method}\n${target}`;
+  let actor = '';
+  if (method !== 'GET' && method !== 'HEAD') {
+    actor = String(bru.getEnvVar('gmActor') || '');
+    if (actor) {
+      canonical += `\n${actor}`;
+    }
+  }
+
+  const signature = CryptoJS.HmacSHA256(canonical, secret).toString(CryptoJS.enc.Hex);
+
+  req.setHeader('X-GM-Timestamp', timestamp);
+  req.setHeader('X-GM-Nonce', nonce);
+  req.setHeader('X-GM-Signature', signature);
+  if (actor) {
+    req.setHeader('X-GM-Actor', actor);
+  } else {
+    req.deleteHeader('X-GM-Actor');
+  }
+}

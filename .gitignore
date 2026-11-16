@@ -36,6 +36,9 @@
 /src/server/scripts/Custom/*
 !/src/server/scripts/Custom/README.md
 
+# Bruno local environment holds the GM API secret.
+/tools/api-tests/bruno/environments/local.bru
+
 /*.override.yml
 /*.override.yaml
 

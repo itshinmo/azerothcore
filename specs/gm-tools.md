@@ -1,9 +1,11 @@
 # GM tools
 
-> Status: phase 4 complete for the current scope; phase 5 started for the GM API. RBAC role presets,
+> Status: phase 4 complete for the current scope; phase 5 resumed for the GM API. RBAC role presets,
 > the command audit module, the command index, the GM API (read endpoints plus audited kick and
 > unstuck writes), and the in-game addon are built. The long-term visual layer is the future server
-> website ([ADR-010](../decisions/ADR-010-website-as-visual-interface.md)); no in-repo web UI.
+> website ([ADR-010](../decisions/ADR-010-website-as-visual-interface.md)), now sequenced after
+> production ([ADR-013](../decisions/ADR-013-server-and-client-before-website.md)); no in-repo web UI.
+> Manual API testing uses the Bruno collection ([ADR-014](../decisions/ADR-014-bruno-api-test-client.md)).
 
 ## Purpose
 
@@ -15,7 +17,7 @@ actions, a server website, and an in-game addon.
 - GM command handbook.
 - RBAC role presets.
 - GM audit.
-- Server website (future) and its GM API.
+- Server website (future, Phase 3) and its GM API.
 - In-game GM addon.
 
 ## Boundary
@@ -66,12 +68,13 @@ Owns the GM workflow and tooling. Does not own the game commands themselves; the
 - Logs go to a dedicated table or structured file, never to a public channel.
 - Procedure and queries: [runbook/gm/audit.md](../runbook/gm/audit.md).
 
-### Web GM website (future)
+### GM API and website (website future)
 
-- Long-term visual layer: the server website. No in-repo web UI exists now; see
-  [ADR-010](../decisions/ADR-010-website-as-visual-interface.md).
+- Long-term visual layer: the server website, built in Phase 3 after the base game and custom content
+  ([ADR-013](../decisions/ADR-013-server-and-client-before-website.md)). No in-repo web UI exists now;
+  see [ADR-010](../decisions/ADR-010-website-as-visual-interface.md).
 - Backend: `modules/mod-gm-api/` inside `worldserver`. Read endpoints and audited kick/unstuck writes
-  built; more writes planned.
+  built; more writes planned. API work does not wait for the website.
 - Browser architecture: browser -> admin website BFF -> GM API. Only the admin BFF holds the API
   secret; the public BFF and browser never see it. The website uses its own web identity, not the game SRP6 session.
 - Transport: HTTP on localhost or a private VPN interface; HMAC-signed requests with a nonce and
@@ -79,9 +82,11 @@ Owns the GM workflow and tooling. Does not own the game commands themselves; the
 - Implemented read-only endpoints: server status, audit rows. Implemented writes: kick, unstuck,
   gated by `GmApi.AllowWrites`, a signed `X-GM-Actor` game account id, RBAC, and audit. Planned read
   endpoints: account, character, online players, instance info.
-- Item grant, mail, ban, RBAC, and server control are not built. They and the live error branches
-  will be exercised through the admin BFF/dashboard before they ship; the cheap branches
-  (`writes_disabled`, `rate_limited`, `audit_failed`) are reachable with the curl recipe today.
+- Item grant, mail, ban, RBAC, and server control are not built. They are the next server-side work
+  and are tested against a live stack with the committed Bruno collection
+  ([`tools/api-tests/bruno/`](../tools/api-tests/bruno/README.md)); the website is not required to
+  exercise them. The cheap branches (`writes_disabled`, `rate_limited`, `audit_failed`) are reachable
+  with the same collection or the curl recipe.
 - Every endpoint validates input and calls game logic; no endpoint writes game tables directly. The
   module writes its own audit rows.
 - Wire contract: [gm-api.openapi.yaml](gm-api.openapi.yaml).
@@ -121,8 +126,9 @@ Owns the GM workflow and tooling. Does not own the game commands themselves; the
 
 - Unit: HMAC canonicalization/signature (with and without actor), actor validation, player target
   parsing, timestamp window, nonce length, limit parsing.
-- Manual API: skew, nonce replay, rate limit, input validation, actor missing/unknown, RBAC denial,
-  target offline, self-target, busy target.
+- Manual API: Bruno collection (`tools/api-tests/bruno/`) plus the curl recipe for skew, nonce
+  replay, rate limit, input validation, actor missing/unknown, RBAC denial, target offline,
+  self-target, busy target.
 - Integration: test realm with each role; read endpoint, kick/unstuck write, denied write, audit row
   with the outcome.
 - Manual: in-game addon install, command execution, audit review.
@@ -131,6 +137,8 @@ Owns the GM workflow and tooling. Does not own the game commands themselves; the
 ## References
 
 - [decisions/ADR-005-gm-tools-and-rbac.md](../decisions/ADR-005-gm-tools-and-rbac.md)
+- [decisions/ADR-013-server-and-client-before-website.md](../decisions/ADR-013-server-and-client-before-website.md)
+- [decisions/ADR-014-bruno-api-test-client.md](../decisions/ADR-014-bruno-api-test-client.md)
 - [runbook/gm/command-handbook.md](../runbook/gm/command-handbook.md)
 - [runbook/gm/rbac-roles.md](../runbook/gm/rbac-roles.md)
 - [runbook/gm/incident-response.md](../runbook/gm/incident-response.md)

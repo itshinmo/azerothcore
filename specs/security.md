@@ -86,6 +86,8 @@ Owns access control and secret handling. Does not own game balance or individual
 
 ### Future website security
 
+Website work starts in Phase 3, after the base game and custom content ([ADR-013](../decisions/ADR-013-server-and-client-before-website.md)).
+
 - The browser talks to a website BFF, not directly to the GM API.
 - The admin BFF holds the GM API HMAC secret. The public BFF and browser never receive it.
 - Web identity is separate from game SRP6. Link a web identity to a game account; do not reuse game

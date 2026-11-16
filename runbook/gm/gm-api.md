@@ -1,12 +1,13 @@
 # GM API
 
 HTTP API inside `worldserver`. It serves read endpoints and, when explicitly enabled, audited write
-endpoints. The future server website calls it through a BFF; no in-repo web UI is built.
+endpoints. The future server website calls it through a BFF in Phase 3
+([ADR-013](../../decisions/ADR-013-server-and-client-before-website.md)); no in-repo web UI is built.
 
 ## When to use
 
-Testing the API, wiring the future website BFF, or checking that HMAC authentication, RBAC, and audit
-work.
+Testing the API with the Bruno collection, reproducing a failure with curl, wiring the future
+website BFF, or checking that HMAC authentication, RBAC, and audit work.
 
 ## Config
 
@@ -25,8 +26,12 @@ GmApi.AllowWrites = 0
 
 - `GmApi.Secret` is required, at least 32 characters. Empty or short secrets stop the API.
 - `GmApi.NonceTtl` must be at least `2 * GmApi.MaxClockSkew`.
-- `GmApi.AllowWrites` defaults to `0`. Keep it off until the BFF and the actor mapping are ready.
+- `GmApi.AllowWrites` defaults to `0`. Keep it off for read-only checks. Enable it only on a local or
+  test stack while testing writes.
 - Bind loopback or a private VPN address. Never expose it publicly.
+- The local and test realm configs both default to `GmApi.Port = 8090`. Start only one stack, or give
+  one config a different port. Otherwise the second worldserver logs `Could not bind GmApi` and its
+  API is unreachable while the other stack answers.
 - The secret is a credential. Keep it out of the repository, logs, and chat.
 - Restart `worldserver` after changing the config.
 
@@ -47,10 +52,25 @@ account must exist and have security above `SEC_PLAYER`. A write refuses to targ
 account or a session with security at or above the actor's. Actions run on the world thread and call
 game logic; the API does not write game tables directly.
 
-Not built: item grant, mail, ban, RBAC, and server control. Their live error branches will be
-exercised through the admin BFF/dashboard on a live stack before these endpoints ship. The cheap
-branches (`writes_disabled`, `rate_limited`, `audit_failed`) are reachable with the curl recipe
-below today.
+Not built: item grant, mail, ban, RBAC, and server control. They are the next server-side work and
+are tested through the Bruno collection below; the website is not required to exercise them. The cheap
+branches (`writes_disabled`, `rate_limited`, `audit_failed`) are reachable with the same collection or
+the curl recipe.
+
+## Bruno collection
+
+[`tools/api-tests/bruno/`](../../tools/api-tests/bruno/README.md) is the primary manual test path. It
+signs every request with `collection.bru`, so no shell signing is needed.
+
+1. Install the Bruno VS Code extension `bruno-api-client.bruno` or the desktop app.
+2. Copy `environments/local.bru.example` to `environments/local.bru`; the real file is ignored.
+3. Set `gmApiSecret` to `GmApi.Secret`, `gmActor` to a GM account id, and `playerName` to an online
+   character.
+4. Open the collection, select the `local` environment, and send Status or Audit for reads. For
+   writes, set `GmApi.AllowWrites = 1` and restart `worldserver`.
+
+The collection holds no secret. Never commit `local.bru`, paste the secret into a request, or point
+the collection at production. It runs in Safe Mode; no Developer Mode or external package is needed.
 
 ## Signing
 
@@ -79,7 +99,9 @@ X-GM-Actor: <numeric game account id>   # required on writes
 
 The server accepts a signature in upper or lower hex.
 
-## Test
+## Test with curl
+
+Use this headless fallback when Bruno is unavailable or to replay a nonce deliberately.
 
 ```bash
 SECRET='<shared-secret>'
@@ -187,5 +209,7 @@ execution.
 
 - [audit.md](audit.md)
 - [rbac-roles.md](rbac-roles.md)
+- [Bruno collection](../../tools/api-tests/bruno/README.md)
 - [modules/mod-gm-api/README.md](../../modules/mod-gm-api/README.md)
 - [specs/gm-tools.md](../../specs/gm-tools.md)
+- [ADR-014](../../decisions/ADR-014-bruno-api-test-client.md)

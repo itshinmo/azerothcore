@@ -46,7 +46,9 @@ DataDir: dbc/, maps/, vmaps/, mmaps/
 
 ## Future server website
 
-The long-term visual layer is the server website, not an in-repo panel. It is not built yet.
+The long-term visual layer is the server website, not an in-repo panel. It is built after the server
+and client are complete and production is live ([ADR-013](../decisions/ADR-013-server-and-client-before-website.md)).
+It is not built yet.
 
 ```text
 browser -> website BFF -> mod-gm-api -> worldserver
@@ -75,6 +77,8 @@ acore_world (read-only)
 - The website never queries MySQL. It reads exported artifacts with freshness metadata.
 - The same extractor output feeds the audit; a page and a finding cannot disagree about what
   exists.
+- The export and the audit stay active while the website waits; the HTTP serving surface and the
+  spawn map page are parked until Phase 3 ([ADR-013](../decisions/ADR-013-server-and-client-before-website.md)).
 - "Spawned in the database" and "alive now" are separate facts. Live state is read through
   `mod-gm-api` behind the BFF, never directly by the browser.
 - Contract: [specs/world-data.md](world-data.md).

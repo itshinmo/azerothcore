@@ -177,11 +177,15 @@ New content is currently out of scope. When it returns:
   same API and audit rules. Never bypass server-side checks with raw SQL.
 - The in-game addon wraps existing commands; it must not bypass server-side permission checks.
 - Never grant items, gold, or account changes from untrusted input without validation and audit.
+- Manual GM API checks use the Bruno collection in `tools/api-tests/bruno/`; see
+  `runbook/gm/gm-api.md`.
 
 ## Visual interface
 
 - The long-term visual layer is the future server website. See
   `decisions/ADR-010-website-as-visual-interface.md`.
+- The website is last: finish the base game, add custom content, then build the website and launch.
+  See `decisions/ADR-013-server-and-client-before-website.md`.
 - Build features API-first. Keep the command/API path, RBAC checks, and audit; add the website page
   later.
 - Do not add one-off in-repo web UIs. The local GM panel was removed.

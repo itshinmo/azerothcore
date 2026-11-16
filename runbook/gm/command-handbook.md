@@ -99,7 +99,8 @@ Temporary spawns must be removed after the test. Permanent spawns need tracked S
 .send money <player> "<subject>" "<text>" <amount>
 ```
 
-Use the future audited website or a wrapped command for purchases and refunds. Never grant from a screenshot alone.
+Use a wrapped command now, or the audited API when the purchase path lands. Never grant from a
+screenshot alone.
 
 ## Instances
 
