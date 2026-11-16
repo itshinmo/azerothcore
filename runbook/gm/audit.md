@@ -13,8 +13,10 @@ Reviewing privileged actions, investigating a player report, or checking that a 
 - command and arguments
 - timestamp
 - `result`: `NULL` for command-hook rows; GM API writes use `pending` for the pre-dispatch row and
-  then `success`, `denied`, `target_not_found`, `player_busy`, `forbidden_target_security`,
-  `cannot_target_self`, `teleport_failed`, `world_unavailable`, or `world_timeout` for the outcome
+  then an outcome such as `success`, `denied`, `target_not_found`, `forbidden_target_security`,
+  `bad_request`, `invalid_item`, `mailbox_full`, `longer_ban_exists`, `unknown_permission`,
+  `server_control_disabled`, `world_unavailable`, or `world_timeout`. The full list is in
+  [gm-api.md](gm-api.md#audit).
 
 Console commands, accounts with security above player, and accounts with any direct RBAC grant
 beyond the default permission set are audited. GM API writes record the actor from the signed

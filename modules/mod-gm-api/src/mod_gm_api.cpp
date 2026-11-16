@@ -16,12 +16,20 @@
  */
 
 #include "AccountMgr.h"
+#include "BanMgr.h"
+#include "CharacterCache.h"
 #include "Config.h"
 #include "DatabaseEnv.h"
 #include "GmApiAuth.h"
+#include "GmApiBody.h"
 #include "HMAC.h"
+#include "Item.h"
 #include "Log.h"
+#include "Mail.h"
+#include "Map.h"
+#include "MapMgr.h"
 #include "ObjectAccessor.h"
+#include "ObjectMgr.h"
 #include "Player.h"
 #include "RBAC.h"
 #include "Realm.h"
@@ -31,6 +39,7 @@
 #include "World.h"
 #include "WorldScript.h"
 #include "WorldSession.h"
+#include "WorldSessionMgr.h"
 
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/steady_timer.hpp>
@@ -47,6 +56,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <deque>
+#include <exception>
 #include <functional>
 #include <memory>
 #include <mutex>
@@ -102,6 +112,11 @@ namespace
         return out;
     }
 
+    std::string JsonError(std::string_view error)
+    {
+        return R"({"error":")" + JsonEscape(error) + R"("})";
+    }
+
     bool ConstantTimeEqual(std::string const& left, std::string const& right)
     {
         if (left.size() != right.size())
@@ -140,12 +155,25 @@ namespace
 
         void Cancel() { cancelled = true; }
 
+        /// Only one terminal audit outcome may be written for a job.
+        bool ClaimOutcome()
+        {
+            bool expected = false;
+            return outcomeClaimed.compare_exchange_strong(expected, true);
+        }
+
         std::mutex mutex;
         std::condition_variable cv;
         bool done = false;
         std::atomic<bool> cancelled{ false };
+        std::atomic<bool> outcomeClaimed{ false };
         http::status status = http::status::service_unavailable;
         std::string body = R"({"error":"world_unavailable"})";
+
+        Actor auditActor;
+        std::string auditCommand;
+        std::string auditArguments;
+        std::string auditPlayerName;
     };
 
     struct QueuedJob
@@ -178,8 +206,8 @@ namespace
     std::string Escape(std::string const& value)
     {
         // Local escaping keeps audit writes thread-safe; DatabaseWorkerPool::EscapeString uses a
-        // shared synchronous connection without a lock. Backslash escaping assumes the default
-        // sql_mode (NO_BACKSLASH_ESCAPES is not set).
+        // shared synchronous connection without a lock. Single quotes are doubled so the result is
+        // also safe when NO_BACKSLASH_ESCAPES is set.
         std::string out;
         out.reserve(value.size() + 8);
         for (char c : value)
@@ -190,7 +218,7 @@ namespace
                 case '\n': out += "\\n"; break;
                 case '\r': out += "\\r"; break;
                 case 0x1a: out += "\\Z"; break;
-                case '\'': out += "\\'"; break;
+                case '\'': out += "''"; break;
                 case '\\': out += "\\\\"; break;
                 default: out += c; break;
             }
@@ -203,7 +231,8 @@ namespace
     {
         std::string const sql = Acore::StringFormat(
             "INSERT INTO `gm_audit_log` "
-            "(`realm_id`, `account_id`, `account_name`, `player_name`, `player_guid`, `command`, `arguments`, `result`) "
+            "(`realm_id`, `account_id`, `account_name`, `player_name`, `player_guid`, `command`, "
+            "`arguments`, `result`) "
             "VALUES ({}, {}, '{}', '{}', {}, '{}', '{}', '{}')",
             realm.Id.Realm, actor.accountId, Escape(actor.name), Escape(playerName), playerGuid,
             Escape(command), Escape(arguments), Escape(result));
@@ -218,16 +247,34 @@ namespace
         return true;
     }
 
-    void ExecutePlayerAction(Actor const& actor, std::string const& action, std::string const& playerName,
-        std::shared_ptr<WriteJob> const& job)
+    void FinishWrite(Actor const& actor, std::string const& command, std::string const& arguments,
+        std::string const& playerName, uint64 playerGuid, std::string const& result,
+        http::status status, std::shared_ptr<WriteJob> const& job,
+        std::string_view bodyError = {})
     {
-        std::string const command = "api." + action;
+        if (!job->ClaimOutcome())
+            return;
 
+        if (!WriteAudit(actor, command, arguments, playerName, playerGuid, result))
+        {
+            job->Finish(http::status::internal_server_error, JsonError("audit_failed"));
+            return;
+        }
+
+        if (status == http::status::ok)
+            job->Finish(status, R"({"status":"ok"})");
+        else
+            job->Finish(status, JsonError(bodyError.empty() ? result : std::string(bodyError)));
+    }
+
+    void ExecutePlayerAction(Actor const& actor, std::string const& command, std::string const& action,
+        std::string const& playerName, std::shared_ptr<WriteJob> const& job)
+    {
         Player* player = ObjectAccessor::FindPlayerByName(playerName);
         if (!player || !player->GetSession())
         {
-            WriteAudit(actor, command, playerName, "", 0, "target_not_found");
-            job->Finish(http::status::not_found, R"({"error":"target_not_found"})");
+            FinishWrite(actor, command, playerName, playerName, 0, "target_not_found",
+                http::status::not_found, job);
             return;
         }
 
@@ -237,15 +284,15 @@ namespace
 
         if (session->GetAccountId() == actor.accountId)
         {
-            WriteAudit(actor, command, playerName, name, guid, "cannot_target_self");
-            job->Finish(http::status::conflict, R"({"error":"cannot_target_self"})");
+            FinishWrite(actor, command, playerName, name, guid, "cannot_target_self",
+                http::status::conflict, job);
             return;
         }
 
         if (AccountMgr::GetSecurity(session->GetAccountId(), realm.Id.Realm) >= actor.security)
         {
-            WriteAudit(actor, command, playerName, name, guid, "forbidden_target_security");
-            job->Finish(http::status::forbidden, R"({"error":"forbidden"})");
+            FinishWrite(actor, command, playerName, name, guid, "forbidden_target_security",
+                http::status::forbidden, job, "forbidden");
             return;
         }
 
@@ -257,27 +304,560 @@ namespace
         {
             if (player->IsInFlight() || player->IsInCombat())
             {
-                WriteAudit(actor, command, playerName, name, guid, "player_busy");
-                job->Finish(http::status::conflict, R"({"error":"player_busy"})");
+                FinishWrite(actor, command, playerName, name, guid, "player_busy",
+                    http::status::conflict, job);
                 return;
             }
 
             if (!player->TeleportTo(player->m_homebindMapId, player->m_homebindX, player->m_homebindY,
                     player->m_homebindZ, player->GetOrientation()))
             {
-                WriteAudit(actor, command, playerName, name, guid, "teleport_failed");
-                job->Finish(http::status::internal_server_error, R"({"error":"teleport_failed"})");
+                FinishWrite(actor, command, playerName, name, guid, "teleport_failed",
+                    http::status::internal_server_error, job);
                 return;
             }
         }
 
-        if (!WriteAudit(actor, command, playerName, name, guid, "success"))
+        FinishWrite(actor, command, playerName, name, guid, "success", http::status::ok, job);
+    }
+
+    struct WriteSpec
+    {
+        std::string command;
+        std::string arguments;
+        std::string playerName;
+        std::vector<uint32> permissions;
+    };
+
+    bool CheckTargetAccount(Actor const& actor, uint32 accountId, std::string const& targetName,
+        std::string const& command, std::string const& arguments,
+        std::shared_ptr<WriteJob> const& job)
+    {
+        if (accountId == actor.accountId)
         {
-            job->Finish(http::status::internal_server_error, R"({"error":"audit_failed"})");
+            FinishWrite(actor, command, arguments, targetName, 0, "cannot_target_self",
+                http::status::conflict, job);
+            return false;
+        }
+
+        if (AccountMgr::GetSecurity(accountId, realm.Id.Realm) >= actor.security)
+        {
+            FinishWrite(actor, command, arguments, targetName, 0, "forbidden_target_security",
+                http::status::forbidden, job, "forbidden");
+            return false;
+        }
+
+        return true;
+    }
+
+    bool CheckTargetAccount(Actor const& actor, WorldSession* session, std::string const& targetName,
+        std::string const& command, std::string const& arguments,
+        std::shared_ptr<WriteJob> const& job)
+    {
+        return session && CheckTargetAccount(actor, session->GetAccountId(), targetName, command,
+            arguments, job);
+    }
+
+    void ExecuteAddItem(Actor const& actor, std::string const& command, std::string const& arguments,
+        std::string const& playerName, std::string const& body, std::shared_ptr<WriteJob> const& job)
+    {
+        GmApiBody::ItemGrantRequest request;
+        std::string error;
+        if (!GmApiBody::ParseItemGrant(body, request, error))
+        {
+            FinishWrite(actor, command, arguments, playerName, 0, error,
+                http::status::bad_request, job);
             return;
         }
 
-        job->Finish(http::status::ok, R"({"status":"ok"})");
+        ItemTemplate const* itemTemplate = sObjectMgr->GetItemTemplate(request.itemId);
+        if (!itemTemplate || (itemTemplate->MaxCount > 0
+                && request.count > static_cast<uint32>(itemTemplate->MaxCount)))
+        {
+            FinishWrite(actor, command, arguments, playerName, 0, "invalid_item",
+                http::status::bad_request, job);
+            return;
+        }
+
+        Player* player = ObjectAccessor::FindPlayerByName(playerName);
+        if (!player || !player->GetSession())
+        {
+            FinishWrite(actor, command, arguments, playerName, 0, "target_not_found",
+                http::status::not_found, job);
+            return;
+        }
+
+        uint64 const guid = player->GetGUID().GetRawValue();
+        std::string const name = player->GetName();
+        if (!CheckTargetAccount(actor, player->GetSession(), name, command, arguments, job))
+            return;
+
+        ItemPosCountVec dest;
+        uint32 noSpace = 0;
+        InventoryResult const storeResult = player->CanStoreNewItem(NULL_BAG, NULL_SLOT, dest,
+            request.itemId, request.count, &noSpace);
+        if (storeResult != EQUIP_ERR_OK || noSpace > 0)
+        {
+            FinishWrite(actor, command, arguments, name, guid, "inventory_full",
+                http::status::conflict, job);
+            return;
+        }
+
+        Item* item = player->StoreNewItem(dest, request.itemId, true, 0);
+        if (!item)
+        {
+            FinishWrite(actor, command, arguments, name, guid, "inventory_full",
+                http::status::conflict, job);
+            return;
+        }
+
+        player->SendNewItem(item, request.count, true, false);
+
+        FinishWrite(actor, command, arguments, name, guid, "success", http::status::ok, job);
+    }
+
+    void ExecuteMail(Actor const& actor, std::string const& command, std::string const& arguments,
+        std::string const& playerName, std::string const& body, std::shared_ptr<WriteJob> const& job)
+    {
+        GmApiBody::MailRequest request;
+        std::string error;
+        if (!GmApiBody::ParseMail(body, request, error))
+        {
+            FinishWrite(actor, command, arguments, playerName, 0, error,
+                http::status::bad_request, job);
+            return;
+        }
+
+        std::string recipient = request.recipient;
+        if (!normalizePlayerName(recipient))
+        {
+            FinishWrite(actor, command, arguments, playerName, 0, "bad_request",
+                http::status::bad_request, job);
+            return;
+        }
+
+        CharacterCacheEntry const* cache = sCharacterCache->GetCharacterCacheByName(recipient);
+        if (!cache)
+        {
+            FinishWrite(actor, command, arguments, playerName, 0, "target_not_found",
+                http::status::not_found, job);
+            return;
+        }
+
+        if (cache->MailCount >= 100)
+        {
+            FinishWrite(actor, command, arguments, cache->Name, cache->Guid.GetRawValue(),
+                "mailbox_full", http::status::conflict, job);
+            return;
+        }
+
+        if (!CheckTargetAccount(actor, cache->AccountId, cache->Name, command, arguments, job))
+            return;
+
+        struct Stack
+        {
+            uint32 itemId;
+            uint32 count;
+        };
+
+        std::vector<Stack> stacks;
+        for (GmApiBody::ItemRequest const& requested : request.items)
+        {
+            ItemTemplate const* itemTemplate = sObjectMgr->GetItemTemplate(requested.itemId);
+            if (!itemTemplate || (itemTemplate->MaxCount > 0
+                    && requested.count > static_cast<uint32>(itemTemplate->MaxCount)))
+            {
+                FinishWrite(actor, command, arguments, cache->Name, cache->Guid.GetRawValue(),
+                    "invalid_item", http::status::bad_request, job);
+                return;
+            }
+
+            uint32 maxStack = itemTemplate->GetMaxStackSize();
+            if (maxStack == 0)
+                maxStack = 1;
+
+            uint32 remaining = requested.count;
+            while (remaining > maxStack)
+            {
+                stacks.push_back({ requested.itemId, maxStack });
+                remaining -= maxStack;
+            }
+            stacks.push_back({ requested.itemId, remaining });
+
+            if (stacks.size() > MAX_MAIL_ITEMS)
+            {
+                FinishWrite(actor, command, arguments, cache->Name, cache->Guid.GetRawValue(),
+                    "too_many_items", http::status::bad_request, job);
+                return;
+            }
+        }
+
+        Player* online = ObjectAccessor::FindPlayer(cache->Guid);
+        CharacterDatabaseTransaction trans = CharacterDatabase.BeginTransaction();
+        MailDraft draft(request.subject, request.text);
+        if (request.money > 0)
+            draft.AddMoney(request.money);
+
+        std::vector<Item*> created;
+        for (Stack const& stack : stacks)
+        {
+            Item* item = Item::CreateItem(stack.itemId, stack.count);
+            if (!item)
+            {
+                for (Item* existing : created)
+                    delete existing;
+                FinishWrite(actor, command, arguments, cache->Name, cache->Guid.GetRawValue(),
+                    "mail_failed", http::status::internal_server_error, job);
+                return;
+            }
+
+            item->SaveToDB(trans);
+            created.push_back(item);
+            draft.AddItem(item);
+        }
+
+        draft.SendMailTo(trans, MailReceiver(online, cache->Guid.GetCounter()),
+            MailSender(MAIL_NORMAL, cache->Guid.GetCounter(), MAIL_STATIONERY_GM));
+        CharacterDatabase.CommitTransaction(trans);
+
+        FinishWrite(actor, command, arguments, cache->Name, cache->Guid.GetRawValue(),
+            "success", http::status::ok, job);
+    }
+
+    void ExecuteBan(Actor const& actor, std::string const& command, std::string const& arguments,
+        std::string const& playerName, std::string const& account, std::string const& body,
+        std::shared_ptr<WriteJob> const& job)
+    {
+        GmApiBody::BanRequest request;
+        std::string error;
+        if (!GmApiBody::ParseBan(body, request, error))
+        {
+            FinishWrite(actor, command, arguments, playerName, 0, error,
+                http::status::bad_request, job);
+            return;
+        }
+
+        std::string accountName = account;
+        Utf8ToUpperOnlyLatin(accountName);
+        uint32 const accountId = AccountMgr::GetId(accountName);
+        if (!accountId)
+        {
+            FinishWrite(actor, command, arguments, playerName, 0, "target_not_found",
+                http::status::not_found, job);
+            return;
+        }
+
+        if (accountId == actor.accountId)
+        {
+            FinishWrite(actor, command, arguments, accountName, 0, "cannot_target_self",
+                http::status::conflict, job);
+            return;
+        }
+
+        if (AccountMgr::GetSecurity(accountId, realm.Id.Realm) >= actor.security)
+        {
+            FinishWrite(actor, command, arguments, accountName, 0, "forbidden_target_security",
+                http::status::forbidden, job, "forbidden");
+            return;
+        }
+
+        std::string const duration = secsToTimeString(request.durationSeconds, true);
+        BanReturn const result = sBan->BanAccount(accountName, duration, request.reason, actor.name);
+        switch (result)
+        {
+            case BAN_SUCCESS:
+                FinishWrite(actor, command, arguments, accountName, 0, "success",
+                    http::status::ok, job);
+                return;
+            case BAN_NOTFOUND:
+                FinishWrite(actor, command, arguments, accountName, 0, "target_not_found",
+                    http::status::not_found, job);
+                return;
+            case BAN_LONGER_EXISTS:
+                FinishWrite(actor, command, arguments, accountName, 0, "longer_ban_exists",
+                    http::status::conflict, job);
+                return;
+            case BAN_SYNTAX_ERROR:
+            default:
+                FinishWrite(actor, command, arguments, accountName, 0, "bad_request",
+                    http::status::bad_request, job);
+                return;
+        }
+    }
+
+    void ExecutePermission(Actor const& actor, std::string const& command,
+        std::string const& arguments, std::string const& playerName, std::string const& account,
+        std::string const& body, std::shared_ptr<WriteJob> const& job)
+    {
+        GmApiBody::PermissionRequest request;
+        std::string error;
+        if (!GmApiBody::ParsePermission(body, request, error))
+        {
+            FinishWrite(actor, command, arguments, playerName, 0, error,
+                http::status::bad_request, job);
+            return;
+        }
+
+        if (request.realmId != -1 && request.realmId != static_cast<int32>(realm.Id.Realm))
+        {
+            FinishWrite(actor, command, arguments, playerName, 0, "bad_request",
+                http::status::bad_request, job);
+            return;
+        }
+
+        std::string accountName = account;
+        Utf8ToUpperOnlyLatin(accountName);
+        uint32 const accountId = AccountMgr::GetId(accountName);
+        if (!accountId)
+        {
+            FinishWrite(actor, command, arguments, playerName, 0, "target_not_found",
+                http::status::not_found, job);
+            return;
+        }
+
+        if (accountId == actor.accountId)
+        {
+            FinishWrite(actor, command, arguments, accountName, 0, "cannot_target_self",
+                http::status::conflict, job);
+            return;
+        }
+
+        uint32 const security = AccountMgr::GetSecurity(accountId, realm.Id.Realm);
+        if (security >= actor.security)
+        {
+            FinishWrite(actor, command, arguments, accountName, 0, "forbidden_target_security",
+                http::status::forbidden, job, "forbidden");
+            return;
+        }
+
+        if (!sAccountMgr->GetRBACPermission(request.permissionId))
+        {
+            FinishWrite(actor, command, arguments, accountName, 0, "unknown_permission",
+                http::status::not_found, job);
+            return;
+        }
+
+        rbac::RBACData data(accountId, accountName, realm.Id.Realm, static_cast<uint8>(security));
+        data.LoadFromDB();
+
+        rbac::RBACCommandResult result;
+        if (request.action == "grant")
+            result = data.GrantPermission(request.permissionId, request.realmId);
+        else if (request.action == "deny")
+            result = data.DenyPermission(request.permissionId, request.realmId);
+        else
+            result = data.RevokePermission(request.permissionId, request.realmId);
+
+        std::string resultName;
+        switch (result)
+        {
+            case rbac::RBAC_OK:
+                if (WorldSession* session = sWorldSessionMgr->FindSession(accountId))
+                    if (session->GetRBACData())
+                        session->InvalidateRBACData();
+
+                FinishWrite(actor, command, arguments, accountName, 0, "success",
+                    http::status::ok, job);
+                return;
+            case rbac::RBAC_CANT_ADD_ALREADY_ADDED:
+                resultName = request.action == "grant" ? "already_granted" : "already_denied";
+                break;
+            case rbac::RBAC_IN_GRANTED_LIST:
+                resultName = "in_granted_list";
+                break;
+            case rbac::RBAC_IN_DENIED_LIST:
+                resultName = "in_denied_list";
+                break;
+            case rbac::RBAC_CANT_REVOKE_NOT_IN_LIST:
+                resultName = "not_in_list";
+                break;
+            case rbac::RBAC_ID_DOES_NOT_EXISTS:
+                FinishWrite(actor, command, arguments, accountName, 0, "unknown_permission",
+                    http::status::not_found, job);
+                return;
+            default:
+                resultName = "bad_request";
+                break;
+        }
+
+        FinishWrite(actor, command, arguments, accountName, 0, resultName,
+            http::status::conflict, job);
+    }
+
+    void ExecuteServerControl(Actor const& actor, std::string const& command,
+        std::string const& arguments, std::string const& body, bool allowServerControl,
+        std::shared_ptr<WriteJob> const& job)
+    {
+        GmApiBody::ServerControlRequest request;
+        std::string error;
+        if (!GmApiBody::ParseServerControl(body, request, error))
+        {
+            FinishWrite(actor, command, arguments, "", 0, error, http::status::bad_request, job);
+            return;
+        }
+
+        if (!allowServerControl)
+        {
+            FinishWrite(actor, command, arguments, "", 0, "server_control_disabled",
+                http::status::forbidden, job);
+            return;
+        }
+
+        if (request.action == "shutdown")
+            sWorld->ShutdownServ(request.delaySeconds, 0, SHUTDOWN_EXIT_CODE, request.reason);
+        else if (request.action == "restart")
+            sWorld->ShutdownServ(request.delaySeconds, SHUTDOWN_MASK_RESTART, RESTART_EXIT_CODE,
+                request.reason);
+        else
+            sWorld->ShutdownCancel();
+
+        FinishWrite(actor, command, arguments, "", 0, "success", http::status::ok, job);
+    }
+
+    void ReadAccount(std::string const& account, std::shared_ptr<WriteJob> const& job)
+    {
+        uint32 accountId = 0;
+        if (GmApiAuth::ValidActor(account))
+        {
+            accountId = ParseAccountId(account);
+        }
+        else
+        {
+            std::string name = account;
+            Utf8ToUpperOnlyLatin(name);
+            accountId = AccountMgr::GetId(name);
+        }
+
+        std::string name;
+        if (!accountId || !AccountMgr::GetName(accountId, name))
+        {
+            job->Finish(http::status::not_found, JsonError("target_not_found"));
+            return;
+        }
+
+        uint32 const security = AccountMgr::GetSecurity(accountId, realm.Id.Realm);
+        bool const online = sWorldSessionMgr->FindSession(accountId) != nullptr;
+
+        job->Finish(http::status::ok, Acore::StringFormat(
+            R"({{"id":{},"username":"{}","security":{},"online":{}}})",
+            accountId, JsonEscape(name), security, online ? "true" : "false"));
+    }
+
+    void ReadCharacter(std::string const& character, std::shared_ptr<WriteJob> const& job)
+    {
+        std::string name = character;
+        if (!normalizePlayerName(name))
+        {
+            job->Finish(http::status::not_found, JsonError("target_not_found"));
+            return;
+        }
+
+        CharacterCacheEntry const* cache = sCharacterCache->GetCharacterCacheByName(name);
+        if (!cache)
+        {
+            job->Finish(http::status::not_found, JsonError("target_not_found"));
+            return;
+        }
+
+        std::string accountName;
+        AccountMgr::GetName(cache->AccountId, accountName);
+        bool const online = ObjectAccessor::FindPlayer(cache->Guid) != nullptr;
+
+        job->Finish(http::status::ok, Acore::StringFormat(
+            R"({{"guid":{},"name":"{}","account_id":{},"account_name":"{}","level":{},"race":{},)"
+            R"("class":{},"online":{}}})",
+            cache->Guid.GetRawValue(), JsonEscape(cache->Name), cache->AccountId,
+            JsonEscape(accountName), uint32(cache->Level), uint32(cache->Race), uint32(cache->Class),
+            online ? "true" : "false"));
+    }
+
+    void ReadOnlinePlayers(uint32 limit, std::shared_ptr<WriteJob> const& job)
+    {
+        struct Entry
+        {
+            uint64 guid;
+            std::string name;
+            uint32 accountId;
+            uint32 level;
+            uint32 race;
+            uint32 playerClass;
+            uint32 map;
+            uint32 zone;
+        };
+
+        std::vector<Entry> entries;
+        for (auto const& [accountId, session] : sWorldSessionMgr->GetAllSessions())
+        {
+            if (!session)
+                continue;
+
+            Player* player = session->GetPlayer();
+            if (!player || !player->IsInWorld())
+                continue;
+
+            entries.push_back({ player->GetGUID().GetRawValue(), player->GetName(), accountId,
+                uint32(player->GetLevel()), uint32(player->getRace()), uint32(player->getClass()),
+                player->GetMapId(), player->GetZoneId() });
+        }
+
+        std::sort(entries.begin(), entries.end(),
+            [](Entry const& left, Entry const& right) { return left.guid < right.guid; });
+        if (entries.size() > limit)
+            entries.resize(limit);
+
+        std::string body = "[";
+        bool first = true;
+        for (Entry const& entry : entries)
+        {
+            if (!first)
+                body += ",";
+            first = false;
+
+            body += Acore::StringFormat(
+                R"({{"guid":{},"name":"{}","account_id":{},"level":{},"race":{},"class":{},)"
+                R"("map":{},"zone":{}}})",
+                entry.guid, JsonEscape(entry.name), entry.accountId, entry.level, entry.race,
+                entry.playerClass, entry.map, entry.zone);
+        }
+        body += "]";
+        job->Finish(http::status::ok, std::move(body));
+    }
+
+    void ReadInstances(uint32 limit, std::shared_ptr<WriteJob> const& job)
+    {
+        std::vector<Map*> maps;
+        sMapMgr->DoForAllMaps([&maps](Map* map)
+        {
+            if (map && map->GetInstanceId() != 0)
+                maps.push_back(map);
+        });
+
+        std::sort(maps.begin(), maps.end(), [](Map const* left, Map const* right)
+        {
+            return left->GetInstanceId() < right->GetInstanceId();
+        });
+        if (maps.size() > limit)
+            maps.resize(limit);
+
+        std::string body = "[";
+        bool first = true;
+        for (Map const* map : maps)
+        {
+            if (!first)
+                body += ",";
+            first = false;
+
+            uint32 players = 0;
+            for (auto const& ref : map->GetPlayers())
+                if (ref.GetSource())
+                    ++players;
+
+            body += Acore::StringFormat(
+                R"({{"instance_id":{},"map_id":{},"difficulty":{},"players":{}}})",
+                map->GetInstanceId(), map->GetId(), uint32(map->GetDifficulty()), players);
+        }
+        body += "]";
+        job->Finish(http::status::ok, std::move(body));
     }
 
 }
@@ -286,11 +866,11 @@ class GmApiServer
 {
 public:
     GmApiServer(std::string bindAddress, uint16 port, std::string secret, int32 maxSkew,
-        int32 nonceTtl, int32 rateLimit, bool allowWrites,
+        int32 nonceTtl, int32 rateLimit, bool allowWrites, bool allowServerControl,
         std::function<bool(std::shared_ptr<WriteJob>, std::function<void()>)> postToWorld)
         : _bindAddress(std::move(bindAddress)), _port(port), _secret(std::move(secret)),
           _maxSkew(maxSkew), _nonceTtl(nonceTtl), _rateLimit(rateLimit), _allowWrites(allowWrites),
-          _postToWorld(std::move(postToWorld)) { }
+          _allowServerControl(allowServerControl), _postToWorld(std::move(postToWorld)) { }
 
     ~GmApiServer() { Stop(); }
 
@@ -397,33 +977,109 @@ private:
             else if (authStatus == http::status::too_many_requests)
                 error = "rate_limited";
 
-            return MakeResponse(request, authStatus, R"({"error":")" + error + R"("})");
+            return MakeResponse(request, authStatus, JsonError(error));
         }
 
         std::string_view const target = request.target();
+        std::string_view const path = GmApiAuth::TargetPath(target);
+        bool const hasQuery = path.size() != target.size();
         bool const isGet = request.method() == http::verb::get;
 
-        if (target == "/api/v1/status")
+        if (path == "/api/v1/status")
         {
             if (!isGet)
                 return MethodNotAllowed(request, "GET");
+            if (hasQuery)
+                return MakeResponse(request, http::status::not_found, JsonError("not_found"));
             return MakeResponse(request, http::status::ok, R"({"status":"ok"})");
         }
 
-        if (target == "/api/v1/audit" || target.starts_with("/api/v1/audit?"))
+        if (path == "/api/v1/audit")
         {
             if (!isGet)
                 return MethodNotAllowed(request, "GET");
             return MakeResponse(request, http::status::ok, AuditJson(GmApiAuth::ParseLimit(target)));
         }
 
-        std::string action;
-        std::string playerName;
-        if (GmApiAuth::ParsePlayerTarget(target, action, playerName))
+        if (path == "/api/v1/players/online")
+        {
+            if (!isGet)
+                return MethodNotAllowed(request, "GET");
+            return HandleOnlinePlayers(request);
+        }
+
+        if (path == "/api/v1/instances")
+        {
+            if (!isGet)
+                return MethodNotAllowed(request, "GET");
+            return HandleInstances(request);
+        }
+
+        std::string account;
+        if (GmApiAuth::ParseAccountReadTarget(path, account))
+        {
+            if (!isGet)
+                return MethodNotAllowed(request, "GET");
+            if (hasQuery)
+                return MakeResponse(request, http::status::not_found, JsonError("not_found"));
+            return HandleAccountRead(request, account);
+        }
+
+        std::string character;
+        if (GmApiAuth::ParseCharacterTarget(path, character))
+        {
+            if (!isGet)
+                return MethodNotAllowed(request, "GET");
+            if (hasQuery)
+                return MakeResponse(request, http::status::not_found, JsonError("not_found"));
+            return HandleCharacterRead(request, character);
+        }
+
+        if (path == "/api/v1/mail")
         {
             if (request.method() != http::verb::post)
                 return MethodNotAllowed(request, "POST");
-            return HandleWrite(request, actor, action, playerName);
+            if (hasQuery)
+                return MakeResponse(request, http::status::not_found, JsonError("not_found"));
+            return HandleMail(request, actor);
+        }
+
+        if (path == "/api/v1/server/control")
+        {
+            if (request.method() != http::verb::post)
+                return MethodNotAllowed(request, "POST");
+            if (hasQuery)
+                return MakeResponse(request, http::status::not_found, JsonError("not_found"));
+            return HandleServerControl(request, actor);
+        }
+
+        std::string playerName;
+        if (GmApiAuth::ParsePlayerItemsTarget(path, playerName))
+        {
+            if (request.method() != http::verb::post)
+                return MethodNotAllowed(request, "POST");
+            if (hasQuery)
+                return MakeResponse(request, http::status::not_found, JsonError("not_found"));
+            return HandleAddItem(request, actor, playerName);
+        }
+
+        std::string action;
+        if (GmApiAuth::ParsePlayerTarget(path, action, playerName))
+        {
+            if (request.method() != http::verb::post)
+                return MethodNotAllowed(request, "POST");
+            if (hasQuery)
+                return MakeResponse(request, http::status::not_found, JsonError("not_found"));
+            return HandlePlayerAction(request, actor, action, playerName);
+        }
+
+        if (GmApiAuth::ParseAccountActionTarget(path, action, account))
+        {
+            if (request.method() != http::verb::post)
+                return MethodNotAllowed(request, "POST");
+            if (hasQuery)
+                return MakeResponse(request, http::status::not_found, JsonError("not_found"));
+            return HandleAccountAction(request, actor, action, account);
         }
 
         return MakeResponse(request, http::status::not_found, R"({"error":"not_found"})");
@@ -436,8 +1092,11 @@ private:
             R"({"error":"method_not_allowed"})", allow);
     }
 
-    http::response<http::string_body> HandleWrite(http::request<http::string_body> const& request,
-        std::string const& actorHeader, std::string const& action, std::string const& playerName)
+    using WriteAction = std::function<void(Actor const&, std::string const&, std::string const&,
+        std::shared_ptr<WriteJob> const&)>;
+
+    http::response<http::string_body> RunWrite(http::request<http::string_body> const& request,
+        std::string const& actorHeader, WriteSpec const& spec, WriteAction action)
     {
         if (!_allowWrites)
             return MakeResponse(request, http::status::forbidden, R"({"error":"writes_disabled"})");
@@ -449,34 +1108,66 @@ private:
         if (!ResolveActor(ParseAccountId(actorHeader), actor))
             return MakeResponse(request, http::status::unauthorized, R"({"error":"unauthorized"})");
 
-        std::string const command = "api." + action;
-
         if (actor.security <= SEC_PLAYER)
         {
-            WriteAudit(actor, command, playerName, "", 0, "denied");
+            WriteAudit(actor, spec.command, spec.arguments, spec.playerName, 0, "denied");
             return MakeResponse(request, http::status::forbidden, R"({"error":"forbidden"})");
         }
 
-        uint32 const permission = action == "kick"
-            ? rbac::RBAC_PERM_COMMAND_KICK
-            : rbac::RBAC_PERM_COMMAND_UNSTUCK;
-        if (!AccountMgr::HasPermission(actor.accountId, permission, realm.Id.Realm))
+        if (spec.permissions.empty())
+            return MakeResponse(request, http::status::internal_server_error,
+                R"({"error":"internal_error"})");
+
+        for (uint32 permission : spec.permissions)
         {
-            WriteAudit(actor, command, playerName, "", 0, "denied");
+            if (AccountMgr::HasPermission(actor.accountId, permission, realm.Id.Realm))
+                continue;
+
+            WriteAudit(actor, spec.command, spec.arguments, spec.playerName, 0, "denied");
             return MakeResponse(request, http::status::forbidden, R"({"error":"forbidden"})");
         }
 
-        if (!WriteAudit(actor, command, playerName, "", 0, "pending"))
+        if (!WriteAudit(actor, spec.command, spec.arguments, spec.playerName, 0, "pending"))
             return MakeResponse(request, http::status::internal_server_error,
                 R"({"error":"audit_failed"})");
 
         auto job = std::make_shared<WriteJob>();
-        if (!_postToWorld(job, [actor, action, playerName, job]()
+        job->auditActor = actor;
+        job->auditCommand = spec.command;
+        job->auditArguments = spec.arguments;
+        job->auditPlayerName = spec.playerName;
+        if (!_postToWorld(job, [actor, spec, action, job]()
             {
-                ExecutePlayerAction(actor, action, playerName, job);
+                action(actor, spec.command, spec.arguments, job);
             }))
         {
-            WriteAudit(actor, command, playerName, "", 0, "world_unavailable");
+            if (job->ClaimOutcome())
+                WriteAudit(actor, spec.command, spec.arguments, spec.playerName, 0, "world_unavailable");
+            return MakeResponse(request, http::status::service_unavailable,
+                R"({"error":"world_unavailable"})");
+        }
+
+        if (!job->Wait(std::chrono::seconds(5)))
+        {
+            if (job->ClaimOutcome())
+                WriteAudit(actor, spec.command, spec.arguments, spec.playerName, 0, "world_timeout");
+            job->Cancel();
+            return MakeResponse(request, http::status::service_unavailable,
+                R"({"error":"world_unavailable"})");
+        }
+
+        return MakeResponse(request, job->status, job->body);
+    }
+
+    http::response<http::string_body> RunRead(http::request<http::string_body> const& request,
+        std::function<void(std::shared_ptr<WriteJob> const&)> action)
+    {
+        auto job = std::make_shared<WriteJob>();
+        if (!_postToWorld(job, [action, job]()
+            {
+                action(job);
+            }))
+        {
             return MakeResponse(request, http::status::service_unavailable,
                 R"({"error":"world_unavailable"})");
         }
@@ -484,12 +1175,214 @@ private:
         if (!job->Wait(std::chrono::seconds(5)))
         {
             job->Cancel();
-            WriteAudit(actor, command, playerName, "", 0, "world_timeout");
             return MakeResponse(request, http::status::service_unavailable,
                 R"({"error":"world_unavailable"})");
         }
 
         return MakeResponse(request, job->status, job->body);
+    }
+
+    http::response<http::string_body> HandlePlayerAction(
+        http::request<http::string_body> const& request, std::string const& actorHeader,
+        std::string const& action, std::string const& playerName)
+    {
+        WriteSpec const spec{
+            "api." + action,
+            playerName,
+            playerName,
+            { action == "kick" ? rbac::RBAC_PERM_COMMAND_KICK : rbac::RBAC_PERM_COMMAND_UNSTUCK }
+        };
+
+        return RunWrite(request, actorHeader, spec,
+            [action, playerName](Actor const& actor, std::string const& command,
+                std::string const& /*arguments*/, std::shared_ptr<WriteJob> const& job)
+            {
+                ExecutePlayerAction(actor, command, action, playerName, job);
+            });
+    }
+
+    http::response<http::string_body> HandleAddItem(
+        http::request<http::string_body> const& request, std::string const& actorHeader,
+        std::string const& playerName)
+    {
+        std::string const body = request.body();
+        GmApiBody::ItemGrantRequest parsed;
+        std::string error;
+        if (!GmApiBody::ParseItemGrant(body, parsed, error))
+            return MakeResponse(request, http::status::bad_request, JsonError(error));
+
+        std::string arguments = Acore::StringFormat("player={} item={} count={}", playerName,
+            parsed.itemId, parsed.count);
+
+        WriteSpec const spec{
+            "api.additem", arguments, playerName, { rbac::RBAC_PERM_COMMAND_ADDITEM }
+        };
+
+        return RunWrite(request, actorHeader, spec,
+            [body, playerName](Actor const& actor, std::string const& command,
+                std::string const& arguments, std::shared_ptr<WriteJob> const& job)
+            {
+                ExecuteAddItem(actor, command, arguments, playerName, body, job);
+            });
+    }
+
+    http::response<http::string_body> HandleMail(
+        http::request<http::string_body> const& request, std::string const& actorHeader)
+    {
+        std::string const body = request.body();
+        GmApiBody::MailRequest parsed;
+        std::string error;
+        if (!GmApiBody::ParseMail(body, parsed, error))
+            return MakeResponse(request, http::status::bad_request, JsonError(error));
+
+        std::vector<uint32> permissions{ rbac::RBAC_PERM_COMMAND_SEND_MAIL };
+        if (!parsed.items.empty())
+            permissions.push_back(rbac::RBAC_PERM_COMMAND_SEND_ITEMS);
+        if (parsed.money > 0)
+            permissions.push_back(rbac::RBAC_PERM_COMMAND_SEND_MONEY);
+
+        std::string const arguments = Acore::StringFormat("to={} items={} money={}",
+            parsed.recipient, parsed.items.size(), parsed.money);
+
+        WriteSpec const spec{ "api.mail", arguments, parsed.recipient, permissions };
+
+        return RunWrite(request, actorHeader, spec,
+            [body, playerName = spec.playerName](Actor const& actor, std::string const& command,
+                std::string const& arguments, std::shared_ptr<WriteJob> const& job)
+            {
+                ExecuteMail(actor, command, arguments, playerName, body, job);
+            });
+    }
+
+    http::response<http::string_body> HandleAccountAction(
+        http::request<http::string_body> const& request, std::string const& actorHeader,
+        std::string const& action, std::string const& account)
+    {
+        if (action == "ban")
+            return HandleBan(request, actorHeader, account);
+        return HandlePermissions(request, actorHeader, account);
+    }
+
+    http::response<http::string_body> HandleBan(
+        http::request<http::string_body> const& request, std::string const& actorHeader,
+        std::string const& account)
+    {
+        std::string const body = request.body();
+        GmApiBody::BanRequest parsed;
+        std::string error;
+        if (!GmApiBody::ParseBan(body, parsed, error))
+            return MakeResponse(request, http::status::bad_request, JsonError(error));
+
+        std::string const arguments = Acore::StringFormat("account={} duration={}", account,
+            parsed.durationSeconds);
+
+        WriteSpec const spec{
+            "api.ban", arguments, account, { rbac::RBAC_PERM_COMMAND_BAN_ACCOUNT }
+        };
+
+        return RunWrite(request, actorHeader, spec,
+            [body, account](Actor const& actor, std::string const& command,
+                std::string const& arguments, std::shared_ptr<WriteJob> const& job)
+            {
+                ExecuteBan(actor, command, arguments, account, account, body, job);
+            });
+    }
+
+    http::response<http::string_body> HandlePermissions(
+        http::request<http::string_body> const& request, std::string const& actorHeader,
+        std::string const& account)
+    {
+        std::string const body = request.body();
+        GmApiBody::PermissionRequest parsed;
+        std::string error;
+        if (!GmApiBody::ParsePermission(body, parsed, error))
+            return MakeResponse(request, http::status::bad_request, JsonError(error));
+
+        uint32 const permission = parsed.action == "grant"
+            ? rbac::RBAC_PERM_COMMAND_RBAC_ACC_PERM_GRANT
+            : parsed.action == "deny"
+                ? rbac::RBAC_PERM_COMMAND_RBAC_ACC_PERM_DENY
+                : rbac::RBAC_PERM_COMMAND_RBAC_ACC_PERM_REVOKE;
+
+        std::string const arguments = Acore::StringFormat(
+            "account={} action={} permission={} realm={}", account, parsed.action,
+            parsed.permissionId, parsed.realmId);
+
+        WriteSpec const spec{ "api.rbac", arguments, account, { permission } };
+
+        return RunWrite(request, actorHeader, spec,
+            [body, account](Actor const& actor, std::string const& command,
+                std::string const& arguments, std::shared_ptr<WriteJob> const& job)
+            {
+                ExecutePermission(actor, command, arguments, account, account, body, job);
+            });
+    }
+
+    http::response<http::string_body> HandleServerControl(
+        http::request<http::string_body> const& request, std::string const& actorHeader)
+    {
+        std::string const body = request.body();
+        GmApiBody::ServerControlRequest parsed;
+        std::string error;
+        if (!GmApiBody::ParseServerControl(body, parsed, error))
+            return MakeResponse(request, http::status::bad_request, JsonError(error));
+
+        uint32 const permission = parsed.action == "shutdown"
+            ? rbac::RBAC_PERM_COMMAND_SERVER_SHUTDOWN
+            : parsed.action == "restart"
+                ? rbac::RBAC_PERM_COMMAND_SERVER_RESTART
+                : rbac::RBAC_PERM_COMMAND_SERVER_SHUTDOWN_CANCEL;
+
+        std::string const arguments = Acore::StringFormat("action={} delay={}", parsed.action,
+            parsed.delaySeconds);
+
+        WriteSpec const spec{ "api.server", arguments, "", { permission } };
+
+        bool const allowServerControl = _allowServerControl;
+        return RunWrite(request, actorHeader, spec,
+            [body, allowServerControl](Actor const& actor, std::string const& command,
+                std::string const& arguments, std::shared_ptr<WriteJob> const& job)
+            {
+                ExecuteServerControl(actor, command, arguments, body, allowServerControl, job);
+            });
+    }
+
+    http::response<http::string_body> HandleAccountRead(
+        http::request<http::string_body> const& request, std::string const& account)
+    {
+        return RunRead(request, [account](std::shared_ptr<WriteJob> const& job)
+        {
+            ReadAccount(account, job);
+        });
+    }
+
+    http::response<http::string_body> HandleCharacterRead(
+        http::request<http::string_body> const& request, std::string const& character)
+    {
+        return RunRead(request, [character](std::shared_ptr<WriteJob> const& job)
+        {
+            ReadCharacter(character, job);
+        });
+    }
+
+    http::response<http::string_body> HandleOnlinePlayers(
+        http::request<http::string_body> const& request)
+    {
+        uint32 const limit = GmApiAuth::ParseLimit(request.target(), 100, 500);
+        return RunRead(request, [limit](std::shared_ptr<WriteJob> const& job)
+        {
+            ReadOnlinePlayers(limit, job);
+        });
+    }
+
+    http::response<http::string_body> HandleInstances(
+        http::request<http::string_body> const& request)
+    {
+        uint32 const limit = GmApiAuth::ParseLimit(request.target(), 100, 100);
+        return RunRead(request, [limit](std::shared_ptr<WriteJob> const& job)
+        {
+            ReadInstances(limit, job);
+        });
     }
 
     static http::response<http::string_body> MakeResponse(
@@ -513,7 +1406,7 @@ private:
     {
     public:
         Session(tcp::socket&& socket, GmApiServer& server)
-            : _stream(std::move(socket)), _server(server), _timer(_stream.get_executor()) { }
+            : _stream(std::move(socket)), _timer(_stream.get_executor()), _server(server) { }
 
         ~Session() { _server.SessionClosed(); }
 
@@ -535,8 +1428,24 @@ private:
                     self->_timer.cancel();
                     if (!ec)
                     {
-                        http::response<http::string_body> response =
-                            self->_server.Process(self->_request, self->RemoteIp());
+                        http::response<http::string_body> response;
+                        try
+                        {
+                            response = self->_server.Process(self->_request, self->RemoteIp());
+                        }
+                        catch (std::exception const& ex)
+                        {
+                            LOG_ERROR("module.gm-api", "GM API request failed: {}", ex.what());
+                            response = GmApiServer::MakeResponse(self->_request,
+                                http::status::internal_server_error, JsonError("internal_error"));
+                        }
+                        catch (...)
+                        {
+                            LOG_ERROR("module.gm-api", "GM API request failed with an unknown error");
+                            response = GmApiServer::MakeResponse(self->_request,
+                                http::status::internal_server_error, JsonError("internal_error"));
+                        }
+
                         boost::system::error_code ignored;
                         http::write(self->_stream, response, ignored);
                     }
@@ -683,6 +1592,7 @@ private:
     int32 _nonceTtl;
     int32 _rateLimit;
     bool _allowWrites;
+    bool _allowServerControl;
     std::function<bool(std::shared_ptr<WriteJob>, std::function<void()>)> _postToWorld;
 
     std::atomic<uint32> _activeSessions{ 0 };
@@ -745,11 +1655,17 @@ public:
 
         bool const allowWrites = sConfigMgr->GetOption<bool>("GmApi.AllowWrites", false);
         if (allowWrites)
-            LOG_INFO("module.gm-api", "GM API write endpoints enabled (kick, unstuck).");
+            LOG_INFO("module.gm-api",
+                "GM API write endpoints enabled (kick, unstuck, additem, mail, ban, rbac, server).");
+
+        bool const allowServerControl = sConfigMgr->GetOption<bool>("GmApi.AllowServerControl", false);
+        if (allowServerControl)
+            LOG_WARN("module.gm-api", "GM API server control is enabled (shutdown, restart, cancel).");
 
         _server = std::make_unique<GmApiServer>(
             sConfigMgr->GetOption<std::string>("GmApi.BindAddress", "127.0.0.1"),
             static_cast<uint16>(port), secret, maxSkew, nonceTtl, rateLimit, allowWrites,
+            allowServerControl,
             [this](std::shared_ptr<WriteJob> job, std::function<void()> action)
             {
                 return Post(std::move(job), std::move(action));
@@ -779,8 +1695,14 @@ public:
             jobs.swap(_jobs);
         }
 
-        for (auto& job : jobs)
-            job.job->Finish(http::status::service_unavailable, R"({"error":"world_unavailable"})");
+        for (auto& queued : jobs)
+        {
+            auto const& job = queued.job;
+            if (job->auditActor.accountId != 0 && job->ClaimOutcome())
+                WriteAudit(job->auditActor, job->auditCommand, job->auditArguments,
+                    job->auditPlayerName, 0, "world_unavailable");
+            job->Finish(http::status::service_unavailable, R"({"error":"world_unavailable"})");
+        }
 
         _server.reset();
     }

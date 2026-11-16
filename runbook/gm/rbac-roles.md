@@ -35,6 +35,11 @@ GM API writes use the same command permission constants as the in-game commands:
 
 | Endpoint | Permission |
 |----------|------------|
+| `POST /api/v1/players/<name>/items` | `RBAC_PERM_COMMAND_ADDITEM` (488) |
+| `POST /api/v1/mail` | `RBAC_PERM_COMMAND_SEND_MAIL` (485), plus `SEND_ITEMS` (484) for items and `SEND_MONEY` (487) for money |
+| `POST /api/v1/accounts/<name>/ban` | `RBAC_PERM_COMMAND_BAN_ACCOUNT` (240) |
+| `POST /api/v1/accounts/<name>/permissions` | 203 grant, 204 deny, 205 revoke |
+| `POST /api/v1/server/control` | 734 shutdown, 727 restart, 735 cancel; also `GmApi.AllowServerControl = 1` |
 | `POST /api/v1/players/<name>/kick` | `RBAC_PERM_COMMAND_KICK` (510) |
 | `POST /api/v1/players/<name>/unstuck` | `RBAC_PERM_COMMAND_UNSTUCK` (534) |
 

@@ -9,8 +9,9 @@ last-verified: 2026-11-15 (docs 141/657; canal swim measured; test realm survive
 
 - Phase 0–4 are complete for the current scope: foundation, tooling, test realm, backups, DBeaver,
   RBAC presets, command audit, command index, GM API read endpoints, in-game GM addon.
-- Phase 5 started: the GM API has audited `kick` and `unstuck` writes behind
-  `GmApi.AllowWrites`, a signed `X-GM-Actor`, RBAC, and `gm_audit_log`.
+- Phase 5 started: the GM API has audited writes for item grant, mail, account ban, account
+  permissions, server control, `kick`, and `unstuck` behind `GmApi.AllowWrites`, a signed
+  `X-GM-Actor`, RBAC, and `gm_audit_log`; server control also needs `GmApi.AllowServerControl`.
 - The long-term visual layer is the future server website. No in-repo web UI exists.
 - Branch: `local-server-setup` is the integration branch. Confirm with `git status`.
 - Website work has not started. Shop and new content remain out of scope.
@@ -34,8 +35,9 @@ last-verified: 2026-11-15 (docs 141/657; canal swim measured; test realm survive
 - World data export (`make world-export`): 140,650 files, 566 MB, 17.6 s; counts npc 29,945 /
   item 46,096 / quest 9,464 / object 21,580 / 33,318 spawn sets. Read API (`make world-api`) serves
   the artifacts on loopback; 43 tool tests.
-- GM API wire contract (`specs/gm-api.openapi.yaml`): four implemented endpoints, HMAC signing,
-  actor identity, all error codes and statuses.
+- GM API wire contract (`specs/gm-api.openapi.yaml`): read endpoints and the audited write set
+  (item grant, mail, ban, RBAC, server control, kick, unstuck), HMAC signing, actor identity, all
+  error codes and statuses.
 - Content audit C-13: gossip-menu, gossip-option, and quest-available conditions validated against
   the rows the server loads; 5,931 rows, 0 findings.
 - Fork CI now runs tool unit tests and triggers on `local-server-setup`; SQL lint covers
@@ -90,9 +92,9 @@ last-verified: 2026-11-15 (docs 141/657; canal swim measured; test realm survive
 3. Decide website auth. The GM API wire contract already exists at
    `specs/gm-api.openapi.yaml`.
 4. Build the admin BFF/dashboard and the read-only website MVP through it.
-5. After the dashboard: remaining GM API writes (item grant, mail, ban, RBAC, server control) and the
-   branches that need an online player. `writes_disabled`, `rate_limited`, and `audit_failed` are
-   reachable now with the documented curl recipe.
+5. After the dashboard: live-test the GM API write branches that need an online player.
+   `writes_disabled`, `rate_limited`, and `audit_failed` are reachable now with the documented curl
+   recipe.
 6. Audit v2 remainder: map-bounds validation (blocked on reference data) and C-06 phase
    reachability.
 7. Triage the 1,972 minors when content work starts; they are cosmetic or expected data.
@@ -141,15 +143,15 @@ No playerbots work is planned.
 
 ## Known issues
 
-1. **GM API coverage is partial and gated on the dashboard.** `kick` and `unstuck` are the only
-   audited writes. Item grant, mail, ban, RBAC, and server control are not built, and several error
-   branches (`player_busy`, `teleport_failed`, `audit_failed`, `writes_disabled`, rate limit,
-   timeout/shutdown) are untested. The new writes and the branches that need an online player will be
-   exercised through the admin BFF/dashboard before they ship; `writes_disabled`, `rate_limited`,
-   and `audit_failed` are reachable with the documented curl recipe now. The API still uses one shared
-   HMAC secret for transport; `X-GM-Actor` identifies the human but the BFF remains the only holder of
-   the secret. Audit query uses the shared sync DB pool; audit search is newest-N only; structured
-   request logging is planned.
+1. **GM API write branches are partly untested.** Item grant, mail, ban, RBAC, server control, `kick`,
+   and `unstuck` are implemented, but several live branches (`player_busy`, `teleport_failed`,
+   `inventory_full`, `mailbox_full`, `longer_ban_exists`, RBAC list conflicts, `server_control_disabled`,
+   `audit_failed`, `writes_disabled`, rate limit, timeout/shutdown) are untested. They will be
+   exercised through the admin BFF/dashboard before the website ships; `writes_disabled`,
+   `rate_limited`, and `audit_failed` are reachable with the documented curl recipe now. The API still
+   uses one shared HMAC secret for transport; `X-GM-Actor` identifies the human but the BFF remains the
+   only holder of the secret. Audit query uses the shared sync DB pool; audit search is newest-N only;
+   structured request logging is planned.
 2. **cppcheck suppressions target 2.22.** Local Homebrew has 2.22.0; the runner's packaged version is
    unrecorded. A green cpp-lint job does not prove the version, because unmatched suppressions are not
    errors. Quote `cppcheck --version` in any CI failure before changing a suppression.

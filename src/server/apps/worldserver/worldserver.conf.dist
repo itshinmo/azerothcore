@@ -5030,6 +5030,15 @@ GmApi.RateLimit = 120
 
 GmApi.AllowWrites = 0
 
+#
+#    GmApi.AllowServerControl
+#        Description: Allows the server control write endpoint to schedule a shutdown, restart, or
+#                     cancel an existing timer. Requires GmApi.AllowWrites = 1 and the matching RBAC
+#                     permission. Restart requires an external supervisor to start the server again.
+#        Default:     0 - (Disabled)
+
+GmApi.AllowServerControl = 0
+
 ###################################################################################################
 #                                                                                                 #
 # GM API SETTINGS END                                                                             #

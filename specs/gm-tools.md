@@ -70,18 +70,20 @@ Owns the GM workflow and tooling. Does not own the game commands themselves; the
 
 - Long-term visual layer: the server website. No in-repo web UI exists now; see
   [ADR-010](../decisions/ADR-010-website-as-visual-interface.md).
-- Backend: `modules/mod-gm-api/` inside `worldserver`. Read endpoints and audited kick/unstuck writes
-  built; more writes planned.
+- Backend: `modules/mod-gm-api/` inside `worldserver`. Read endpoints and the audited write set are
+  built.
 - Browser architecture: browser -> admin website BFF -> GM API. Only the admin BFF holds the API
   secret; the public BFF and browser never see it. The website uses its own web identity, not the game SRP6 session.
 - Transport: HTTP on localhost or a private VPN interface; HMAC-signed requests with a nonce and
   timestamp; replay window; per-address rate limit.
-- Implemented read-only endpoints: server status, audit rows. Implemented writes: kick, unstuck,
-  gated by `GmApi.AllowWrites`, a signed `X-GM-Actor` game account id, RBAC, and audit. Planned read
-  endpoints: account, character, online players, instance info.
-- Item grant, mail, ban, RBAC, and server control are not built. They and the live error branches
-  will be exercised through the admin BFF/dashboard before they ship; the cheap branches
-  (`writes_disabled`, `rate_limited`, `audit_failed`) are reachable with the curl recipe today.
+- Implemented read endpoints: server status, audit rows, account, character, online players, active
+  instances. Implemented writes: item grant, mail, account ban, account permission grant/deny/revoke,
+  server control, kick, and unstuck. All writes are gated by `GmApi.AllowWrites`, a signed
+  `X-GM-Actor` game account id, RBAC, and audit; server control also requires
+  `GmApi.AllowServerControl`.
+- Live error branches will be exercised through the admin BFF/dashboard before the website ships; the
+  cheap branches (`writes_disabled`, `rate_limited`, `audit_failed`) are reachable with the curl
+  recipe today.
 - Every endpoint validates input and calls game logic; no endpoint writes game tables directly. The
   module writes its own audit rows.
 - Wire contract: [gm-api.openapi.yaml](gm-api.openapi.yaml).
