@@ -9,3 +9,17 @@ get {
   body: none
   auth: none
 }
+
+docs {
+  ## Character read
+
+  Read a character by name.
+
+  - Method and path: `GET /api/v1/characters/{{playerName}}`.
+  - Auth: valid HMAC signature only; no `X-GM-Actor` and no RBAC permission.
+  - Success: `200` with `{"guid","name","account_id","account_name","level","race","class","online"}`.
+  - Failure: `401` bad signature, `404 target_not_found` when the character does not exist,
+    `405` wrong method, `409` replayed nonce, `429` rate limited, `503 world_unavailable`.
+
+  Replace `{{playerName}}` with any character name.
+}

@@ -9,3 +9,19 @@ get {
   body: none
   auth: none
 }
+
+docs {
+  ## Instances
+
+  List loaded instances.
+
+  - Method and path: `GET /api/v1/instances?limit=100`.
+  - Auth: valid HMAC signature only; no `X-GM-Actor` and no RBAC permission.
+  - Query: `limit` is 1-100; values above 100 clamp to 100; invalid or missing values use 100.
+  - Success: `200` with an array of
+    `{"instance_id","map_id","difficulty","players"}`, ordered by instance id.
+  - Failure: `401` bad signature, `405` wrong method, `409` replayed nonce, `429` rate limited,
+    `503 world_unavailable`.
+
+  Only loaded maps with a non-zero instance id are returned.
+}

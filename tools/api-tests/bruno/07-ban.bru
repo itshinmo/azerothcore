@@ -19,3 +19,22 @@ body:json {
     "reason": "Bruno test ban"
   }
 }
+
+docs {
+  ## Ban
+
+  Ban a game account. Tagged `danger`: run it deliberately.
+
+  - Method and path: `POST /api/v1/accounts/{{targetAccount}}/ban`.
+  - Body: `durationSeconds` 0-315360000; `0` means permanent. `reason` is at most 255 characters.
+  - Write gate: `GmApi.AllowWrites = 1`.
+  - Permission: `RBAC_PERM_COMMAND_BAN_ACCOUNT` (240).
+  - Actor: signed `X-GM-Actor` game account id; must have security above `SEC_PLAYER`.
+  - Target: existing account `{{targetAccount}}`. The API refuses the actor's own account and any
+    account with security at or above the actor's.
+  - Success: `200` with `{"status":"ok"}`. Audit rows: `pending` then `success`.
+  - Failure: `400 bad_request`, `403 forbidden`, `404 target_not_found`,
+    `409 cannot_target_self` or `longer_ban_exists`, `500 audit_failed`, `503 world_unavailable`.
+
+  A longer existing ban is not shortened. Reasons are not stored in the audit arguments.
+}

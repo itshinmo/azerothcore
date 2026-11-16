@@ -19,3 +19,17 @@ tests {
     expect(res.body.status).to.equal("ok");
   });
 }
+
+docs {
+  ## Status
+
+  Liveness check for the GM API inside `worldserver`.
+
+  - Method and path: `GET /api/v1/status`.
+  - Auth: valid HMAC signature only; no `X-GM-Actor` and no RBAC permission.
+  - Success: `200` with `{"status":"ok"}`.
+  - Failure: `401` bad signature or timestamp, `405` wrong method, `409` replayed nonce,
+    `429` rate limited.
+
+  Use this first to confirm the API is listening on `{{baseUrl}}` before sending any write.
+}

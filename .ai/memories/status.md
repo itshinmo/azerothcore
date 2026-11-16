@@ -62,10 +62,12 @@ last-verified: 2026-11-16 (phases: base game, custom content, website, launch; B
 - Test realm supervisor logging: `tools/dev/test-realm.sh` now wraps each server and appends
   `start`, `signal=`, and `exit=` lines to `env/test/logs/<name>.supervisor.log`. A normal `stop`
   logs `exit=0` for both, so a silent death is now visible.
-- Bruno collection (`tools/api-tests/bruno/`): status, audit, kick, unstuck requests; a collection
-  pre-request script computes the HMAC headers; a committed environment example; the real
-  environment file is ignored. Validated on 2026-11-16 against a mock server that verified the
-  signature independently, in Bruno CLI Safe Mode; a real-stack run is still pending.
+- Bruno collection (`tools/api-tests/bruno/`): status, audit, kick, unstuck, item grant, mail, ban,
+  RBAC permissions, server cancel, and the four read requests. A collection pre-request script
+  computes the HMAC headers; a committed environment example; the real environment file is ignored.
+  Every request carries a `docs` block, and new requests must add theirs. Validated on 2026-11-16
+  against a mock server that verified the signature independently, in Bruno CLI Safe Mode; a
+  real-stack run is still pending.
 - Per-account XP override (`modules/mod-xp-override`): player `.xp` toggle between 1x and the realm
   default, per-account `account_xp_override` table, command help row. Merged; local SQL applied and
   verified. Unit tests written but not run locally (gtest unavailable); module compiled and linked.

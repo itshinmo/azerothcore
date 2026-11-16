@@ -16,3 +16,23 @@ body:json {
     "count": 1
   }
 }
+
+docs {
+  ## Items
+
+  Grant an item to an online character.
+
+  - Method and path: `POST /api/v1/players/{{playerName}}/items`.
+  - Body: `itemId` is the item template id; `count` is 1-1000. The item must exist and respect
+    `MaxCount`.
+  - Write gate: `GmApi.AllowWrites = 1`.
+  - Permission: `RBAC_PERM_COMMAND_ADDITEM` (488).
+  - Actor: signed `X-GM-Actor` game account id; must have security above `SEC_PLAYER`.
+  - Target: online character `{{playerName}}`. The API refuses the actor's own account and any
+    account with security at or above the actor's.
+  - Success: `200` with `{"status":"ok"}`. Audit rows: `pending` then `success`.
+  - Failure: `400 bad_request` or `invalid_item`, `403 forbidden`, `404 target_not_found`,
+    `409 cannot_target_self` or `inventory_full`, `500 audit_failed`, `503 world_unavailable`.
+
+  The grant is atomic: the API stores the item only when the full count fits.
+}

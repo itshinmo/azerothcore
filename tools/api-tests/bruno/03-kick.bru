@@ -9,3 +9,22 @@ post {
   body: none
   auth: none
 }
+
+docs {
+  ## Kick
+
+  Disconnect an online player.
+
+  - Method and path: `POST /api/v1/players/{{playerName}}/kick`.
+  - Write gate: `GmApi.AllowWrites = 1`.
+  - Permission: `RBAC_PERM_COMMAND_KICK` (510).
+  - Actor: signed `X-GM-Actor` game account id; must have security above `SEC_PLAYER`.
+  - Target: online character `{{playerName}}`. The API refuses the actor's own account and any
+    account with security at or above the actor's.
+  - Success: `200` with `{"status":"ok"}`. Audit rows: `pending` then `success`.
+  - Failure: `403` forbidden, `404 target_not_found` when offline, `409 cannot_target_self`,
+    `500 audit_failed`, `503 world_unavailable`.
+
+  Kick is the last request in a full collection run because it disconnects the target. Send it
+  deliberately.
+}

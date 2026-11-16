@@ -15,3 +15,23 @@ body:json {
     "action": "cancel"
   }
 }
+
+docs {
+  ## Server cancel
+
+  Cancel a pending shutdown or restart timer.
+
+  - Method and path: `POST /api/v1/server/control`.
+  - Body: `action` is `cancel`. `delaySeconds` is optional and unused for cancel.
+  - Write gate: `GmApi.AllowWrites = 1`.
+  - Server-control gate: `GmApi.AllowServerControl = 1`; the default is `0`, so this returns
+    `403 server_control_disabled` until the config is enabled.
+  - Permission: `RBAC_PERM_COMMAND_SERVER_SHUTDOWN_CANCEL` (735).
+  - Actor: signed `X-GM-Actor` game account id; must have security above `SEC_PLAYER`.
+  - Success: `200` with `{"status":"ok"}`. Audit rows: `pending` then `success`.
+  - Failure: `400 bad_request`, `403 server_control_disabled` or `forbidden`,
+    `500 audit_failed`, `503 world_unavailable`.
+
+  Shutdown and restart use the same path with `delaySeconds` 1-3600; a restart only exits the
+  process and needs an external supervisor to come back.
+}

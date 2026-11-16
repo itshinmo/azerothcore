@@ -40,6 +40,10 @@ and the audit behavior.
 The Ban and Permissions requests carry the `danger` tag. Run them deliberately, one request at a
 time, and do not include them in a full collection run.
 
+Every request carries a `docs` block. Open the **Docs** tab in Bruno to see what the request does,
+what it needs, and which outcomes to expect. When you add a request, add its `docs` block in the same
+change.
+
 Writes need `GmApi.AllowWrites = 1`. With writes disabled they return `403`. Self-target returns
 `409`; an offline target returns `404`; a higher-security target returns `403`.
 

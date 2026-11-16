@@ -19,3 +19,20 @@ tests {
     expect(res.body).to.be.an("array");
   });
 }
+
+docs {
+  ## Audit
+
+  Recent rows from `acore_auth.gm_audit_log`, newest first.
+
+  - Method and path: `GET /api/v1/audit?limit={{auditLimit}}`.
+  - Auth: valid HMAC signature only; no `X-GM-Actor` and no RBAC permission.
+  - Query: `limit` is 1-200; invalid or missing values use the server default of 50.
+  - Success: `200` with an array of audit rows. Each row has `id`, `realm_id`, `account_name`,
+    `player_name`, `command`, optional `arguments`, optional `result`, and `created_at`.
+  - Failure: `401` bad signature, `405` wrong method, `409` replayed nonce, `429` rate limited.
+
+  After a write, check here for the `pending` row and the terminal row: `success`, `denied`,
+  `target_not_found`, `cannot_target_self`, `player_busy`, `teleport_failed`, `inventory_full`,
+  `mailbox_full`, `longer_ban_exists`, RBAC conflicts, `world_timeout`, or `world_unavailable`.
+}

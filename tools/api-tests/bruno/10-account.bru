@@ -9,3 +9,17 @@ get {
   body: none
   auth: none
 }
+
+docs {
+  ## Account read
+
+  Read a game account by numeric id or account name.
+
+  - Method and path: `GET /api/v1/accounts/<id-or-name>`. This request uses account id `1`.
+  - Auth: valid HMAC signature only; no `X-GM-Actor` and no RBAC permission.
+  - Success: `200` with `{"id","username","security","online"}`.
+  - Failure: `401` bad signature, `404 target_not_found` when the account does not exist,
+    `405` wrong method, `409` replayed nonce, `429` rate limited, `503 world_unavailable`.
+
+  Change `1` in the URL to another id, or to an account name such as `ADMIN`.
+}

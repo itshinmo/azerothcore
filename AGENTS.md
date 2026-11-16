@@ -178,7 +178,8 @@ New content is currently out of scope. When it returns:
 - The in-game addon wraps existing commands; it must not bypass server-side permission checks.
 - Never grant items, gold, or account changes from untrusted input without validation and audit.
 - Manual GM API checks use the Bruno collection in `tools/api-tests/bruno/`; see
-  `runbook/gm/gm-api.md`.
+  `runbook/gm/gm-api.md`. Every request in the collection carries a `docs` block; add it in the same
+  change as the request.
 
 ## Visual interface
 

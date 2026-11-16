@@ -20,3 +20,25 @@ body:json {
     "realmId": -1
   }
 }
+
+docs {
+  ## Permissions
+
+  Grant, deny, or revoke an RBAC permission on a game account. Tagged `danger`: run it deliberately.
+
+  - Method and path: `POST /api/v1/accounts/{{targetAccount}}/permissions`.
+  - Body: `action` is `grant`, `deny`, or `revoke`; `permissionId` is the RBAC permission id;
+    `realmId` is the current realm id or `-1` for all realms.
+  - Write gate: `GmApi.AllowWrites = 1`.
+  - Permissions: grant 203, deny 204, revoke 205.
+  - Actor: signed `X-GM-Actor` game account id; must have security above `SEC_PLAYER`.
+  - Target: existing account `{{targetAccount}}`. The API refuses the actor's own account and any
+    account with security at or above the actor's.
+  - Success: `200` with `{"status":"ok"}`. Audit rows: `pending` then `success`. An online target's
+    session RBAC cache is invalidated.
+  - Failure: `400 bad_request`, `403 forbidden`, `404 target_not_found` or `unknown_permission`,
+    `409 cannot_target_self`, `already_granted`, `already_denied`, `in_denied_list`,
+    `in_granted_list`, or `not_in_list`, `500 audit_failed`.
+
+  Switching a permission from grant to deny needs a revoke first.
+}

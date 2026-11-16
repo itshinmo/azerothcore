@@ -102,6 +102,10 @@ signs every request with `collection.bru`, so no shell signing is needed.
 4. Open the collection, select the `local` environment, and send Status or Audit for reads. For
    writes, set `GmApi.AllowWrites = 1` and restart `worldserver`.
 
+Every request in the collection carries a `docs` block; open the **Docs** tab to see what the
+request does and which outcomes to expect. When you add an endpoint, add its request and its `docs`
+block in the same change.
+
 The collection holds no secret. Never commit `local.bru`, paste the secret into a request, or point
 the collection at production. It runs in Safe Mode; no Developer Mode or external package is needed.
 
