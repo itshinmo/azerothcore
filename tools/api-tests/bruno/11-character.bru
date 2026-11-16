@@ -13,13 +13,20 @@ get {
 docs {
   ## Character read
 
-  Read a character by name.
+  Read a character by name, online or offline.
 
-  - Method and path: `GET /api/v1/characters/{{playerName}}`.
-  - Auth: valid HMAC signature only; no `X-GM-Actor` and no RBAC permission.
+  - Method and path: `GET /api/v1/characters/{{playerName}}`. Replace `{{playerName}}` with any
+    character name.
+  - Path parameters: `name` — character name, case-insensitive, letters and digits only (max 24).
+    A name that fails this pattern returns `404 not_found`.
+  - Query parameters: none.
+  - Body: none.
+  - Signature headers: `X-GM-Timestamp`, `X-GM-Nonce`, `X-GM-Signature`, set by `collection.bru`.
+    No `X-GM-Actor`, no RBAC permission.
   - Success: `200` with `{"guid","name","account_id","account_name","level","race","class","online"}`.
-  - Failure: `401` bad signature, `404 target_not_found` when the character does not exist,
-    `405` wrong method, `409` replayed nonce, `429` rate limited, `503 world_unavailable`.
+    `guid` is a 64-bit value; above 2^53 it loses precision in JavaScript clients.
+  - Failure: `401 unauthorized`, `404 target_not_found` when the character does not exist,
+    `405 method_not_allowed`, `409 replayed_nonce`, `429 rate_limited`, `503 world_unavailable`.
 
-  Replace `{{playerName}}` with any character name.
+  The read uses the character cache on the world thread; a stalled world thread returns `503`.
 }

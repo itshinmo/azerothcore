@@ -15,11 +15,18 @@ docs {
 
   Read a game account by numeric id or account name.
 
-  - Method and path: `GET /api/v1/accounts/<id-or-name>`. This request uses account id `1`.
-  - Auth: valid HMAC signature only; no `X-GM-Actor` and no RBAC permission.
-  - Success: `200` with `{"id","username","security","online"}`.
-  - Failure: `401` bad signature, `404 target_not_found` when the account does not exist,
-    `405` wrong method, `409` replayed nonce, `429` rate limited, `503 world_unavailable`.
+  - Method and path: `GET /api/v1/accounts/1`. Replace `1` with another numeric id or an account
+    **username** such as `ADMIN`.
+  - Path parameters: `account` — numeric values up to 10 digits are treated as account ids; any
+    other value is treated as a username (case-insensitive; letters, digits, `_`, `-`, `.`, max 17).
+  - Query parameters: none.
+  - Body: none.
+  - Signature headers: `X-GM-Timestamp`, `X-GM-Nonce`, `X-GM-Signature`, set by `collection.bru`.
+    No `X-GM-Actor`, no RBAC permission.
+  - Success: `200` with `{"id","username","security","online"}`. `security` is the realm security
+    level; `0` is a player.
+  - Failure: `401 unauthorized`, `404 target_not_found` when the account does not exist,
+    `405 method_not_allowed`, `409 replayed_nonce`, `429 rate_limited`, `503 world_unavailable`.
 
-  Change `1` in the URL to another id, or to an account name such as `ADMIN`.
+  The read runs on the world thread; a stalled world thread returns `503`.
 }

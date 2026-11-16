@@ -23,13 +23,19 @@ docs {
   Grant an item to an online character.
 
   - Method and path: `POST /api/v1/players/{{playerName}}/items`.
-  - Body: `itemId` is the item template id; `count` is 1-1000. The item must exist and respect
-    `MaxCount`.
-  - Write gate: `GmApi.AllowWrites = 1`.
+  - Path parameters: `{{playerName}}` — character name, case-insensitive, letters and digits only
+    (max 24). A name that fails this pattern returns `404 not_found`.
+  - Query parameters: none.
+  - Body (JSON, required):
+    - `itemId` (integer, required, minimum 1) — the item template id; the template must exist.
+    - `count` (integer, required, 1-1000) — total requested; must not exceed the template's
+      `MaxCount`.
+  - Signature headers: `X-GM-Timestamp`, `X-GM-Nonce`, `X-GM-Signature`, plus the write header
+    `X-GM-Actor: {{gmActor}}`. All are set by `collection.bru`.
+  - Write gate: `GmApi.AllowWrites = 1` (else `403 writes_disabled`).
   - Permission: `RBAC_PERM_COMMAND_ADDITEM` (488).
-  - Actor: signed `X-GM-Actor` game account id; must have security above `SEC_PLAYER`.
-  - Target: online character `{{playerName}}`. The API refuses the actor's own account and any
-    account with security at or above the actor's.
+  - Target: online character. The API refuses the actor's own account (`409 cannot_target_self`)
+    and any account with security at or above the actor's (`403 forbidden_target_security`).
   - Success: `200` with `{"status":"ok"}`. Audit rows: `pending` then `success`.
   - Failure: `400 bad_request` or `invalid_item`, `403 forbidden`, `404 target_not_found`,
     `409 cannot_target_self` or `inventory_full`, `500 audit_failed`, `503 world_unavailable`.

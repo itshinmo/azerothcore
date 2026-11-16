@@ -16,12 +16,17 @@ docs {
   List loaded instances.
 
   - Method and path: `GET /api/v1/instances?limit=100`.
-  - Auth: valid HMAC signature only; no `X-GM-Actor` and no RBAC permission.
-  - Query: `limit` is 1-100; values above 100 clamp to 100; invalid or missing values use 100.
+  - Path parameters: none.
+  - Query parameters: `limit` (optional). 0, invalid, or missing values use `100`; values above
+    `100` clamp to `100`.
+  - Body: none.
+  - Signature headers: `X-GM-Timestamp`, `X-GM-Nonce`, `X-GM-Signature`, set by `collection.bru`.
+    No `X-GM-Actor`, no RBAC permission.
   - Success: `200` with an array of
     `{"instance_id","map_id","difficulty","players"}`, ordered by instance id.
-  - Failure: `401` bad signature, `405` wrong method, `409` replayed nonce, `429` rate limited,
-    `503 world_unavailable`.
+  - Failure: `401 unauthorized`, `405 method_not_allowed`, `409 replayed_nonce`,
+    `429 rate_limited`, `503 world_unavailable`.
 
-  Only loaded maps with a non-zero instance id are returned.
+  Only loaded maps with a non-zero instance id are returned. The read runs on the world thread; a
+  stalled world thread returns `503`.
 }

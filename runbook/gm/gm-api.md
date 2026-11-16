@@ -71,16 +71,16 @@ summary; the YAML is authoritative for bodies, parameters, and error codes.
 | Method | Target | Permission | Returns |
 |--------|--------|------------|---------|
 | GET | `/api/v1/status` | none | `{"status":"ok"}` |
-| GET | `/api/v1/audit?limit=50` | none | recent `gm_audit_log` rows, limit 1–200 |
+| GET | `/api/v1/audit?limit=50` | none | recent `gm_audit_log` rows; `limit` defaults to 50, values above 200 clamp to 200 |
 | GET | `/api/v1/accounts/<name-or-id>` | none | account object |
 | GET | `/api/v1/characters/<name>` | none | character object |
-| GET | `/api/v1/players/online?limit=100` | none | online player array, limit 1–500 |
-| GET | `/api/v1/instances?limit=100` | none | active instance array, limit 1–100 |
-| POST | `/api/v1/players/<name>/items` | `RBAC_PERM_COMMAND_ADDITEM` (488) | `{"status":"ok"}` |
-| POST | `/api/v1/mail` | 485, plus 484 for items and 487 for money | `{"status":"ok"}` |
-| POST | `/api/v1/accounts/<name>/ban` | `RBAC_PERM_COMMAND_BAN_ACCOUNT` (240) | `{"status":"ok"}` |
-| POST | `/api/v1/accounts/<name>/permissions` | 203 grant, 204 deny, 205 revoke | `{"status":"ok"}` |
-| POST | `/api/v1/server/control` | 734 shutdown, 727 restart, 735 cancel | `{"status":"ok"}` |
+| GET | `/api/v1/players/online?limit=100` | none | online player array; `limit` defaults to 100, values above 500 clamp to 500 |
+| GET | `/api/v1/instances?limit=100` | none | active instance array; `limit` defaults to 100 and clamps to 100 |
+| POST | `/api/v1/players/<name>/items` | `RBAC_PERM_COMMAND_ADDITEM` (488) | `{"status":"ok"}`; body `{"itemId","count"}`, count 1-1000 |
+| POST | `/api/v1/mail` | 485, plus 484 for items and 487 for money | `{"status":"ok"}`; body `recipient`, optional `subject` (max 64), `text` (max 5000), `money` (copper), `items` (max 12 after splitting) |
+| POST | `/api/v1/accounts/<name>/ban` | `RBAC_PERM_COMMAND_BAN_ACCOUNT` (240) | `{"status":"ok"}`; body `durationSeconds` 0-315360000 (`0` permanent), optional `reason` (max 255) |
+| POST | `/api/v1/accounts/<name>/permissions` | 203 grant, 204 deny, 205 revoke | `{"status":"ok"}`; body `action`, `permissionId`, optional `realmId` (current realm id or `-1`) |
+| POST | `/api/v1/server/control` | 734 shutdown, 727 restart, 735 cancel | `{"status":"ok"}`; body `action` `shutdown`/`restart` (needs `delaySeconds` 1-3600) or `cancel` |
 | POST | `/api/v1/players/<name>/kick` | `RBAC_PERM_COMMAND_KICK` (510) | `{"status":"ok"}` |
 | POST | `/api/v1/players/<name>/unstuck` | `RBAC_PERM_COMMAND_UNSTUCK` (534) | `{"status":"ok"}` |
 

@@ -1,7 +1,10 @@
 meta {
-  name: Server cancel
+  name: Server control
   type: http
   seq: 9
+  tags: [
+    danger
+  ]
 }
 
 post {
@@ -17,21 +20,35 @@ body:json {
 }
 
 docs {
-  ## Server cancel
+  ## Server control
 
-  Cancel a pending shutdown or restart timer.
+  Schedule a shutdown, schedule a restart, or cancel a pending timer — one endpoint, three
+  actions. Tagged `danger`: shutdown and restart stop the server. The body in this request is
+  `cancel`, the safe variant.
 
   - Method and path: `POST /api/v1/server/control`.
-  - Body: `action` is `cancel`. `delaySeconds` is optional and unused for cancel.
-  - Write gate: `GmApi.AllowWrites = 1`.
+  - Path and query parameters: none.
+  - Body (JSON, required). One of:
+    - `{"action": "cancel"}` — cancels a pending shutdown/restart timer. `delaySeconds` may be
+      present but is unused.
+    - `{"action": "shutdown", "delaySeconds": 30}` — schedules shutdown after 1-3600 seconds.
+      Optional `reason` (max 255) is recorded. After the timer fires, `worldserver` exits; restart
+      the stack with `make start` (local) or the supervisor (test realm).
+    - `{"action": "restart", "delaySeconds": 30}` — same as shutdown with the restart exit code.
+      A restart is only an exit: an external supervisor must start the process again.
+    - `delaySeconds` is **required** for shutdown and restart (1-3600). Omitting it, or sending
+      `0` or a value above 3600, returns `400 bad_request`.
+  - Signature headers: `X-GM-Timestamp`, `X-GM-Nonce`, `X-GM-Signature`, plus the write header
+    `X-GM-Actor: {{gmActor}}`. All are set by `collection.bru`.
+  - Write gate: `GmApi.AllowWrites = 1` (else `403 writes_disabled`).
   - Server-control gate: `GmApi.AllowServerControl = 1`; the default is `0`, so this returns
-    `403 server_control_disabled` until the config is enabled.
-  - Permission: `RBAC_PERM_COMMAND_SERVER_SHUTDOWN_CANCEL` (735).
-  - Actor: signed `X-GM-Actor` game account id; must have security above `SEC_PLAYER`.
+    `403 server_control_disabled` until the config is enabled and `worldserver` is restarted.
+  - Permissions: shutdown 734, restart 727, cancel 735 — the permission matching the action.
+  - Actor: the account in `X-GM-Actor` must exist and have security above `SEC_PLAYER`.
   - Success: `200` with `{"status":"ok"}`. Audit rows: `pending` then `success`.
   - Failure: `400 bad_request`, `403 server_control_disabled` or `forbidden`,
     `500 audit_failed`, `503 world_unavailable`.
 
-  Shutdown and restart use the same path with `delaySeconds` 1-3600; a restart only exits the
-  process and needs an external supervisor to come back.
+  Safe test order: send shutdown with a small `delaySeconds`, then send `cancel` before the timer
+  fires — the world stays up and both audit rows appear.
 }

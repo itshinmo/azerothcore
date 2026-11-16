@@ -16,12 +16,17 @@ docs {
   List characters that are currently in the world.
 
   - Method and path: `GET /api/v1/players/online?limit=100`.
-  - Auth: valid HMAC signature only; no `X-GM-Actor` and no RBAC permission.
-  - Query: `limit` is 1-500; values above 500 clamp to 500; invalid or missing values use 100.
+  - Path parameters: none.
+  - Query parameters: `limit` (optional). 0, invalid, or missing values use `100`; values above
+    `500` clamp to `500`.
+  - Body: none.
+  - Signature headers: `X-GM-Timestamp`, `X-GM-Nonce`, `X-GM-Signature`, set by `collection.bru`.
+    No `X-GM-Actor`, no RBAC permission.
   - Success: `200` with an array of
     `{"guid","name","account_id","level","race","class","map","zone"}`, ordered by GUID.
-  - Failure: `401` bad signature, `405` wrong method, `409` replayed nonce, `429` rate limited,
-    `503 world_unavailable`.
+  - Failure: `401 unauthorized`, `405 method_not_allowed`, `409 replayed_nonce`,
+    `429 rate_limited`, `503 world_unavailable`.
 
-  Empty array means no character is in the world.
+  Empty array means no character is in the world. The read runs on the world thread; a stalled
+  world thread returns `503`.
 }

@@ -26,15 +26,23 @@ docs {
   Ban a game account. Tagged `danger`: run it deliberately.
 
   - Method and path: `POST /api/v1/accounts/{{targetAccount}}/ban`.
-  - Body: `durationSeconds` 0-315360000; `0` means permanent. `reason` is at most 255 characters.
-  - Write gate: `GmApi.AllowWrites = 1`.
+  - Path parameters: `{{targetAccount}}` — account **username** (not numeric id), case-insensitive;
+    letters, digits, `_`, `-`, `.` (max 17). Uppercased before lookup.
+  - Query parameters: none.
+  - Body (JSON, required):
+    - `durationSeconds` (integer, required, 0-315360000). `0` means permanent.
+    - `reason` (string, optional, max 255).
+  - Signature headers: `X-GM-Timestamp`, `X-GM-Nonce`, `X-GM-Signature`, plus the write header
+    `X-GM-Actor: {{gmActor}}`. All are set by `collection.bru`.
+  - Write gate: `GmApi.AllowWrites = 1` (else `403 writes_disabled`).
   - Permission: `RBAC_PERM_COMMAND_BAN_ACCOUNT` (240).
-  - Actor: signed `X-GM-Actor` game account id; must have security above `SEC_PLAYER`.
-  - Target: existing account `{{targetAccount}}`. The API refuses the actor's own account and any
-    account with security at or above the actor's.
+  - Target: existing account. The API refuses the actor's own account (`409 cannot_target_self`)
+    and any account with security at or above the actor's (`403 forbidden_target_security`).
   - Success: `200` with `{"status":"ok"}`. Audit rows: `pending` then `success`.
   - Failure: `400 bad_request`, `403 forbidden`, `404 target_not_found`,
-    `409 cannot_target_self` or `longer_ban_exists`, `500 audit_failed`, `503 world_unavailable`.
+    `409 cannot_target_self` or `longer_ban_exists` (an existing longer ban is not shortened),
+    `500 audit_failed`, `503 world_unavailable`.
 
-  A longer existing ban is not shortened. Reasons are not stored in the audit arguments.
+  Reasons are not stored in the audit arguments. To lift a test ban, use the GM command
+  `.ban unban <account>` or unban through the database.
 }

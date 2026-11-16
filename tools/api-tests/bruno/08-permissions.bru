@@ -27,18 +27,27 @@ docs {
   Grant, deny, or revoke an RBAC permission on a game account. Tagged `danger`: run it deliberately.
 
   - Method and path: `POST /api/v1/accounts/{{targetAccount}}/permissions`.
-  - Body: `action` is `grant`, `deny`, or `revoke`; `permissionId` is the RBAC permission id;
-    `realmId` is the current realm id or `-1` for all realms.
-  - Write gate: `GmApi.AllowWrites = 1`.
-  - Permissions: grant 203, deny 204, revoke 205.
-  - Actor: signed `X-GM-Actor` game account id; must have security above `SEC_PLAYER`.
-  - Target: existing account `{{targetAccount}}`. The API refuses the actor's own account and any
-    account with security at or above the actor's.
+  - Path parameters: `{{targetAccount}}` — account **username** (not numeric id), case-insensitive;
+    letters, digits, `_`, `-`, `.` (max 17). Uppercased before lookup.
+  - Query parameters: none.
+  - Body (JSON, required):
+    - `action` (string, required) — `grant`, `deny`, or `revoke`.
+    - `permissionId` (integer, required, minimum 1) — the RBAC permission id; must exist.
+    - `realmId` (integer, optional, default `-1`) — the current realm id or `-1` for all realms.
+      `0` and other realm ids are rejected.
+  - Signature headers: `X-GM-Timestamp`, `X-GM-Nonce`, `X-GM-Signature`, plus the write header
+    `X-GM-Actor: {{gmActor}}`. All are set by `collection.bru`.
+  - Write gate: `GmApi.AllowWrites = 1` (else `403 writes_disabled`).
+  - Permissions: grant 203, deny 204, revoke 205 — the permission matching the action.
+  - Target: existing account. The API refuses the actor's own account (`409 cannot_target_self`)
+    and any account with security at or above the actor's (`403 forbidden_target_security`).
   - Success: `200` with `{"status":"ok"}`. Audit rows: `pending` then `success`. An online target's
     session RBAC cache is invalidated.
   - Failure: `400 bad_request`, `403 forbidden`, `404 target_not_found` or `unknown_permission`,
     `409 cannot_target_self`, `already_granted`, `already_denied`, `in_denied_list`,
     `in_granted_list`, or `not_in_list`, `500 audit_failed`.
 
-  Switching a permission from grant to deny needs a revoke first.
+  Conflict meanings: granting an already-granted permission is `already_granted`; revoking a
+  permission the account does not have is `not_in_list`; switching grant to deny needs a revoke
+  first.
 }

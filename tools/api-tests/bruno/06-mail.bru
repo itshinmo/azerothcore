@@ -25,22 +25,28 @@ docs {
   Send a GM-stationery mail with text, optional money, and up to 12 item attachments.
 
   - Method and path: `POST /api/v1/mail`.
-  - Body:
-    - `recipient` is a character name; the character may be offline.
-    - `subject` is at most 64 characters; `text` is at most 5000.
-    - `money` is optional copper, at most 2147483646.
-    - `items` is an optional array of `{"itemId": n, "count": n}`; after stack splitting the mail
-      may carry at most 12 attachments.
-  - Write gate: `GmApi.AllowWrites = 1`.
+  - Path parameters: none.
+  - Query parameters: none.
+  - Body (JSON, required):
+    - `recipient` (string, required, 1-24) — character name; online or offline.
+    - `subject` (string, optional, max 64).
+    - `text` (string, optional, max 5000).
+    - `money` (integer, optional, 0-2147483646) — copper.
+    - `items` (array, optional, max 12 entries) — each entry `{"itemId": n, "count": n}` with
+      `itemId` minimum 1 and `count` 1-1000. Stacks are split by `MaxStackSize`; after splitting
+      the mail may carry at most 12 attachments.
+  - Signature headers: `X-GM-Timestamp`, `X-GM-Nonce`, `X-GM-Signature`, plus the write header
+    `X-GM-Actor: {{gmActor}}`. All are set by `collection.bru`.
+  - Write gate: `GmApi.AllowWrites = 1` (else `403 writes_disabled`).
   - Permissions: `RBAC_PERM_COMMAND_SEND_MAIL` (485) always, plus
     `RBAC_PERM_COMMAND_SEND_ITEMS` (484) when items are attached and
     `RBAC_PERM_COMMAND_SEND_MONEY` (487) when money is sent.
-  - Actor: signed `X-GM-Actor` game account id; must have security above `SEC_PLAYER`.
   - Target: the recipient account must be below the actor's security and not the actor's own
-    account.
+    account (`409 cannot_target_self`).
   - Success: `200` with `{"status":"ok"}`. Audit rows: `pending` then `success`.
-  - Failure: `400 bad_request`, `invalid_item`, or `too_many_items`; `404 target_not_found`;
-    `409 cannot_target_self` or `mailbox_full`; `500 mail_failed` or `audit_failed`.
+  - Failure: `400 bad_request`, `invalid_item`, or `too_many_items`; `403 forbidden`;
+    `404 target_not_found`; `409 cannot_target_self` or `mailbox_full` (99+ mails);
+    `500 mail_failed` or `audit_failed`; `503 world_unavailable`.
 
   Mail bodies are not stored in the audit arguments.
 }

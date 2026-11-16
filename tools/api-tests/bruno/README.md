@@ -24,22 +24,21 @@ and the audit behavior.
 | Request | Method and target | Notes |
 |---------|-------------------|-------|
 | Status | `GET /api/v1/status` | Read, no actor needed. Expects `200` and `{"status":"ok"}`. |
-| Audit | `GET /api/v1/audit?limit={{auditLimit}}` | Read, newest-N rows. Limit is 1-200. |
-| Unstuck | `POST /api/v1/players/{{playerName}}/unstuck` | Write. Same target rules. Runs before Kick so a full run can succeed. |
+| Audit | `GET /api/v1/audit?limit={{auditLimit}}` | Read, newest-N rows. Limit defaults to 50, clamps to 200. |
+| Unstuck | `POST /api/v1/players/{{playerName}}/unstuck` | Write. Teleports to homebind. Runs before Kick so a full run can succeed. |
 | Kick | `POST /api/v1/players/{{playerName}}/kick` | Write. Target must be online and below the actor's security. Kicks last. |
 | Items | `POST /api/v1/players/{{playerName}}/items` | Write. Grants the item in the JSON body to the online target. |
 | Mail | `POST /api/v1/mail` | Write. Text mail with money; the body also accepts `items` attachments. |
 | Ban | `POST /api/v1/accounts/{{targetAccount}}/ban` | Tagged `danger`. Bans the account for 60 seconds. |
 | Permissions | `POST /api/v1/accounts/{{targetAccount}}/permissions` | Tagged `danger`. Grants permission 488 on the target account. |
-| Server cancel | `POST /api/v1/server/control` | Write. Cancels a pending shutdown/restart timer; safe to send. |
-| Server shutdown | `POST /api/v1/server/control` | Tagged `danger`. Schedules shutdown in 30 seconds; `make start` afterwards. |
+| Server control | `POST /api/v1/server/control` | Tagged `danger`. Body sends `cancel` (safe). The docs cover `shutdown`/`restart` and their required `delaySeconds`. |
 | Account read | `GET /api/v1/accounts/1` | Read. Change the numeric id or use an account name. |
 | Character read | `GET /api/v1/characters/{{playerName}}` | Read. |
 | Online players | `GET /api/v1/players/online?limit=100` | Read. |
 | Instances | `GET /api/v1/instances?limit=100` | Read. |
 
-The Ban and Permissions requests carry the `danger` tag. Run them deliberately, one request at a
-time, and do not include them in a full collection run.
+The Ban, Permissions, and Server control requests carry the `danger` tag. Run them deliberately, one
+request at a time, and do not include them in a full collection run.
 
 Every request carries a `docs` block. Open the **Docs** tab in Bruno to see what the request does,
 what it needs, and which outcomes to expect. When you add a request, add its `docs` block in the same
