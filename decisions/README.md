@@ -25,7 +25,7 @@ decision supersedes one and both link each other.
 | [ADR-009](ADR-009-rbac-command-permission-precedence.md) | accepted | core RBAC permissions override legacy `command.security` |
 | [ADR-010](ADR-010-website-as-visual-interface.md) | accepted | future server website is the long-term visual layer; API-first, separate web auth |
 | [ADR-011](ADR-011-world-data-and-content-verification.md) | accepted | one read-only extractor feeds the public catalog and the content audit; playerbots rejected |
-| [ADR-012](ADR-012-progression-rates.md) | accepted | default 3x experience, everything else 1x, per-account override intended |
+| [ADR-012](ADR-012-progression-rates.md) | accepted, revised 2026-11-16 | default 2x experience for all players, everything else 1x; per-account override removed |
 | [ADR-013](ADR-013-server-and-client-before-website.md) | accepted | base game, custom content, website, launch; website work deferred to phase 3 |
 | [ADR-014](ADR-014-bruno-api-test-client.md) | accepted | committed Bruno collection is the manual GM API test path |
 

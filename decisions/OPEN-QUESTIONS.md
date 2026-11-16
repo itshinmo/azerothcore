@@ -45,20 +45,6 @@ approved, and tested on a copy of the client.
 **Owner:** human.
 **Record:** ADR-002 or a new ADR.
 
-## Per-account experience override
-
-**Question:** How does a player select a lower experience rate?
-
-Options:
-
-1. A project module with an in-game command and a persisted per-account value (preferred).
-2. GM-assisted only, with the value stored on the account.
-3. No override; the realm runs one rate for everyone.
-
-**Blocks:** publishing the 1x purist option promised by ADR-012.
-**Owner:** human + implementer.
-**Record:** a new ADR that extends [ADR-012](ADR-012-progression-rates.md).
-
 ## Shop product list revision
 
 **Question:** Does the allowed product list in [specs/shop.md](../specs/shop.md) change before shop

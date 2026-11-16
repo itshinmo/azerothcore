@@ -39,8 +39,8 @@ last-verified: 2026-11-16 (phases: base game, custom content, website, launch; B
   extractor feeds both the public world catalog and the content audit; the audit is a release gate.
   Playerbots were considered and rejected; the rejection and its revisit condition are recorded in
   the ADR.
-- [ADR-012](../../decisions/ADR-012-progression-rates.md): default 3x experience, everything else
-  1x, per-account override intended but not implemented.
+- [ADR-012](../../decisions/ADR-012-progression-rates.md): default 2x experience for every player,
+  everything else at 1x; no per-account override, and Phase 2 rule-set pacing is an idea only.
 - Branch topology: `master` mirrors upstream and fast-forwards only; `local-server-setup` is the
   integration branch; task branches are created from it. Procedure updated in
   [runbook/development/worktrees-and-branches.md](../../runbook/development/worktrees-and-branches.md).
@@ -68,9 +68,6 @@ last-verified: 2026-11-16 (phases: base game, custom content, website, launch; B
   Every request carries a `docs` block, and new requests must add theirs. Validated on 2026-11-16
   against a mock server that verified the signature independently, in Bruno CLI Safe Mode; a
   real-stack run is still pending.
-- Per-account XP override (`modules/mod-xp-override`): player `.xp` toggle between 1x and the realm
-  default, per-account `account_xp_override` table, command help row. Merged; local SQL applied and
-  verified. Unit tests written but not run locally (gtest unavailable); module compiled and linked.
 - Content audit C-06 phase reachability: fixpoint model over SmartAI phase actions and timed action
   lists. 63 tool tests pass; on `acore_world` the real-data phase findings dropped to 16.
 - GM API audited writes and reads implemented and merged: item grant, mail, ban, RBAC
@@ -87,6 +84,13 @@ last-verified: 2026-11-16 (phases: base game, custom content, website, launch; B
   the rate limit (`120 x 200` then `429`). Audit `pending` + outcome rows confirmed after writes.
   The human edited `worldserver.conf.dist` first; reverted, and the real `env/dist/etc/worldserver.conf`
   was changed instead — the `.dist` file is a build template, never the live config.
+- Per-account XP override removed 2026-11-16 before any public promise: ADR-012 revised to 2x for
+  all experience sources and one shared rate for all players; `modules/mod-xp-override`, its SQL,
+  and its command row deleted; local `account_xp_override` table dropped and `command` row removed.
+  The module was live-verified first: with `Rate.XP.Kill = 3`, override on gave base XP and off gave
+  the rate-multiplied amount. A one-off worldserver crash during `.xp` testing was not reproduced
+  under lldb and has no artifacts (AC has no POSIX crash handler); the lldb recipe lives in
+  `/tmp/xp-repro.log` history.
 
 ## Investigated 2026-11-14
 
@@ -138,38 +142,38 @@ content, website, launch. Playtests and a friends-only test VPS can happen betwe
    rows and record the result. Procedure: `runbook/gm/gm-api.md`.
 2. Live-test the new GM API writes and reads through Bruno on a live stack, including the branches
    that need an online player.
-3. Live-test the per-account XP override promised by
-   [ADR-012](../../decisions/ADR-012-progression-rates.md) (`modules/mod-xp-override`).
-4. Audit v2 remainder: map-bounds validation stays blocked on reference data; C-06 phase
+3. Audit v2 remainder: map-bounds validation stays blocked on reference data; C-06 phase
    reachability is implemented.
-5. Build the base-game verification checklist: quest chains, scripted encounters, NPC spawns and
+4. Build the base-game verification checklist: quest chains, scripted encounters, NPC spawns and
    behavior, client-observed behavior, and stability. Playtest against it.
-6. Triage the 1,972 minors when content work starts; they are cosmetic or expected data.
-7. Add server-side water movement validation if the cheat risk is accepted: swim flag vs
+5. Triage the 1,972 minors when content work starts; they are cosmetic or expected data.
+6. Add server-side water movement validation if the cheat risk is accepted: swim flag vs
    `GetLiquidData()` status, swim-speed enforcement, mismatch logging. Not implemented, and it does
    not fix the client.
-8. Keep `libSiliconPatch` off until WoWSilicon#67 is fixed; re-test after each launcher update and
+7. Keep `libSiliconPatch` off until WoWSilicon#67 is fixed; re-test after each launcher update and
    keep a second client copy (`~/Games/wotlk-test`) without the mod for client-side behaviour checks.
-9. Test realm death: keep the supervisor log; capture it on the next occurrence, with `screen -ls`
+8. Test realm death: keep the supervisor log; capture it on the next occurrence, with `screen -ls`
    and the unified log, before restarting.
 
 ### Phase 2 — custom content
 
-10. Scope hardcore rule-sets and other unique features only after Phase 1 is done. Record each feature
-    in a new ADR before implementation.
+9. Scope hardcore rule-sets and other unique features only after Phase 1 is done. Record each feature
+   in a new ADR before implementation. Rule-set pacing (for example, hardcore locked at 1x without a
+   player command) needs its own ADR; see
+   [ADR-012](../../decisions/ADR-012-progression-rates.md).
 
 ### Phase 3 — website
 
-11. Decide website auth (passkeys, OAuth, or Argon2id). Record it in an ADR extending ADR-010.
-12. Build the admin BFF/dashboard and the read-only website MVP through it.
-13. Static spawn map page, after the map imagery decision.
-14. Account and character pages, after their priority decision.
-15. Shop frontend, after the shop decisions.
+10. Decide website auth (passkeys, OAuth, or Argon2id). Record it in an ADR extending ADR-010.
+11. Build the admin BFF/dashboard and the read-only website MVP through it.
+12. Static spawn map page, after the map imagery decision.
+13. Account and character pages, after their priority decision.
+14. Shop frontend, after the shop decisions.
 
 ### Phase 4 — launch
 
-16. Choose the production host, region, and budget.
-17. Finish the deploy runbook, deploy, verify production health and backups, and publish.
+15. Choose the production host, region, and budget.
+16. Finish the deploy runbook, deploy, verify production health and backups, and publish.
 
 No playerbots work is planned.
 
@@ -237,10 +241,6 @@ Before launch:
 
 - Production provider, region, and budget.
 - Custom content scope (hardcore rule-sets and other unique features) after Phase 1.
-
-Server work:
-
-- Per-account experience override mechanism (module command versus GM-only).
 
 Deferred until Phase 3 — website ([ADR-013](../../decisions/ADR-013-server-and-client-before-website.md)):
 
