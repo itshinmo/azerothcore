@@ -32,6 +32,8 @@ I do it"; behavior lives in `specs/`.
 - [rollback.md](operation/rollback.md) — database, binary, and config rollback.
 - [test-realm.md](operation/test-realm.md) — isolated realm for e2e and risky changes.
 - [content-audit.md](operation/content-audit.md) — read-only world content audit and waivers.
+- [base-game-verification.md](operation/base-game-verification.md) — Phase 1 playtest checklist and
+  result recording.
 - [world-export.md](operation/world-export.md) — export world data artifacts for the public catalog.
 - [world-api.md](operation/world-api.md) — serve the exported catalog on loopback (parked until after
   production).

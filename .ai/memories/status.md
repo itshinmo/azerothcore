@@ -144,8 +144,10 @@ content, website, launch. Playtests and a friends-only test VPS can happen betwe
    that need an online player.
 3. Audit v2 remainder: map-bounds validation stays blocked on reference data; C-06 phase
    reachability is implemented.
-4. Build the base-game verification checklist: quest chains, scripted encounters, NPC spawns and
-   behavior, client-observed behavior, and stability. Playtest against it.
+4. Base-game verification checklist is built
+   ([runbook/operation/base-game-verification.md](../../runbook/operation/base-game-verification.md)):
+   character flow, leveling path at 2x, quest chains, dungeons, systems, client behavior,
+   stability, and the result-recording procedure. Playing through it is the current Phase 1 work.
 5. Triage the 1,972 minors when content work starts; they are cosmetic or expected data.
 6. Add server-side water movement validation if the cheat risk is accepted: swim flag vs
    `GetLiquidData()` status, swim-speed enforcement, mismatch logging. Not implemented, and it does
