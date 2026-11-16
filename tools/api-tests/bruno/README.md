@@ -58,6 +58,14 @@ request or the queries in `runbook/gm/audit.md`.
 The nonce is fresh per request, so collection runs do not trip the replay check. A deliberate replay
 test needs the same nonce twice; do that with the curl recipe in the runbook.
 
+## VS Code extension note
+
+The Bruno VS Code extension has a known bug where pre-request scripts may not run and variables may
+not interpolate, producing `401` responses. If a request returns `401` in VS Code but succeeds with
+the CLI, use the CLI (or the Bruno desktop app) until the extension is fixed.
+
+Reference: usebruno/bruno-vscode issue 73.
+
 ## CLI
 
 From this directory:
