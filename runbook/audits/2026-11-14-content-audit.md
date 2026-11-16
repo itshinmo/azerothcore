@@ -109,3 +109,5 @@ They stay visible.
 - Conditions auditing (not implemented in audit v1).
 - Whether upstream has an open issue for the `ScriptName` column; the same statement is a candidate
   for an upstream pull request.
+
+Later: C-06 phase reachability is now implemented; see `specs/content-pipeline.md`.

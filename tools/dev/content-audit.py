@@ -33,6 +33,44 @@ NPC_FLAG_QUESTGIVER = 0x02
 NPC_FLAG_TRAINER = 0x10
 NPC_FLAG_VENDOR = 0x80
 
+# smart_scripts.action_type values that change the event phase or start a timed action list
+SMART_ACTION_SET_EVENT_PHASE = 22
+SMART_ACTION_INC_EVENT_PHASE = 23
+SMART_ACTION_RANDOM_PHASE = 30
+SMART_ACTION_RANDOM_PHASE_RANGE = 31
+SMART_ACTION_INSTALL_AI_TEMPLATE = 58
+SMART_ACTION_CALL_TIMED_ACTIONLIST = 80
+SMART_ACTION_CALL_RANDOM_TIMED_ACTIONLIST = 87
+SMART_ACTION_CALL_RANDOM_RANGE_TIMED_ACTIONLIST = 88
+
+TIMED_ACTION_TYPES = (
+    SMART_ACTION_CALL_TIMED_ACTIONLIST,
+    SMART_ACTION_CALL_RANDOM_TIMED_ACTIONLIST,
+    SMART_ACTION_CALL_RANDOM_RANGE_TIMED_ACTIONLIST,
+)
+
+# SMARTAI_TEMPLATE ids whose installed events set phase 1: caster and caged NPC part
+PHASE_ONE_TEMPLATES = (1, 5)
+
+# smart_scripts.source_type values
+SMART_SCRIPT_TYPE_CREATURE = 0
+SMART_SCRIPT_TYPE_GAMEOBJECT = 1
+SMART_SCRIPT_TYPE_TIMED_ACTIONLIST = 9
+
+# smart_scripts.target_type values that select one object by its database guid
+SMART_TARGET_CREATURE_GUID = 10
+SMART_TARGET_GAMEOBJECT_GUID = 14
+
+# target_type -> script type of the block owned by the targeted guid
+FIXED_GUID_TARGETS = {
+    SMART_TARGET_CREATURE_GUID: SMART_SCRIPT_TYPE_CREATURE,
+    SMART_TARGET_GAMEOBJECT_GUID: SMART_SCRIPT_TYPE_GAMEOBJECT,
+}
+
+# Highest usable phase id. The core's SMART_EVENT_PHASE_MAX is 13 and is a sentinel, not a phase;
+# SMART_EVENT_PHASE_COUNT in SmartScriptMgr.h equals this id and is preferred when parsed.
+SMART_EVENT_PHASE_12 = 12
+
 LOOT_TABLES = (
     "creature_loot_template",
     "disenchant_loot_template",
@@ -243,6 +281,10 @@ def smart_limits(header: Path) -> dict[str, int]:
                   re.findall(r"SMART_EVENT_PHASE_\d+_BIT\s*=\s*(\d+)", text)]
     if phase_bits:
         limits["phase_mask"] = sum(phase_bits)
+    # SMART_EVENT_PHASE_COUNT is the number of phases and equals the highest phase id.
+    count = re.search(r"SMART_EVENT_PHASE_COUNT\s*=\s*(\d+)", text)
+    if count:
+        limits["phase_max"] = int(count.group(1))
     return limits
 
 
@@ -406,13 +448,162 @@ def check_c05(data: dict) -> list[Finding]:
     return findings
 
 
+def mask_runs_in(mask: int, phase: int) -> bool:
+    """True when a row with this phase mask can run in `phase`."""
+    return mask == 0 or (phase > 0 and bool(mask & (1 << (phase - 1))))
+
+
+def phase_row_targets(row: dict, phase: int,
+                      phase_max: int = SMART_EVENT_PHASE_12) -> set[int]:
+    """Phases one SmartAI row moves to from `phase`; empty when it does not change it."""
+    action = row["action"]
+    params = [row[f"param{index}"] for index in range(1, 7)]
+    if action == SMART_ACTION_SET_EVENT_PHASE:
+        targets = {params[0]}
+    elif action == SMART_ACTION_INC_EVENT_PHASE:
+        current = min(phase_max, phase + params[0])
+        targets = {0 if params[1] >= current else current - params[1]}
+    elif action == SMART_ACTION_RANDOM_PHASE:
+        targets = set(params)
+    elif action == SMART_ACTION_RANDOM_PHASE_RANGE:
+        low, high = max(params[0], 0), min(params[1], phase_max)
+        targets = set(range(low, high + 1)) if low <= high else set()
+    else:
+        return set()
+    return {target for target in targets if 0 <= target <= phase_max}
+
+
+def timed_action_ids(row: dict, timed: dict[int, list[dict]]) -> set[int]:
+    """Script9 ids a row starts through a timed action list action."""
+    params = [row[f"param{index}"] for index in range(1, 7)]
+    action = row["action"]
+    if action == SMART_ACTION_CALL_TIMED_ACTIONLIST:
+        ids = {params[0]}
+    elif action == SMART_ACTION_CALL_RANDOM_TIMED_ACTIONLIST:
+        ids = set(params)
+    elif action == SMART_ACTION_CALL_RANDOM_RANGE_TIMED_ACTIONLIST:
+        ids = {entry for entry in timed if params[0] <= entry <= params[1]}
+    else:
+        return set()
+    return {entry for entry in ids if entry in timed}
+
+
+def block_phase_targets(rows: list[dict], phase: int, phase_max: int,
+                        timed: dict[int, list[dict]], seen: set[tuple[int, int]]) -> set[int]:
+    """Phases one block moves to from `phase`, folding called timed action lists."""
+    targets: set[int] = set()
+    for row in rows:
+        if not mask_runs_in(row["phase_mask"], phase):
+            continue
+        targets |= phase_row_targets(row, phase, phase_max)
+        if row["target"] in FIXED_GUID_TARGETS:
+            continue  # the list runs on the target's own phase, not the caller's
+        for entry in timed_action_ids(row, timed):
+            marker = (entry, phase)
+            if marker in seen:
+                continue
+            targets |= block_phase_targets(timed[entry], phase, phase_max, timed,
+                                           seen | {marker})
+    return targets
+
+
+def fixed_target_blocks(rows: list[dict], reachable: set[int],
+                        spawn_maps: dict[int, dict[int, int]]) -> set[tuple[int, int]]:
+    """Blocks a reachable fixed-guid timed action list starts on."""
+    blocks = set()
+    for row in rows:
+        source = FIXED_GUID_TARGETS.get(row["target"])
+        if source is None or row["action"] not in TIMED_ACTION_TYPES:
+            continue
+        if not any(mask_runs_in(row["phase_mask"], phase) for phase in reachable):
+            continue
+        entry = spawn_maps.get(source, {}).get(row["target_param1"])
+        if entry is not None:
+            blocks.add((entry, source))
+    return blocks
+
+
+def block_timed_calls(rows: list[dict], phase: int,
+                      timed: dict[int, list[dict]]) -> set[int]:
+    """Script9 blocks that rows of one block start at `phase`."""
+    calls: set[int] = set()
+    for row in rows:
+        if row["target"] in FIXED_GUID_TARGETS:
+            continue  # the list runs on the target's own phase, not the caller's
+        if mask_runs_in(row["phase_mask"], phase):
+            calls |= timed_action_ids(row, timed)
+    return calls
+
+
+def invoked_timed_blocks(blocks: dict[tuple[int, int], list[dict]],
+                         reachable_by_block: dict[tuple[int, int], set[int]],
+                         timed: dict[int, list[dict]]) -> set[tuple[int, int]]:
+    """(script9 entry, phase) pairs started from reachable rows, including nested lists."""
+    invoked: set[tuple[int, int]] = set()
+    for key, reachable in reachable_by_block.items():
+        for phase in reachable:
+            for entry in block_timed_calls(blocks[key], phase, timed):
+                invoked.add((entry, phase))
+    pending = list(invoked)
+    while pending:
+        entry, phase = pending.pop()
+        for called in block_timed_calls(timed[entry], phase, timed):
+            if (called, phase) not in invoked:
+                invoked.add((called, phase))
+                pending.append((called, phase))
+    return invoked
+
+
+def reachable_phases(rows: list[dict], phase_max: int = SMART_EVENT_PHASE_12,
+                     timed: dict[int, list[dict]] | None = None) -> set[int]:
+    """Phases a SmartAI block can enter, starting at phase 0.
+
+    Only rows that run in an already reachable phase contribute, so an action in an
+    unreachable row cannot unlock a phase by itself. Timed action lists called from a
+    reachable row contribute their phase changes in the caller's phase, except when the
+    target is fixed by guid: that list runs on the target's own phase.
+    """
+    timed = timed or {}
+    reachable = {0}
+    # These templates install an event that sets phase 1.
+    if any(row["action"] == SMART_ACTION_INSTALL_AI_TEMPLATE
+           and row["param1"] in PHASE_ONE_TEMPLATES for row in rows):
+        reachable.add(1)
+    while True:
+        unlocked: set[int] = set()
+        for phase in reachable:
+            unlocked |= block_phase_targets(rows, phase, phase_max, timed, set())
+        if unlocked <= reachable:
+            return reachable
+        reachable |= unlocked
+
+
 def check_c06(data: dict) -> list[Finding]:
     findings = []
-    blocks: dict[tuple[int, int], dict[int, int]] = {}
+    limits = data.get("smart_limits") or {}
+    phase_max = limits.get("phase_max", SMART_EVENT_PHASE_12)
+    blocks: dict[tuple[int, int], list[dict]] = {}
     for row in data["smart"]:
-        blocks.setdefault((row["entryorguid"], row["source_type"]), {})[row["id"]] = row["link"]
-    for (entry, source), links in blocks.items():
+        blocks.setdefault((row["entryorguid"], row["source_type"]), []).append(row)
+    timed = {entry: rows for (entry, source), rows in blocks.items()
+             if source == SMART_SCRIPT_TYPE_TIMED_ACTIONLIST}
+    reachable_by_block = {}
+    for key, rows in blocks.items():
+        if key[1] != SMART_SCRIPT_TYPE_TIMED_ACTIONLIST:
+            reachable_by_block[key] = reachable_phases(rows, phase_max, timed)
+    spawn_maps = {SMART_SCRIPT_TYPE_CREATURE: data.get("creature_spawn_map", {}),
+                  SMART_SCRIPT_TYPE_GAMEOBJECT: data.get("go_spawn_map", {})}
+    invoked = invoked_timed_blocks(blocks, reachable_by_block, timed)
+    fixed_targets: set[tuple[int, int]] = set()
+    for key, reachable in reachable_by_block.items():
+        fixed_targets |= fixed_target_blocks(blocks[key], reachable, spawn_maps)
+    for entry, phase in invoked:
+        # Fixed-guid calls often live inside a reachable script9 list; the list runs at the
+        # caller's phase, so scan those rows at the phase the list is invoked with.
+        fixed_targets |= fixed_target_blocks(timed[entry], {phase}, spawn_maps)
+    for (entry, source), rows in blocks.items():
         block = f"{entry}:{source}"
+        links = {row["id"]: row["link"] for row in rows}
         for row_id, link in links.items():
             if link and link not in links:
                 findings.append(Finding("C-06", "major", "smart_script", entry, block,
@@ -434,6 +625,21 @@ def check_c06(data: dict) -> list[Finding]:
                 findings.append(Finding("C-06", "major", "smart_script", entry, block,
                                         f"link cycle through id {cycle}"))
                 break
+        if source == SMART_SCRIPT_TYPE_TIMED_ACTIONLIST:
+            continue  # only evaluated through the blocks that call it
+        if (entry, source) in fixed_targets:
+            # Conservative: a fixed-guid timed action list runs on the target's own phase, which
+            # is unknown here, so a mask that looks unreachable may still run on that target.
+            # Skipping the finding avoids a false report, but may hide a real finding.
+            continue
+        reachable = reachable_by_block[(entry, source)]
+        phases = ", ".join(str(phase) for phase in sorted(reachable))
+        for row in rows:
+            mask = row["phase_mask"]
+            if mask and not any(mask_runs_in(mask, phase) for phase in reachable):
+                findings.append(Finding("C-06", "major", "smart_script", entry, block,
+                                        f"id {row['id']} phase mask 0x{mask:x} is not reachable "
+                                        f"(reachable phases: {phases})"))
     return findings
 
 
@@ -645,7 +851,9 @@ def load_data(db: Db, root: Path, data_dir: Path | None) -> dict:
     data["smart"] = []
     for row in db.query("""
             SELECT entryorguid, source_type, id, link, event_type, action_type, target_type,
-                   event_chance, event_phase_mask
+                   event_chance, event_phase_mask,
+                   action_param1, action_param2, action_param3, action_param4, action_param5,
+                   action_param6, target_param1
             FROM smart_scripts"""):
         data["smart"].append({
             "entryorguid": intellig(row[0]), "source_type": intellig(row[1]),
@@ -653,6 +861,10 @@ def load_data(db: Db, root: Path, data_dir: Path | None) -> dict:
             "event": intellig(row[4]), "action": intellig(row[5]),
             "target": intellig(row[6]), "chance": intellig(row[7]),
             "phase_mask": intellig(row[8]),
+            "param1": intellig(row[9]), "param2": intellig(row[10]),
+            "param3": intellig(row[11]), "param4": intellig(row[12]),
+            "param5": intellig(row[13]), "param6": intellig(row[14]),
+            "target_param1": intellig(row[15]),
         })
 
     data["script_names"] = set()
