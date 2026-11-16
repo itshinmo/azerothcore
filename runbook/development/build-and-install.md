@@ -79,7 +79,10 @@ The `make` configuration passes these automatically when the paths exist:
   `sudo xcode-select -s /Applications/Xcode.app`. Offline fallback: configure with
   `-DCMAKE_OSX_SYSROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk`, using the newest SDK
   in `ls /Library/Developer/CommandLineTools/SDKs/` that links. The pin only affects a fresh configure
-  and link; an already configured `build/` is unaffected.
+  and link; an already configured `build/` is unaffected. Verify with
+  `make build MACOS_SYSROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk` after removing
+  `build/CMakeCache.txt` (this machine, 2026-11-16: CLT is already current, no update available, and
+  `MacOSX26.5.sdk` and older link while `MacOSX27.0.sdk` fails — the pin is the working path here).
 - If `CliRunnable.cpp` fails with `rl_done` or `rl_event_hook` missing, CMake found the SDK's libedit
   instead of GNU readline. Set
   `-DREADLINE_INCLUDE_DIR="$(brew --prefix readline)/include"` and

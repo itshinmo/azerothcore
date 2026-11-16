@@ -228,11 +228,17 @@ TEST(GmApiBodyTest, MailRequest)
     EXPECT_FALSE(GmApiBody::ParseMail(tooMany, request, error));
     EXPECT_EQ(error, "too_many_items");
 
-    std::string const sixtyFour = std::string(64, '\xC3') + std::string(64, '\xA9');
+    // 64 two-byte UTF-8 characters (é), not 64 lead bytes followed by 64 continuation bytes:
+    // Boost's JSON parser rejects invalid UTF-8 before the length check would run.
+    std::string sixtyFour;
+    for (uint32 i = 0; i < 64; ++i)
+        sixtyFour += "\xC3\xA9";
     EXPECT_TRUE(GmApiBody::ParseMail(
         R"({"recipient":"Thrall","subject":")" + sixtyFour + R"("})", request, error));
 
-    std::string const sixtyFive = std::string(65, '\xC3') + std::string(65, '\xA9');
+    std::string sixtyFive;
+    for (uint32 i = 0; i < 65; ++i)
+        sixtyFive += "\xC3\xA9";
     EXPECT_FALSE(GmApiBody::ParseMail(
         R"({"recipient":"Thrall","subject":")" + sixtyFive + R"("})", request, error));
 }
