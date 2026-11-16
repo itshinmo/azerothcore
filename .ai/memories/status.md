@@ -77,9 +77,16 @@ last-verified: 2026-11-16 (phases: base game, custom content, website, launch; B
   grant/deny/revoke, server control behind `GmApi.AllowServerControl`, plus account, character,
   online players, and instances reads. Contract and runbook updated.
 - Live Bruno run on the local stack: status and audit return `200`; unstuck and kick return
-  `409 cannot_target_self` because the target is the actor's own account. Successful kick/unstuck
-  still needs a lower-security account online. A test-realm/local port collision on GM API 8090 was
-  found and fixed; the runbook records the rule.
+  `409 cannot_target_self` because the target is the actor's own account. A test-realm/local port
+  collision on GM API 8090 was found and fixed; the runbook records the rule.
+- Full GM API live test 2026-11-16, human-driven from the Bruno desktop app against a second
+  `SEC_PLAYER` account online in the world: reads (status, audit, account, character, online
+  players, instances), writes (item grant, mail, unstuck, kick, offline-target 404s, bad-item 400,
+  self-target 409), RBAC grant/deny/revoke incl. `already_granted`/`not_in_list`, ban incl.
+  `longer_ban_exists` and unban, server cancel `200` after enabling `GmApi.AllowServerControl`, and
+  the rate limit (`120 x 200` then `429`). Audit `pending` + outcome rows confirmed after writes.
+  The human edited `worldserver.conf.dist` first; reverted, and the real `env/dist/etc/worldserver.conf`
+  was changed instead — the `.dist` file is a build template, never the live config.
 
 ## Investigated 2026-11-14
 
@@ -201,14 +208,14 @@ No playerbots work is planned.
 
 ## Known issues
 
-1. **GM API live branches are partly untested.** The audited writes and the four read endpoints are
-   implemented. Live branches that still need testing: `player_busy`, `teleport_failed`,
-   `inventory_full`, `mailbox_full`, `longer_ban_exists`, RBAC list conflicts,
-   `server_control_disabled`, `audit_failed`, `writes_disabled`, rate limit, timeout/shutdown. They
-   are exercised through the Bruno collection on a live stack. The API still uses one shared HMAC
-   secret for transport; `X-GM-Actor` identifies the human and the Phase 3 BFF will be the only
-   holder of the secret. Audit query uses the shared sync DB pool; audit search is newest-N only;
-   structured request logging is planned.
+1. **GM API live branches are mostly tested.** 2026-11-16 the human ran the full Bruno set live: all
+   reads, item/mail/unstuck/kick, RBAC grant/deny/revoke conflicts, ban incl. `longer_ban_exists`,
+   server cancel with `GmApi.AllowServerControl=1`, rate limit, and the 401/404/405/409 paths. Still
+   untested: `player_busy`, `teleport_failed`, `inventory_full`, `mailbox_full`, `audit_failed`,
+   `writes_disabled`, timeout/shutdown — they need a wedged player, full bags/mailbox, or a dying
+   world. The API still uses one shared HMAC secret for transport; `X-GM-Actor` identifies the human
+   and the Phase 3 BFF will be the only holder of the secret. Audit query uses the shared sync DB
+   pool; audit search is newest-N only; structured request logging is planned.
 2. **cppcheck suppressions target 2.22.** Local Homebrew has 2.22.0; the runner's packaged version is
    unrecorded. A green cpp-lint job does not prove the version, because unmatched suppressions are not
    errors. Quote `cppcheck --version` in any CI failure before changing a suppression.
