@@ -1,0 +1,22 @@
+meta {
+  name: Permissions
+  type: http
+  seq: 8
+  tags: [
+    danger
+  ]
+}
+
+post {
+  url: {{baseUrl}}/api/v1/accounts/{{targetAccount}}/permissions
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "action": "grant",
+    "permissionId": 488,
+    "realmId": -1
+  }
+}

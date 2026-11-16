@@ -1,0 +1,20 @@
+meta {
+  name: Mail
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/api/v1/mail
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "recipient": "{{playerName}}",
+    "subject": "GM API test",
+    "text": "Hello from the Bruno collection.",
+    "money": 1000
+  }
+}

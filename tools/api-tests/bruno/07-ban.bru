@@ -1,0 +1,21 @@
+meta {
+  name: Ban
+  type: http
+  seq: 7
+  tags: [
+    danger
+  ]
+}
+
+post {
+  url: {{baseUrl}}/api/v1/accounts/{{targetAccount}}/ban
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "durationSeconds": 60,
+    "reason": "Bruno test ban"
+  }
+}

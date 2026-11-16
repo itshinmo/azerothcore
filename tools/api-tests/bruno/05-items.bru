@@ -1,0 +1,18 @@
+meta {
+  name: Items
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/api/v1/players/{{playerName}}/items
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "itemId": 6948,
+    "count": 1
+  }
+}

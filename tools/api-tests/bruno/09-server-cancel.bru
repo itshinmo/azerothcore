@@ -1,0 +1,17 @@
+meta {
+  name: Server cancel
+  type: http
+  seq: 9
+}
+
+post {
+  url: {{baseUrl}}/api/v1/server/control
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "action": "cancel"
+  }
+}

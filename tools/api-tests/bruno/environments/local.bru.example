@@ -3,5 +3,6 @@ vars {
   gmApiSecret: replace-with-the-worldserver-GmApi.Secret
   gmActor: 1
   playerName: Thrall
+  targetAccount: change-me-or-leave-blank
   auditLimit: 10
 }

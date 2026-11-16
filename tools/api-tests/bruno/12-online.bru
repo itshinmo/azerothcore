@@ -1,0 +1,11 @@
+meta {
+  name: Online players
+  type: http
+  seq: 12
+}
+
+get {
+  url: {{baseUrl}}/api/v1/players/online?limit=100
+  body: none
+  auth: none
+}
