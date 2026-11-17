@@ -258,6 +258,7 @@
 | `.honor add` | 409 | `cs_honor.cpp` |
 | `.honor add kill` | 410 | `cs_honor.cpp` |
 | `.honor update` | 411 | `cs_honor.cpp` |
+| `.instance bind` | 946 | `cs_instance.cpp` |
 | `.instance getbossstate` | 796 | `cs_instance.cpp` |
 | `.instance listbinds` | 413 | `cs_instance.cpp` |
 | `.instance savedata` | 416 | `cs_instance.cpp` |
