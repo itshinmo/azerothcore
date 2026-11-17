@@ -134,9 +134,18 @@ last-verified: 2026-11-16 (phases: base game, custom content, website, launch; B
 ## Next tasks
 
 Order follows [ADR-013](../../decisions/ADR-013-server-and-client-before-website.md): base game, custom
-content, website, launch. Playtests and a friends-only test VPS can happen between phases.
+content, website, launch. Phase 1 exit is a measured gate; playtests and a friends-only test VPS can
+happen between phases.
 
 ### Phase 1 — base game (now)
+
+Standing rituals, started 2026-11-17:
+
+- Weekly upstream sync with `make sync-upstream`; first sync executed (31 upstream commits merged).
+- Player bug reports: triage `acore_characters.bugreport` per
+  [runbook/operation/bug-reports.md](../../runbook/operation/bug-reports.md).
+
+Remaining:
 
 1. Run the Bruno collection once on the local stack: status, audit, kick, unstuck; confirm the audit
    rows and record the result. Procedure: `runbook/gm/gm-api.md`.
@@ -156,28 +165,32 @@ content, website, launch. Playtests and a friends-only test VPS can happen betwe
    keep a second client copy (`~/Games/wotlk-test`) without the mod for client-side behaviour checks.
 8. Test realm death: keep the supervisor log; capture it on the next occurrence, with `screen -ls`
    and the unified log, before restarting.
+9. Playerbot test rig ([ADR-015](../../decisions/ADR-015-playerbot-test-rig.md)): build the
+   throwaway rig, smoke it, then produce per-dungeon success rates for the Phase 1 gate.
 
 ### Phase 2 — custom content
 
-9. Scope hardcore rule-sets and other unique features only after Phase 1 is done. Record each feature
-   in a new ADR before implementation. Rule-set pacing (for example, hardcore locked at 1x without a
-   player command) needs its own ADR; see
-   [ADR-012](../../decisions/ADR-012-progression-rates.md).
+10. Custom-content planning (first: hardcore rule-sets) may start in parallel once the measured
+    Phase 1 gate in [ADR-013](../../decisions/ADR-013-server-and-client-before-website.md) is met.
+    Record each feature in a new ADR before implementation. Rule-set pacing (for example, hardcore
+    locked at 1x without a player command) needs its own ADR; see
+    [ADR-012](../../decisions/ADR-012-progression-rates.md).
 
 ### Phase 3 — website
 
-10. Decide website auth (passkeys, OAuth, or Argon2id). Record it in an ADR extending ADR-010.
-11. Build the admin BFF/dashboard and the read-only website MVP through it.
-12. Static spawn map page, after the map imagery decision.
-13. Account and character pages, after their priority decision.
-14. Shop frontend, after the shop decisions.
+11. Decide website auth (passkeys, OAuth, or Argon2id). Record it in an ADR extending ADR-010.
+12. Build the admin BFF/dashboard and the read-only website MVP through it.
+13. Static spawn map page, after the map imagery decision.
+14. Account and character pages, after their priority decision.
+15. Shop frontend, after the shop decisions.
 
 ### Phase 4 — launch
 
-15. Choose the production host, region, and budget.
-16. Finish the deploy runbook, deploy, verify production health and backups, and publish.
+16. Choose the production host, region, and budget.
+17. Finish the deploy runbook, deploy, verify production health and backups, and publish.
 
-No playerbots work is planned.
+Playerbots exist only in the throwaway test rig ([ADR-015](../../decisions/ADR-015-playerbot-test-rig.md)),
+never on a production server and never inside this repository.
 
 ## Built and verified
 
