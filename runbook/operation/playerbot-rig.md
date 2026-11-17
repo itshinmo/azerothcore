@@ -100,18 +100,33 @@ This answers with the current run: which dungeon, which phase (pulling, clearing
 boss), how many bots are alive, and how long it has been running. `no test runs active` means
 everything finished.
 
-### 3. Watch the run with a camera, from inside the game
+### 3. Watch the run with a camera, from inside the game (one-time setup)
 
-If you want to *see* it like a movie, log a game client into the rig realm, then at the `AC>`
-prompt:
+If you want to *see* it like a movie, watch it with a game client. One-time setup:
+
+1. Point a spare copy of the game client at the rig: in the client folder, open the file
+   `realmlist.wtf` with a text editor and make it read
+   `set realmlist 127.0.0.1:3725`. (Use a copy of the client — your normal one keeps pointing at
+   the real server.)
+2. Create a watcher account on the rig and make it a GM. At the `AC>` prompt:
+
+   ```
+   .account create WATCHER choose-a-password
+   .account set gmlevel WATCHER 3 1
+   ```
+
+3. Log into the rig with that account in the client and create any character.
+
+Then, **inside the game chat** (not the `AC>` prompt — the camera command only works in-game):
 
 ```
 .dc test watch
 ```
 
-A free camera attaches to the party and follows the tank from boss to boss. Keys move the camera
-between party members. `watch off` releases the camera. The watcher stays out of the party and
-cannot interfere with the fight.
+A free camera attaches to the party and follows the tank from boss to boss. You stay hidden from
+monsters and cannot affect the fight. To change which bot the camera follows, type
+`.dc spectate next` or `.dc spectate prev` in chat. To release the camera: `.dc test watch off`.
+Reserve the `AC>` prompt for starting and managing runs.
 
 ## Monitoring bot behavior in general
 
@@ -129,14 +144,16 @@ To follow one specific bot by name through the log:
 grep 'DC:Nurran' ~/wow/playerbot-rig/logs/worldserver.log | tail -20
 ```
 
-For maximum detail during a run, start it with tracing on:
+Every run already streams the party's decisions to the log (the `[DC:<bot>]` lines above). If you
+want a deeper record for failure analysis, start the run with:
 
 ```
 .dc test start deadmines trace=1
 ```
 
-That prints every decision the party AI makes. The log grows fast; use it when hunting a specific
-failure, not for casual watching.
+That records a machine-readable trace file (saved in `lab_traces/` next to the rig) which is scored
+when the run ends. You will not see extra log lines while it runs — the value is in the end-of-run
+analysis. Use it when hunting a specific failure, not for casual watching.
 
 ## Running a dungeon test
 
