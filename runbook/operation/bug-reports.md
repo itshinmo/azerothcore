@@ -7,7 +7,8 @@ procedure around that table.
 ## How players report
 
 - In the 3.3.5 client, use the built-in bug/suggestion UI (the Help/`?` menu). The client requires
-  a category before submission and confirms with "Bug submitted".
+  a category before submission and confirms with "Bug submitted" (client strings
+  `BUG_CATEGORY_ERROR` / `BUG_SUBMITTED`).
 - There is no in-game command to list or follow up on a report. Players should include the
   character name, location, and time in the text — the table does not store them.
 
