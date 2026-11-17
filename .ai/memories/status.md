@@ -165,8 +165,15 @@ Remaining:
    keep a second client copy (`~/Games/wotlk-test`) without the mod for client-side behaviour checks.
 8. Test realm death: keep the supervisor log; capture it on the next occurrence, with `screen -ls`
    and the unified log, before restarting.
-9. Playerbot test rig ([ADR-015](../../decisions/ADR-015-playerbot-test-rig.md)): build the
-   throwaway rig, smoke it, then produce per-dungeon success rates for the Phase 1 gate.
+9. Playerbot test rig ([ADR-015](../../decisions/ADR-015-playerbot-test-rig.md)): built and
+   smoke-tested 2026-11-17. Lives in `~/wow/playerbot-rig/` (fork core + mod-playerbots +
+   mod-dungeon-clear, ports 8086/3725, databases `acore_pb_*` + `acore_playerbots`, all outside the
+   repository). Full Deadmines clear by a 5-bot party driven by `.dc test` — scripted doors,
+   bosses through VanCleef, loot step. User guide:
+   [runbook/operation/playerbot-rig.md](../../runbook/operation/playerbot-rig.md). Gotchas
+   recorded: account-name lookups in prepared statements bind case-sensitively (config must use
+   `DCDRIVER`, not `dcdriver`); SIGTERM is ignored for 30s, so rig restarts need SIGKILL and a
+   free-port check before relaunching. Next: `.dc test plan` pool runs for the Phase 1 gate.
 
 ### Phase 2 — custom content
 

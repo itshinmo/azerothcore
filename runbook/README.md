@@ -35,6 +35,7 @@ I do it"; behavior lives in `specs/`.
 - [bug-reports.md](operation/bug-reports.md) — player bug reports: triage lifecycle and fix loop.
 - [base-game-verification.md](operation/base-game-verification.md) — Phase 1 playtest checklist and
   result recording.
+- [playerbot-rig.md](operation/playerbot-rig.md) — how to run the bot test rig and read its results.
 - [world-export.md](operation/world-export.md) — export world data artifacts for the public catalog.
 - [world-api.md](operation/world-api.md) — serve the exported catalog on loopback (parked until after
   production).
