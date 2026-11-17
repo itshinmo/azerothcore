@@ -124,6 +124,11 @@ One-time setup:
    .account set gmlevel mohsen 3 1
    ```
 
+   If the account already exists (it was created live once), skip the first line — it only prints
+   "already exist" — and run the second line, which is safe to repeat. If the account was created
+   through this console, its password appeared in the rig log in plain text; set a fresh one with
+   `.account set password mohsen <old> <new>`.
+
    The GM level is what lets the camera command work. This account exists only on the rig; it is
    not your game-server account.
 
