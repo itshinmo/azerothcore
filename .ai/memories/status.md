@@ -171,9 +171,10 @@ Remaining:
    repository). Full Deadmines clear by a 5-bot party driven by `.dc test` — scripted doors,
    bosses through VanCleef, loot step. User guide:
    [runbook/operation/playerbot-rig.md](../../runbook/operation/playerbot-rig.md). Gotchas
-   recorded: account-name lookups in prepared statements bind case-sensitively (config must use
-   `DCDRIVER`, not `dcdriver`); SIGTERM is ignored for 30s, so rig restarts need SIGKILL and a
-   free-port check before relaunching. Next: `.dc test plan` pool runs for the Phase 1 gate.
+   recorded: the test driver's **character name** lookup is exact and case-sensitive (the config
+   must say `Dcdriver`, not `dcdriver`); SIGTERM triggers shutdown but the process holds its port
+   ~30s while bots log out, so rig restarts need SIGKILL and a free-port check before relaunching.
+   Next: `.dc test plan` pool runs for the Phase 1 gate, reported dungeon by dungeon.
 
 ### Phase 2 — custom content
 
