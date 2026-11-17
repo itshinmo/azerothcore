@@ -168,13 +168,18 @@ Remaining:
 9. Playerbot test rig ([ADR-015](../../decisions/ADR-015-playerbot-test-rig.md)): built and
    smoke-tested 2026-11-17. Lives in `~/wow/playerbot-rig/` (fork core + mod-playerbots +
    mod-dungeon-clear, ports 8086/3725, databases `acore_pb_*` + `acore_playerbots`, all outside the
-   repository). Full Deadmines clear by a 5-bot party driven by `.dc test` — scripted doors,
-   bosses through VanCleef, loot step. User guide:
-   [runbook/operation/playerbot-rig.md](../../runbook/operation/playerbot-rig.md). Gotchas
-   recorded: the test driver's **character name** lookup is exact and case-sensitive (the config
-   must say `Dcdriver`, not `dcdriver`); SIGTERM triggers shutdown but the process holds its port
-   ~30s while bots log out, so rig restarts need SIGKILL and a free-port check before relaunching.
-   Next: `.dc test plan` pool runs for the Phase 1 gate, reported dungeon by dungeon.
+   repository). Two full clears: Deadmines 8/8 (~34 min, one self-recovered freeze at Gilnid) and
+   Shadowfang Keep 8/8 (~21 min, no freezes). User guide:
+   [runbook/operation/playerbot-rig.md](../../runbook/operation/playerbot-rig.md), including the
+   in-game camera spectating setup. Run ledger:
+   [runbook/audits/2026-11-17-bot-dungeon-runs.md](../../runbook/audits/2026-11-17-bot-dungeon-runs.md).
+   Gotchas recorded: the test driver's **character name** lookup is exact and case-sensitive (the
+   config must say `Dcdriver`, not `dcdriver`); SIGTERM triggers shutdown but the process holds its
+   port ~30s while bots log out, so rig restarts need SIGKILL and a free-port check before
+   relaunching. **Session-close reminder for the next session: when asked for tasks, remind the
+   owner to resume the bot dungeon runs** — one dungeon per owner go, results logged in the ledger,
+   next step `.dc test plan` pool runs for the Phase 1 gate (measured success rates per
+   [ADR-013](../../decisions/ADR-013-server-and-client-before-website.md)).
 
 ### Phase 2 — custom content
 
