@@ -151,7 +151,8 @@ want a deeper record for failure analysis, start the run with:
 .dc test start deadmines trace=1
 ```
 
-That records a machine-readable trace file (saved in `lab_traces/` next to the rig) which is scored
+That records a machine-readable trace file (saved inside the rig folder at
+`~/wow/playerbot-rig/env/dist/bin/lab_traces/`) which is scored
 when the run ends. You will not see extra log lines while it runs — the value is in the end-of-run
 analysis. Use it when hunting a specific failure, not for casual watching.
 
