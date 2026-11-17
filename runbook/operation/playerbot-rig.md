@@ -100,33 +100,56 @@ This answers with the current run: which dungeon, which phase (pulling, clearing
 boss), how many bots are alive, and how long it has been running. `no test runs active` means
 everything finished.
 
-### 3. Watch the run with a camera, from inside the game (one-time setup)
+### 3. See the run in game, live (the camera)
 
-If you want to *see* it like a movie, watch it with a game client. One-time setup:
+The rig can render the dungeon run in your game client, like watching a replay live. The watcher is
+invisible to the monsters and cannot change the fight — a pure camera.
 
-1. Point a spare copy of the game client at the rig: in the client folder, open the file
-   `realmlist.wtf` with a text editor and make it read
-   `set realmlist 127.0.0.1:3725`. (Use a copy of the client — your normal one keeps pointing at
-   the real server.)
-2. Create a watcher account on the rig and make it a GM. At the `AC>` prompt:
+One-time setup:
+
+1. **Make a spare copy of the game client.** Copy your whole client folder to a second location.
+   Your normal copy keeps pointing at the real server and stays untouched.
+2. **Point the spare copy at the rig.** In the spare copy's folder, open the file `realmlist.wtf`
+   with a text editor and make its line read:
 
    ```
-   .account create WATCHER choose-a-password
-   .account set gmlevel WATCHER 3 1
+   set realmlist 127.0.0.1:3725
    ```
 
-3. Log into the rig with that account in the client and create any character.
+3. **Create your watcher account on the rig.** At the rig's `AC>` prompt (see "Talking to the
+   bots"), replace the password with your own:
 
-Then, **inside the game chat** (not the `AC>` prompt — the camera command only works in-game):
+   ```
+   .account create mohsen choose-your-password
+   .account set gmlevel mohsen 3 1
+   ```
+
+   The GM level is what lets the camera command work. This account exists only on the rig; it is
+   not your game-server account.
+
+4. **Log into the rig** with that account in the spare client and create any character (any race
+   and class; level 1 is fine). You will see the rig's world — possibly full of random bots going
+   about their day.
+
+During a run, type in the game's **chat box** — not the `AC>` prompt, the camera command only works
+in-game:
 
 ```
 .dc test watch
 ```
 
-A free camera attaches to the party and follows the tank from boss to boss. You stay hidden from
-monsters and cannot affect the fight. To change which bot the camera follows, type
-`.dc spectate next` or `.dc spectate prev` in chat. To release the camera: `.dc test watch off`.
-Reserve the `AC>` prompt for starting and managing runs.
+A free camera attaches to the party and follows the tank from boss to boss. Useful while watching:
+
+- `.dc spectate next` / `.dc spectate prev` — move the camera between party members.
+- `.dc test watch off` — release the camera.
+- `.dc test status` — typed in the game chat as well; shows the run's phase.
+
+You are a ghost to the fight: monsters cannot see the watcher, and nothing you do changes the
+outcome. Keep the `AC>` prompt for starting and managing runs only.
+
+Why this cannot disturb the run: the camera is a spectator spell, not a party member. The watcher
+body is parked at the dungeon entrance and the camera works through a scrying effect, so the combat
+AI never counts you in pulls, threat, or loot.
 
 ## Monitoring bot behavior in general
 
