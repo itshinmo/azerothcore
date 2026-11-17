@@ -53,6 +53,17 @@ git remote -v
 Procedure, roughly weekly:
 
 ```bash
+make sync-upstream
+```
+
+The wrapper fetches, fast-forwards `master`, merges into the current branch, and runs
+`make verify-docs`. On conflicts it prints the file list and stops: resolve by hand, commit the
+merge, then run the risk-tier verification and `make backup` before restarting the stack, because
+upstream `data/sql` updates apply on worldserver start.
+
+Manual equivalent:
+
+```bash
 git fetch --all
 git checkout master
 git merge --ff-only upstream/master

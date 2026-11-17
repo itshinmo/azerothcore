@@ -10,7 +10,7 @@ ZLIB_FLAG := $(if $(MACOS_ZLIB),-DMYSQL_EXTRA_LIBRARIES=$(MACOS_ZLIB),)
 MACOS_READLINE := $(shell brew --prefix readline 2>/dev/null)
 READLINE_FLAG := $(if $(MACOS_READLINE),-DREADLINE_INCLUDE_DIR=$(MACOS_READLINE)/include -DREADLINE_LIBRARY=$(MACOS_READLINE)/lib/libreadline.dylib,)
 
-.PHONY: help doctor configure configure-verify build install test test-tools command-index content-audit world-export world-api verify-docs verify-sql verify-cpp verify-smoke verify-full start stop restart status logs console backup clean
+.PHONY: help doctor configure configure-verify build install test test-tools command-index content-audit world-export world-api verify-docs verify-sql verify-cpp verify-smoke verify-full sync-upstream start stop restart status logs console backup clean
 
 help:
 	@printf '%s\n' \
@@ -19,6 +19,7 @@ help:
 	  'make test             build the test target and run unit tests' \
 	  'make test-tools       run the Python tool unit tests' \
 	  'make command-index    regenerate the GM command index' \
+	  'make sync-upstream    fetch, fast-forward master, merge, verify docs' \
 	  'make content-audit    read-only content audit of the world database' \
 	  'make world-export     export world data artifacts for the public site' \
 	  'make world-api        serve the exported world data on loopback' \
@@ -73,6 +74,9 @@ test-tools:
 
 command-index:
 	@python3 tools/dev/command-index.py
+
+sync-upstream:
+	@bash tools/dev/sync-upstream.sh
 
 content-audit:
 	@python3 tools/dev/content-audit.py $(ARGS)
