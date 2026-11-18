@@ -1,11 +1,12 @@
 # GM tools
 
 > Status: phase 4 complete for the current scope; phase 5 resumed for the GM API. RBAC role presets,
-> the command audit module, the command index, the GM API (read endpoints plus audited kick and
-> unstuck writes), and the in-game addon are built. The long-term visual layer is the future server
-> website ([ADR-010](../decisions/ADR-010-website-as-visual-interface.md)), now sequenced after
-> production ([ADR-013](../decisions/ADR-013-server-and-client-before-website.md)); no in-repo web UI.
-> Manual API testing uses the Bruno collection ([ADR-014](../decisions/ADR-014-bruno-api-test-client.md)).
+> the command audit module, the command index, the GM API (read endpoints, the audited write set, the
+> request log, and filtered audit paging), and the in-game addon are built. The long-term visual
+> layer is the future server website ([ADR-010](../decisions/ADR-010-website-as-visual-interface.md)),
+> now sequenced after production ([ADR-013](../decisions/ADR-013-server-and-client-before-website.md));
+> no in-repo web UI. Manual API testing uses the Bruno collection
+> ([ADR-014](../decisions/ADR-014-bruno-api-test-client.md)).
 
 ## Purpose
 
@@ -119,13 +120,15 @@ Owns the GM workflow and tooling. Does not own the game commands themselves; the
 ## Observability
 
 - Audit table/file.
-- Structured API request log is planned. Current module logs start, stop, and errors only.
+- One structured API request log line per request: method, target, status, duration, actor, remote
+  address. Bodies, signatures, nonces, and the secret are excluded.
 - In-game command audit.
 
 ## Test plan
 
 - Unit: HMAC canonicalization/signature (with and without actor), actor validation, player target
-  parsing, timestamp window, nonce length, limit parsing.
+  parsing, timestamp window, nonce length, limit parsing, audit query filters and cursor, request
+  body parsers and their limits.
 - Manual API: Bruno collection (`tools/api-tests/bruno/`) plus the curl recipe for skew, nonce
   replay, rate limit, input validation, actor missing/unknown, RBAC denial, target offline,
   self-target, busy target.

@@ -71,7 +71,7 @@ summary; the YAML is authoritative for bodies, parameters, and error codes.
 | Method | Target | Permission | Returns |
 |--------|--------|------------|---------|
 | GET | `/api/v1/status` | none | `{"status":"ok"}` |
-| GET | `/api/v1/audit?limit=50` | none | recent `gm_audit_log` rows; `limit` defaults to 50, values above 200 clamp to 200 |
+| GET | `/api/v1/audit?limit=50` | none | recent `gm_audit_log` rows; `limit` defaults to 50, values above 200 clamp to 200; exact `account`, `command`, and `result` filters; page with `before_id` (id of the last row seen) |
 | GET | `/api/v1/accounts/<name-or-id>` | none | account object |
 | GET | `/api/v1/characters/<name>` | none | character object |
 | GET | `/api/v1/players/online?limit=100` | none | online player array; `limit` defaults to 100, values above 500 clamp to 500 |
@@ -243,11 +243,24 @@ curl -s \
 Other read targets: `/api/v1/accounts/ADMIN`, `/api/v1/accounts/1`,
 `/api/v1/characters/Thrall`, `/api/v1/instances?limit=100`.
 
+## Request log
+
+Every request writes one `module.gm-api` INFO line in `Server.log` after the response is built:
+
+```text
+GET /api/v1/audit?limit=10&account=ADMIN status=200 duration_ms=1 actor=- ip=127.0.0.1
+POST /api/v1/players/Thrall/kick status=200 duration_ms=12 actor=1 ip=127.0.0.1
+```
+
+Fields: method, exact target including the query string, HTTP status, handler duration in
+milliseconds, `X-GM-Actor` when the request authenticated (`-` otherwise), and the remote address.
+Request bodies, signature headers, nonces, and the secret are never logged.
+
 ## Errors
 
 | Status | Meaning |
 |--------|---------|
-| `400` | malformed JSON or body (`bad_request`), unknown item template or exceeded `MaxCount` (`invalid_item`), or too many attachments (`too_many_items`) |
+| `400` | malformed JSON or body (`bad_request`), unknown item template or exceeded `MaxCount` (`invalid_item`), too many attachments (`too_many_items`), or a malformed audit query filter (`invalid_parameter`) |
 | `401` | missing header, bad signature, timestamp outside the skew window, or unknown actor |
 | `403` | writes disabled, server control disabled, actor is a player account, permission denied, or target security too high |
 | `404` | unknown path (`not_found`), missing account/character (`target_not_found`), or unknown permission (`unknown_permission`) |
@@ -352,7 +365,7 @@ later completes. Command-hook rows still record the attempt before execution.
   external supervisor are ready. A restart only exits the process with the restart exit code.
 - Reads keep one shared HMAC secret. Writes add the signed actor, RBAC, and audit; they are still
   gated by the same shared secret, so protect it like a service credential.
-- Audit search is newest-N only. Add filters, cursor paging, and indexes before the website audit page.
+- Audit search supports exact `account`, `command`, and `result` filters plus id-cursor paging. Free-text search, paging by `created_at`, and per-actor scoping stay open before the website audit page.
 
 ## References
 

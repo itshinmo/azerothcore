@@ -24,7 +24,7 @@ and the audit behavior.
 | Request | Method and target | Notes |
 |---------|-------------------|-------|
 | Status | `GET /api/v1/status` | Read, no actor needed. Expects `200` and `{"status":"ok"}`. |
-| Audit | `GET /api/v1/audit?limit={{auditLimit}}` | Read, newest-N rows. Limit defaults to 50, clamps to 200. |
+| Audit | `GET /api/v1/audit?limit={{auditLimit}}` | Read, newest-first rows. Limit defaults to 50, clamps to 200. Accepts `account`, `command`, and `result` filters and `before_id` paging. |
 | Unstuck | `POST /api/v1/players/{{playerName}}/unstuck` | Write. Teleports to homebind. Runs before Kick so a full run can succeed. |
 | Kick | `POST /api/v1/players/{{playerName}}/kick` | Write. Target must be online and below the actor's security. Kicks last. |
 | Items | `POST /api/v1/players/{{playerName}}/items` | Write. Grants the item in the JSON body to the online target. |

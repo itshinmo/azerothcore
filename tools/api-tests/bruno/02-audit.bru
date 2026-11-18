@@ -27,15 +27,18 @@ docs {
 
   - Method and path: `GET /api/v1/audit?limit={{auditLimit}}`.
   - Path parameters: none.
-  - Query parameters: `limit` (optional). 0, invalid, or missing values use the server default of
-    `50`; values above `200` clamp to `200`.
+  - Query parameters: `limit` (optional). 0 or missing values use the server default of `50`;
+    values above `200` clamp to `200`; a non-numeric value answers `400 invalid_parameter`. Optional
+    exact filters: `account` (account name), `command`, `result`; an empty or malformed filter
+    answers `400 invalid_parameter`. Optional `before_id`: the `id` of the last row already seen,
+    for the next page. Unknown query keys are ignored.
   - Body: none.
   - Signature headers: `X-GM-Timestamp`, `X-GM-Nonce`, `X-GM-Signature`, set by `collection.bru`.
     No `X-GM-Actor`, no RBAC permission.
   - Success: `200` with an array of audit rows. Each row has `id`, `realm_id`, `account_name`,
     `player_name`, `command`, optional `arguments`, optional `result`, and `created_at`.
-  - Failure: `401 unauthorized`, `405 method_not_allowed`, `409 replayed_nonce`,
-    `429 rate_limited`.
+  - Failure: `400 invalid_parameter`, `401 unauthorized`, `405 method_not_allowed`,
+    `409 replayed_nonce`, `429 rate_limited`.
 
   After a write, check here for the `pending` row and the terminal row: `success`, `denied`,
   `target_not_found`, `cannot_target_self`, `player_busy`, `teleport_failed`, `inventory_full`,

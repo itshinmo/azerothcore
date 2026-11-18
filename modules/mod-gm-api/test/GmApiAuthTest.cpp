@@ -313,3 +313,76 @@ TEST(GmApiBodyTest, ServerControlRequest)
     EXPECT_FALSE(GmApiBody::ParseServerControl(
         R"({"action":"shutdown","delaySeconds":3601})", request, error));
 }
+
+TEST(GmApiAuthTest, ParseUInt64)
+{
+    uint64 value = 7;
+
+    EXPECT_TRUE(GmApiAuth::ParseUInt64("0", value));
+    EXPECT_EQ(value, 0u);
+    EXPECT_TRUE(GmApiAuth::ParseUInt64("18446744073709551615", value));
+    EXPECT_EQ(value, 18446744073709551615ull);
+
+    EXPECT_FALSE(GmApiAuth::ParseUInt64("", value));
+    EXPECT_FALSE(GmApiAuth::ParseUInt64("+1", value));
+    EXPECT_FALSE(GmApiAuth::ParseUInt64(" 1", value));
+    EXPECT_FALSE(GmApiAuth::ParseUInt64("1x", value));
+    EXPECT_FALSE(GmApiAuth::ParseUInt64("18446744073709551616", value));
+    EXPECT_FALSE(GmApiAuth::ParseUInt64("0000000000000000000001", value));
+}
+
+TEST(GmApiAuthTest, AuditQueryDefaults)
+{
+    GmApiAuth::AuditQuery query;
+    std::string error;
+
+    EXPECT_TRUE(GmApiAuth::ParseAuditQuery("/api/v1/audit", query, error));
+    EXPECT_EQ(query.limit, 50u);
+    EXPECT_EQ(query.beforeId, 0u);
+    EXPECT_TRUE(query.account.empty());
+    EXPECT_TRUE(query.command.empty());
+    EXPECT_TRUE(query.result.empty());
+    EXPECT_TRUE(error.empty());
+}
+
+TEST(GmApiAuthTest, AuditQueryFiltersAndCursor)
+{
+    GmApiAuth::AuditQuery query;
+    std::string error;
+
+    EXPECT_TRUE(GmApiAuth::ParseAuditQuery(
+        "/api/v1/audit?limit=25&before_id=1234&account=ADMIN&command=api.kick&result=success"
+        "&unknown=ignored",
+        query, error));
+    EXPECT_EQ(query.limit, 25u);
+    EXPECT_EQ(query.beforeId, 1234u);
+    EXPECT_EQ(query.account, "ADMIN");
+    EXPECT_EQ(query.command, "api.kick");
+    EXPECT_EQ(query.result, "success");
+
+    EXPECT_TRUE(GmApiAuth::ParseAuditQuery("/api/v1/audit?limit=9999", query, error));
+    EXPECT_EQ(query.limit, 200u);
+
+    EXPECT_TRUE(GmApiAuth::ParseAuditQuery("/api/v1/audit?limit=0", query, error));
+    EXPECT_EQ(query.limit, 50u);
+}
+
+TEST(GmApiAuthTest, AuditQueryRejectsMalformed)
+{
+    GmApiAuth::AuditQuery query;
+    std::string error;
+
+    EXPECT_FALSE(GmApiAuth::ParseAuditQuery("/api/v1/audit?before_id=abc", query, error));
+    EXPECT_EQ(error, "invalid_parameter");
+    EXPECT_FALSE(GmApiAuth::ParseAuditQuery("/api/v1/audit?before_id=-1", query, error));
+    EXPECT_FALSE(GmApiAuth::ParseAuditQuery(
+        "/api/v1/audit?before_id=18446744073709551616", query, error));
+    EXPECT_FALSE(GmApiAuth::ParseAuditQuery("/api/v1/audit?limit=abc", query, error));
+    EXPECT_FALSE(GmApiAuth::ParseAuditQuery("/api/v1/audit?limit=-1", query, error));
+    EXPECT_FALSE(GmApiAuth::ParseAuditQuery("/api/v1/audit?limit=+5", query, error));
+    EXPECT_FALSE(GmApiAuth::ParseAuditQuery("/api/v1/audit?account=bad'name", query, error));
+    EXPECT_FALSE(GmApiAuth::ParseAuditQuery("/api/v1/audit?command=", query, error));
+    EXPECT_FALSE(GmApiAuth::ParseAuditQuery(
+        "/api/v1/audit?result=" + std::string(65, 'a'), query, error));
+    EXPECT_EQ(error, "invalid_parameter");
+}

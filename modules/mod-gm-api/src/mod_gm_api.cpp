@@ -965,9 +965,10 @@ private:
     }
 
     http::response<http::string_body> Process(http::request<http::string_body> const& request,
-        std::string const& remoteIp)
+        std::string const& remoteIp, std::string& actorOut)
     {
         std::string actor;
+        actorOut.clear();
         http::status const authStatus = Authorize(request, remoteIp, actor);
         if (authStatus != http::status::ok)
         {
@@ -979,6 +980,7 @@ private:
 
             return MakeResponse(request, authStatus, JsonError(error));
         }
+        actorOut = actor;
 
         std::string_view const target = request.target();
         std::string_view const path = GmApiAuth::TargetPath(target);
@@ -998,7 +1000,13 @@ private:
         {
             if (!isGet)
                 return MethodNotAllowed(request, "GET");
-            return MakeResponse(request, http::status::ok, AuditJson(GmApiAuth::ParseLimit(target)));
+
+            GmApiAuth::AuditQuery query;
+            std::string error;
+            if (!GmApiAuth::ParseAuditQuery(target, query, error))
+                return MakeResponse(request, http::status::bad_request, JsonError(error));
+
+            return MakeResponse(request, http::status::ok, AuditJson(query));
         }
 
         if (path == "/api/v1/players/online")
@@ -1428,10 +1436,12 @@ private:
                     self->_timer.cancel();
                     if (!ec)
                     {
+                        auto const started = std::chrono::steady_clock::now();
+                        std::string actor;
                         http::response<http::string_body> response;
                         try
                         {
-                            response = self->_server.Process(self->_request, self->RemoteIp());
+                            response = self->_server.Process(self->_request, self->RemoteIp(), actor);
                         }
                         catch (std::exception const& ex)
                         {
@@ -1445,6 +1455,13 @@ private:
                             response = GmApiServer::MakeResponse(self->_request,
                                 http::status::internal_server_error, JsonError("internal_error"));
                         }
+
+                        auto const elapsedMs = std::chrono::duration_cast<std::chrono::milliseconds>(
+                            std::chrono::steady_clock::now() - started).count();
+                        LOG_INFO("module.gm-api", "{} {} status={} duration_ms={} actor={} ip={}",
+                            self->_request.method_string(), self->_request.target(),
+                            response.result_int(), elapsedMs, actor.empty() ? std::string("-") : actor,
+                            self->RemoteIp());
 
                         boost::system::error_code ignored;
                         http::write(self->_stream, response, ignored);
@@ -1551,12 +1568,34 @@ private:
         return ++window.count <= static_cast<uint32>(_rateLimit);
     }
 
-    std::string AuditJson(uint32 limit)
+    std::string AuditJson(GmApiAuth::AuditQuery const& query)
     {
-        QueryResult result = LoginDatabase.Query(
+        std::vector<std::string> conditions;
+        if (query.beforeId != 0)
+            conditions.push_back("`id` < " + std::to_string(query.beforeId));
+        if (!query.account.empty())
+            conditions.push_back("`account_name` = '" + Escape(query.account) + "'");
+        if (!query.command.empty())
+            conditions.push_back("`command` = '" + Escape(query.command) + "'");
+        if (!query.result.empty())
+            conditions.push_back("`result` = '" + Escape(query.result) + "'");
+
+        std::string sql =
             "SELECT `id`, `realm_id`, `account_name`, `player_name`, `command`, `arguments`, "
-            "`result`, UNIX_TIMESTAMP(`created_at`) FROM `gm_audit_log` ORDER BY `id` DESC LIMIT {}",
-            limit);
+            "`result`, UNIX_TIMESTAMP(`created_at`) FROM `gm_audit_log`";
+        if (!conditions.empty())
+        {
+            sql += " WHERE ";
+            for (std::size_t i = 0; i < conditions.size(); ++i)
+            {
+                if (i != 0)
+                    sql += " AND ";
+                sql += conditions[i];
+            }
+        }
+        sql += " ORDER BY `id` DESC LIMIT " + std::to_string(query.limit);
+
+        QueryResult result = LoginDatabase.Query(sql);
 
         std::string body = "[";
         bool first = true;

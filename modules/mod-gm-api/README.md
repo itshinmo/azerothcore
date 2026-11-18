@@ -8,7 +8,10 @@ collection (`tools/api-tests/bruno/`).
 Read (valid signature only, no actor, no RBAC):
 
 - `GET /api/v1/status` — `{"status":"ok"}`
-- `GET /api/v1/audit?limit=50` — recent `gm_audit_log` rows, limit 1–200
+- `GET /api/v1/audit?limit=50` — recent `gm_audit_log` rows, newest first. `limit` 1–200 (0 or
+  missing uses 50; non-numeric answers 400 `invalid_parameter`). Exact filters `account`,
+  `command`, `result`; page with `before_id` (the last row's `id`). Malformed filter values answer
+  400 `invalid_parameter`.
 - `GET /api/v1/accounts/<name-or-id>` — `id`, `username`, `security`, `online`
 - `GET /api/v1/characters/<name>` — `guid`, `name`, `account_id`, `account_name`, `level`, `race`,
   `class`, `online`
@@ -60,6 +63,8 @@ limits, and error codes.
 - Replayed nonce returns `409`; bad signature, missing headers, or skew returns `401`.
 - Per-IP rate limit: default 120 requests per minute; see `GmApi.RateLimit`.
 - No direct SQL writes from clients; actions call game logic.
+- Every request writes one `module.gm-api` INFO line: method, target, status, duration, actor, remote
+  address. Bodies, signature headers, nonces, and the secret are never logged.
 
 ## Config
 

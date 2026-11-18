@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: GM API
-  version: 1.1.0
+  version: 1.2.0
   description: |
     HTTP API inside `worldserver` (`modules/mod-gm-api`). The browser never calls it: only the
     admin BFF holds the HMAC secret. Read endpoints need a valid signature; write endpoints also
@@ -47,16 +47,50 @@ paths:
     get:
       tags: [read]
       summary: Recent GM audit rows, newest first
+      description: |
+        Filters are exact-match column values. Page backwards by passing the `id` of the last row
+        already seen as `before_id`; the response shape stays a bare array. `account` matches
+        `account_name`; `command` and `result` match those columns verbatim.
       parameters:
         - $ref: "#/components/parameters/Timestamp"
         - $ref: "#/components/parameters/Nonce"
         - $ref: "#/components/parameters/Signature"
         - name: limit
           in: query
-          description: Values above 200 clamp to 200; 0, invalid, or missing values use 50.
+          description: Values above 200 clamp to 200; 0 or missing uses 50; a non-numeric value
+            answers 400 `invalid_parameter`.
           schema:
             type: integer
             default: 50
+        - name: before_id
+          in: query
+          description: Only rows with `id` below this value. Omit for the newest page; pass the
+            last row's `id` for the next page. Unsigned 64-bit; values above 2^53 lose precision in
+            JSON clients.
+          schema:
+            type: integer
+            minimum: 0
+        - name: account
+          in: query
+          description: Exact `account_name` filter, 1 to 64 characters of `A-Z a-z 0-9 _ - . :`.
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 64
+        - name: command
+          in: query
+          description: Exact `command` filter, 1 to 64 characters of `A-Z a-z 0-9 _ - . :`.
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 64
+        - name: result
+          in: query
+          description: Exact `result` filter, 1 to 64 characters of `A-Z a-z 0-9 _ - . :`.
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 64
       responses:
         "200":
           description: Audit rows
@@ -66,6 +100,8 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/AuditEntry"
+        "400":
+          $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "405":
@@ -771,8 +807,8 @@ components:
             $ref: "#/components/schemas/Error"
     BadRequest:
       description: Malformed JSON or body (`bad_request`), an unknown item template or an exceeded
-        `MaxCount` (`invalid_item`), or too many attachments after stack splitting
-        (`too_many_items`).
+        `MaxCount` (`invalid_item`), too many attachments after stack splitting
+        (`too_many_items`), or a malformed audit query filter (`invalid_parameter`).
       content:
         application/json:
           schema:
