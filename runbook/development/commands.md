@@ -5,6 +5,9 @@
 Day-to-day development, building, testing, running the server, applying SQL, and verifying a change.
 Each command has a one-line purpose so a human can choose the right one without guessing.
 
+Start a fresh machine with `make doctor`; it reports what is missing before you build. Environment
+purposes, ports, and databases are in [environment-overview.md](environment-overview.md).
+
 ## Conventions
 
 - Run from the repository root unless a step says otherwise.

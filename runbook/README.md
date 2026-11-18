@@ -15,6 +15,8 @@ I do it"; behavior lives in `specs/`.
 
 ### Development
 
+- [environment-overview.md](development/environment-overview.md) — start here: what the project is,
+  the local/test/rig environments, ports, databases, first-day path.
 - [setup-macos.md](development/setup-macos.md) — Homebrew dependencies, MySQL, build, install.
 - [build-and-install.md](development/build-and-install.md) — CMake options, build, install, tools.
 - [database-bootstrap.md](development/database-bootstrap.md) — create and populate the three databases.

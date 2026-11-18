@@ -4,6 +4,10 @@ This is the onboarding and workflow guide for the private AzerothCore workspace.
 humans and agents. Binding rules live in [AGENTS.md](AGENTS.md); procedures live in
 [runbook/](runbook/README.md). When this file and a linked source disagree, the linked source wins.
 
+New to the project? Read
+[runbook/development/environment-overview.md](runbook/development/environment-overview.md) first: it
+explains the local server, the test realm, and the bot rig, with ports and databases.
+
 ## Scope
 
 Current work is infrastructure, documentation, database tooling, and GM tooling. New game content is

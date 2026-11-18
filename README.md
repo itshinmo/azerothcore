@@ -86,6 +86,7 @@ Full procedures live in [runbook/development/setup-macos.md](runbook/development
 
 ## Knowledge map
 
+- **New here?** Start with [runbook/development/environment-overview.md](runbook/development/environment-overview.md).
 - **Rules for agents:** [AGENTS.md](AGENTS.md)
 - **How to contribute:** [CONTRIBUTING.md](CONTRIBUTING.md)
 - **How the system works:** [specs/architecture.md](specs/architecture.md)
