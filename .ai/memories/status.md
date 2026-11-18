@@ -1,6 +1,6 @@
 ---
 description: Current project status, last verified commit, known issues, open decisions, and next tasks. Read after overview on any task.
-last-verified: 2026-11-16 (phases: base game, custom content, website, launch; Bruno API collection added)
+last-verified: 2026-11-18 (classic bot batch complete, 24/27 green; GM API hardened; developer docs added)
 ---
 
 # Status
@@ -19,6 +19,84 @@ last-verified: 2026-11-16 (phases: base game, custom content, website, launch; B
 - Website work has not started and is not part of the current phase. Custom content and shop work
   remain out of scope until the base game is done.
 - Branch: `local-server-setup` is the integration branch. Confirm with `git status`.
+
+## Decisions recorded 2026-11-18
+
+- The playerbot sweep runs every 5-man dungeon once, then every raid entry once: classic 27 tokens,
+  TBC 16, WotLK 16, classic raids 6, TBC raids 3. Deadmines and Shadowfang Keep are skipped because
+  they are already green. All four Maraudon tokens run; `kara-chess` counts as its own token.
+- The sweep is gated: one batch at a time, each run reported individually, and the next batch starts
+  only on the owner's go. Results go in
+  [runbook/audits/2026-11-17-bot-dungeon-runs.md](../../runbook/audits/2026-11-17-bot-dungeon-runs.md),
+  which also records the batch scope and the raid sizing rule.
+- Concurrency: four dungeon parties, two raid parties. Pool plans force raid entries to the 10-bot
+  catalogue default; a failed raid is rerun at the map cap before a finding is filed.
+- Measurement integrity: cameras only while a measured batch runs. A GM body may enter an instance
+  on a throwaway run, never on a batch run, because a nearby real player can change bot behavior.
+
+## Session record — 2026-11-18 (second session)
+
+One long working session. Everything below is committed with this session; no push.
+
+**Playerbot classic sweep — complete.** Plan `tp-20261118-160918-1` ran all 27 classic 5-man tokens
+once: **24 success, 3 fail**, 11,452s wall time, average 1,834s. Full table and findings:
+[runbook/audits/2026-11-17-bot-dungeon-runs.md](../../runbook/audits/2026-11-17-bot-dungeon-runs.md).
+`Deadmines` and `SFK` remain green from 2026-11-17. Concurrency was raised 4 → 5 → 7 → 8 as the
+client closed; the machine held at 8 parties.
+
+- `lbrs` failed `no_progress` at 7/7 and **passed on replay** after the no-progress clock was held
+  once every roster boss is credited.
+- `brd-db` failed `no_progress` at 3/9 and **passed on replay** after the combat-progress sample
+  started reading the whole party instead of only the tank.
+- `bfd` is still **open** after four runs. Two defects were fixed in the harness (swim replan,
+  portal door exemption); two remain (`F3c` advance/objective livelock on an empty path, `F3d` wave
+  gate starvation). Last run reached 8/10 with three of four fires lit before being stopped by hand.
+
+**Rig harness changes** (all in `~/wow/playerbot-rig/core/modules/mod-dungeon-clear`, not this
+repository, documented in the ledger): party-wide progress hash, no-progress hold at full boss
+credit, swim-leg replan through `SwimPathfinder`, Portal of Aku'mai in `IsNavigationIgnored`.
+Rollback binaries: `env/dist/bin/worldserver.pre-20261118` and `worldserver.pre-swimfix`.
+
+**GM API hardening.**
+- One structured `module.gm-api` request log line per request: method, target, status,
+  `duration_ms`, actor, address. Bodies, signatures, nonces and the secret are excluded.
+- Audit read gained exact `account` / `command` / `result` filters and `before_id` id-cursor paging,
+  with `invalid_parameter` on malformed values and an `account_name` index in
+  `data/sql/custom/db_auth/gm_audit.sql` (idempotent, applied locally and to the test realm).
+- Contract bumped to 1.2.0; runbook, `specs/gm-tools.md`, Bruno README and the Audit request docs
+  updated.
+- Tests: 6,000 pass, 23 of them GM API. New cases cover the audit query parser, cursor bounds and
+  filter validation.
+- Live local pass: 200 reads and filtered audit, 401 unsigned, 400 malformed filter, 403
+  `writes_disabled`, 404, 405. Write success paths and `player_busy`, `inventory_full`,
+  `mailbox_full`, `teleport_failed` still need two online clients.
+
+**Developer documentation.** New
+[runbook/development/environment-overview.md](../../runbook/development/environment-overview.md):
+what the project is, the local/test/rig environments side by side (ports, databases, client copies),
+first-day order, where everything lives, first failures, beginner safety. `setup-macos.md` gained a
+clear GM-account flow, client checklist and realm-port troubleshooting; `commands.md`, `README.md`,
+`CONTRIBUTING.md` and `runbook/README.md` point to it. `playerbot-rig.md` gained prerequisites,
+layout, ready checklist, `stdbuf`/`screen -wipe` start commands, an `expect` fallback for console
+input, the realm-port/offline-flag fixes, result-file map, rebuild procedure and a troubleshooting
+table.
+
+**Rig reachability fixes.** The rig authserver kept advertising world port `8085` after the DB row
+said `8086`; restarting it re-read the table. The realm row also needed `flag=0`: the authserver
+marks realms offline at boot, and the worldserver clears its own realm only at its own startup, so
+the clear has to come after the authserver. Both are now documented in `playerbot-rig.md` and the
+overview.
+
+**Whitemane research.** Full analysis (feature inventory, player feedback, copy candidates with
+effort/risk, do-not-copy list, decisions for the next session) is stored outside the repository at
+`.agents/plans/whitemane-research/whitemane-research.ANALYSIS.md` (gitignored). Headline: copy their
+QoL and collections/transmog; do not copy custom Heroic raids, Hardcore, Paragon, Timewalking or
+Domination until Phase 1 is done.
+
+**LAN play with a friend.** Plan recorded in the overview runbook and this session's findings: the
+local stack is the LAN realm; set `acore_auth.realmlist.localAddress` to the Mac's LAN IP
+(`192.168.100.17`, mask `255.255.255.0`) and keep `address=127.0.0.1`, then `make start`; the friend
+uses `set realmlist <LAN-IP>:3724`. Do not run a second worldserver against `acore_characters`.
 
 ## Decisions recorded 2026-11-16
 
@@ -49,6 +127,13 @@ last-verified: 2026-11-16 (phases: base game, custom content, website, launch; B
 
 ## Built since the last update
 
+- GM API hardening 2026-11-18: one structured request log line per request (method, target, status,
+  duration, actor, address; bodies and secrets excluded); audit reads gained exact
+  `account`/`command`/`result` filters and `before_id` id-cursor paging with an
+  `account_name` index; contract bumped to 1.2.0. Unit tests 6,000 pass (23 GM API). Live local pass:
+  200 reads, filtered audit, 401 unsigned, 400 malformed filter, 403 `writes_disabled`, 404, 405.
+  Write success paths and `player_busy`/`inventory_full`/`mailbox_full`/`teleport_failed` still need
+  two online clients.
 - World data export (`make world-export`): 140,650 files, 566 MB, 17.6 s; counts npc 29,945 /
   item 46,096 / quest 9,464 / object 21,580 / 33,318 spawn sets. Read API (`make world-api`) serves
   the artifacts on loopback (parked until Phase 3); 43 tool tests.
@@ -176,10 +261,12 @@ Remaining:
    Gotchas recorded: the test driver's **character name** lookup is exact and case-sensitive (the
    config must say `Dcdriver`, not `dcdriver`); SIGTERM triggers shutdown but the process holds its
    port ~30s while bots log out, so rig restarts need SIGKILL and a free-port check before
-   relaunching. **Session-close reminder for the next session: when asked for tasks, remind the
-   owner to resume the bot dungeon runs** — one dungeon per owner go, results logged in the ledger,
-   next step `.dc test plan` pool runs for the Phase 1 gate (measured success rates per
-   [ADR-013](../../decisions/ADR-013-server-and-client-before-website.md)).
+   relaunching. Classic batch `tp-20261118-160918-1` is **complete**: 27/27 tested, 24 success, 3
+   fail. `lbrs` and `brd-db` passed on replay after harness fixes. `bfd` stays open with two
+   harness defects (F3c empty-path livelock, F3d wave gate starvation) and must be replayed before
+   its result counts. TBC, WotLK, classic raids, and TBC raids are the next batches, on the owner's
+   go. Scope, concurrency, raid sizing, and the gating rule are recorded in the ledger and in the
+   decisions above.
 
 ### Phase 2 — custom content
 
@@ -244,10 +331,12 @@ never on a production server and never inside this repository.
    reads, item/mail/unstuck/kick, RBAC grant/deny/revoke conflicts, ban incl. `longer_ban_exists`,
    server cancel with `GmApi.AllowServerControl=1`, rate limit, and the 401/404/405/409 paths. Still
    untested: `player_busy`, `teleport_failed`, `inventory_full`, `mailbox_full`, `audit_failed`,
-   `writes_disabled`, timeout/shutdown — they need a wedged player, full bags/mailbox, or a dying
-   world. The API still uses one shared HMAC secret for transport; `X-GM-Actor` identifies the human
-   and the Phase 3 BFF will be the only holder of the secret. Audit query uses the shared sync DB
-   pool; audit search is newest-N only; structured request logging is planned.
+   timeout/shutdown — they need a wedged player, full bags/mailbox, or a dying world. `writes_disabled`
+   was verified 2026-11-18 (403 with the flag off). The API still uses one shared HMAC secret for
+   transport; `X-GM-Actor` identifies the human and the Phase 3 BFF will be the only holder of the
+   secret. Audit query and writes use the shared sync DB pool. Audit reads support exact
+   `account`/`command`/`result` filters and id-cursor paging; free-text search stays open. Every
+   request logs one structured line (method, target, status, duration, actor, address).
 2. **cppcheck suppressions target 2.22.** Local Homebrew has 2.22.0; the runner's packaged version is
    unrecorded. A green cpp-lint job does not prove the version, because unmatched suppressions are not
    errors. Quote `cppcheck --version` in any CI failure before changing a suppression.
@@ -262,6 +351,13 @@ never on a production server and never inside this repository.
    excludes the servers. `tools/dev/test-realm.sh` now writes
    `env/test/logs/<name>.supervisor.log` with `start`, `signal=`, and `exit=` lines to name the
    signal on the next occurrence. See [test-realm-stops.md](../../runbook/troubleshooting/test-realm-stops.md).
+6. **BFD has two open harness defects.** `F3c`: while standing on the fires anchor, `DcAdvanceAction`
+   rebuilds an empty path every tick (`segs=0`) and never yields to the objective action — a CPU
+   livelock that produced 4,003 identical log lines. `F3d`: after the third fire,
+   `KillCreatureEngage(Barbed Crustacean, 1, 90yd)` never pulls the wave, which stood 33–73 yd away,
+   so the fourth fire was never clicked. Both live in the rig harness, not this repository; fix and
+   replay seed `3150551725` before BFD counts as tested. Details:
+   [ledger](../../runbook/audits/2026-11-17-bot-dungeon-runs.md).
 
 ## Open decisions
 

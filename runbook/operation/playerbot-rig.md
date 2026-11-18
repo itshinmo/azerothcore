@@ -23,6 +23,48 @@ The bots are not part of the game you play. Players never see them.
 
 Rule: they run at the same time without problems, because every port and database is different.
 
+## Prerequisites and layout
+
+The rig is **not part of this repository** and you do not create it here. It already exists at
+`~/wow/playerbot-rig` on this machine. Treat it as a separate, disposable project:
+
+- its own source tree (`core/` with AzerothCore plus `mod-playerbots` and `mod-dungeon-clear`);
+- its own build (`build/`), binaries (`env/dist/bin`), configs (`env/dist/etc`), logs (`logs/`);
+- its own databases on the same MySQL instance: `acore_pb_auth`, `acore_pb_world`,
+  `acore_pb_characters`;
+- about 510 bot characters, so a party is always available;
+- one client copy, `~/Games/wotlk-test`, already pointed at port 3725.
+
+Do not reuse the local or test-realm databases, configs, or client copy. Changes in the main
+repository never reach the rig until the rig is rebuilt (see “Updating the rig code”).
+
+| Path | What it is |
+|---|---|
+| `~/wow/playerbot-rig/core/` | rig source tree |
+| `~/wow/playerbot-rig/build/` | rig build directory |
+| `~/wow/playerbot-rig/env/dist/bin/` | rig binaries |
+| `~/wow/playerbot-rig/env/dist/etc/` | rig configs |
+| `~/wow/playerbot-rig/logs/` | `authserver.log`, `worldserver.log` |
+| `~/wow/playerbot-rig/env/dist/bin/Server.log` | worldserver appender log |
+| `~/wow/playerbot-rig/env/dist/bin/dc_testruns.jsonl` | one JSON record per finished dungeon run |
+| `~/wow/playerbot-rig/env/dist/bin/dc_testplans.jsonl` | plan summaries, written when a plan ends |
+| `~/wow/playerbot-rig/env/dist/bin/dc_testrun_live.json` | live dashboard snapshot |
+| `~/wow/playerbot-rig/env/dist/bin/lab_traces/` | trace files from runs started with `trace=1` |
+
+## Ready checklist
+
+Before starting a run, confirm all four:
+
+```bash
+lsof -nP -iTCP:3725 -sTCP:LISTEN | tail -1     # login port
+lsof -nP -iTCP:8086 -sTCP:LISTEN | tail -1     # world port
+grep -a 'worldserver-daemon) ready' ~/wow/playerbot-rig/logs/worldserver.log | tail -1
+mysql -h 127.0.0.1 -u <user> -p -N \
+  -e "SELECT name,address,port,flag FROM acore_pb_auth.realmlist;"
+```
+
+The realm row must show `127.0.0.1`, port `8086`, flag `0`.
+
 ## Starting and stopping the rig
 
 Open Terminal. Paste one line at a time.
@@ -32,10 +74,15 @@ Start:
 ```bash
 R=~/wow/playerbot-rig
 cd "$R/env/dist/bin"
-screen -dmS ac-pb-authserver bash -c "cd '$R/env/dist/bin' && ./authserver -c '$R/env/dist/etc/authserver.conf' >>'$R/logs/authserver.log' 2>&1"
+screen -wipe
+screen -dmS ac-pb-authserver bash -c "cd '$R/env/dist/bin' && exec stdbuf -oL -eL ./authserver -c '$R/env/dist/etc/authserver.conf' >>'$R/logs/authserver.log' 2>&1"
 sleep 2
-screen -dmS ac-pb-worldserver bash -c "cd '$R/env/dist/bin' && ./worldserver -c '$R/env/dist/etc/worldserver.conf' >>'$R/logs/worldserver.log' 2>&1"
+screen -dmS ac-pb-worldserver bash -c "cd '$R/env/dist/bin' && exec stdbuf -oL -eL ./worldserver -c '$R/env/dist/etc/worldserver.conf' >>'$R/logs/worldserver.log' 2>&1"
 ```
+
+`stdbuf` keeps the authserver log readable; without it the startup lines, including the realm port,
+can sit in the process buffer for hours. `screen -wipe` removes dead sessions left by an earlier
+stop, so the new session is the only one with the rig's name.
 
 Wait about three minutes. Then check it is up:
 
@@ -45,6 +92,20 @@ lsof -nP -iTCP:8086 -sTCP:LISTEN | tail -1
 
 If you see a line containing `*:8086`, the rig is ready. If no such line appears, wait one more
 minute and check again.
+
+The authserver marks every realm offline when it boots; the worldserver clears that bit for its own
+realm only at its own startup. The start order above (authserver first, worldserver last) therefore
+works. If you restart the authserver by itself, the realm goes offline again — clear the bit after
+the restart:
+
+```bash
+mysql -h 127.0.0.1 -u <user> -p -e "UPDATE acore_pb_auth.realmlist SET flag=0, port=8086 WHERE id=1;"
+```
+
+If selecting the realm reopens the realm list, read the authserver log first. It prints
+`Added realm "AzerothCore" at 127.0.0.1:<port>` at startup. A line with `8085` means an older
+authserver is still holding port 3725 and serving a realm list cached before the rig started; stop
+every authserver process, start one fresh, and confirm the log now says `8086`.
 
 Stop (this closes the rig only, never your game server; do it only when no test is running — a
 force-stop in the middle of a test wastes that run):
@@ -62,6 +123,45 @@ attach to it:
 ```bash
 screen -r ac-pb-worldserver
 ```
+
+`screen -ls` on macOS can report "No Sockets found" even while the rig runs, because the sockets
+live in a per-session temporary directory. Prefix any `screen` command with that directory when the
+plain form cannot see the sessions:
+
+```bash
+export SCREENDIR=/private/var/folders/n0/qhyplrb17tq7gmrfy0v4f_3h0000gn/T/.screen
+```
+
+A command can also be sent without attaching, which is how scripted batches are driven:
+
+```bash
+screen -S ac-pb-worldserver -X stuff "$(printf '%s\r' '.dc test status')"
+```
+
+Send a real carriage return (`\r`). A literal `\n` is typed into the console as the two characters
+backslash and n, and nothing runs.
+
+`screen -X stuff` can silently do nothing against a freshly detached session. If a command never
+appears in the log, drive an attach instead. macOS ships `expect`; this sends one command and
+detaches safely:
+
+```bash
+expect -c '
+set timeout 30
+spawn env SCREENDIR=/private/var/folders/n0/qhyplrb17tq7gmrfy0v4f_3h0000gn/T/.screen screen -r ac-pb-worldserver
+sleep 2
+send -- ".dc test status\r"
+sleep 3
+send -- "\001d"
+expect eof
+'
+```
+
+`\001d` is `Ctrl+A` then `D`, the detach sequence. Never send `Ctrl+A` `K`; that kills the rig.
+
+The rig's database is `acore_pb_auth` / `acore_pb_world` / `acore_pb_characters` on the same MySQL
+instance; the realm row in `acore_pb_auth.realmlist` must carry the rig's world port, `8086`. A
+realm row left on `8085` makes the client return to the realm list after selection.
 
 You will see the rig's console (`AC>` prompt). Commands you type there go to the bots. To leave the
 panel again: press `Ctrl+A`, then `D`. **Detach only — do not use `Ctrl+A` `K`**, which kills the
@@ -108,29 +208,32 @@ invisible to the monsters and cannot change the fight — a pure camera.
 One-time setup:
 
 1. **Make a spare copy of the game client.** Copy your whole client folder to a second location.
-   Your normal copy keeps pointing at the real server and stays untouched.
-2. **Point the spare copy at the rig.** In the spare copy's folder, open the file `realmlist.wtf`
-   with a text editor and make its line read:
+   Your normal copy keeps pointing at the real server and stays untouched. This machine already has
+   one at `~/Games/wotlk-test`.
+2. **Point the spare copy at the rig.** In the spare copy's folder, open `Data/enUS/realmlist.wtf`
+   with a text editor and make its active line read:
 
    ```
    set realmlist 127.0.0.1:3725
    ```
 
-3. **Create your watcher account on the rig.** At the rig's `AC>` prompt (see "Talking to the
-   bots"), replace the password with your own:
+   Keep `libSiliconPatch` off in that copy: leave `#mods/libSiliconPatch.dll` commented out in
+   `dlls.txt`. The patch breaks the client's water handling; see
+   [stormwind-water.md](../troubleshooting/stormwind-water.md).
+
+3. **Use the rig's watcher account.** The rig already has an `ADMIN` account at GM level 3 with
+   character `Asdaddsa`; log in with it. A separate watcher account is optional; create one at the
+   rig's `AC>` prompt (see "Talking to the bots") and give it GM level 3:
 
    ```
    .account create mohsen choose-your-password
    .account set gmlevel mohsen 3 1
    ```
 
-   If the account already exists (it was created live once), skip the first line — it only prints
-   "already exist" — and run the second line, which is safe to repeat. If the account was created
-   through this console, its password appeared in the rig log in plain text; set a fresh one with
-   `.account set password mohsen <old> <new>`.
-
-   The GM level is what lets the camera command work. This account exists only on the rig; it is
-   not your game-server account.
+   The GM level is what lets the camera command work. These accounts exist only on the rig; they are
+   not your game-server accounts. If an account was created through this console, its password
+   appeared in the rig log in plain text; set a fresh one with
+   `.account set password <name> <old> <new>`.
 
 4. **Log into the rig** with that account in the spare client and create any character (any race
    and class; level 1 is fine). You will see the rig's world — possibly full of random bots going
@@ -234,6 +337,44 @@ Stop everything (plans and active runs):
 
 You can give more than one dungeon: `pool=deadmines,sfk,wc`.
 
+### Running dungeons in parallel
+
+Runs are not serial. A plan keeps several parties in flight at once, up to `concurrent=N`:
+
+```
+.dc test plan start pool=deadmines,sfk,wc total=12 concurrent=3
+```
+
+Omitted, `concurrent` defaults to 5. The server accepts any number; the real ceiling is the machine
+and the free bot pool. On the MacBook rig, 4 parties run comfortably beside the game client; raise
+it only while watching the CPU. Retune a live plan without stopping it:
+
+```
+.dc test plan edit <planId> concurrent=5
+```
+
+`pick=bag` (the default) gives every dungeon in the pool one run per cycle, in shuffled order. A
+pool of 27 dungeons with `total=27` therefore covers each dungeon exactly once, whatever order the
+bag draws. That is how a whole expansion is swept in one batch:
+
+```
+.dc test plan start pool=rfc,wc,stockade,bfd,rfk,sm-gy,gnomer,sm-lib,sm-arm,sm-cath,rfd,uldaman,zf,maraudon,mara-orange,mara-purple,mara-pw,st,brd-db,brd-uc,lbrs,ubrs,dm-east,dm-west,dm-north,scholo,strat total=27 concurrent=4 pick=bag
+```
+
+The bag order mixes levels on purpose; do not read the launch order as a difficulty order.
+
+With several runs live, the bare `.dc test watch` is refused because the camera needs one target.
+Watch a specific run by its dungeon token, which also works when the same dungeon runs twice:
+
+```
+.dc test watch strat
+```
+
+Each run's `TESTRUN START` and `TESTRUN END` lines carry the run id; select by run id when tokens
+are ambiguous. Per-run records accumulate in
+`~/wow/playerbot-rig/env/dist/bin/dc_testruns.jsonl`, plan summaries in `dc_testplans.jsonl` next to
+it, and one summary line per finished run is all the ledger needs.
+
 ### After a run
 
 Each run ends with a line like:
@@ -248,6 +389,38 @@ fight, which creature, what went wrong). Copy the start and end lines into a pla
 (`runbook/audits/<date>-base-game-playtest.md` in the main project folder) — failures there become
 fixes in the real server.
 
+## Reading the result files
+
+The log is the live view; the files are the record.
+
+```bash
+B=~/wow/playerbot-rig/env/dist/bin
+tail -n 5 "$B/dc_testruns.jsonl"          # finished runs, one JSON object per line
+cat "$B/dc_testplans.jsonl"               # plan summaries, one line per finished plan
+ls -la "$B/lab_traces"                    # traces from runs started with trace=1
+```
+
+Each finished run keeps its run id, dungeon, seed, level, result, bosses, duration, comp, pull
+statistics, and diagnostics. The seed makes a run exactly replayable:
+`.dc test start <dungeon> seed=<seed>`. Add `trace=1` to write a machine-readable trace for failure
+analysis. A trace file can be large (tens of MB); use it for a specific failure, not for every run.
+
+## Updating the rig code
+
+The rig is its own checkout. After changing a rig module (for example `mod-dungeon-clear`):
+
+```bash
+cd ~/wow/playerbot-rig
+cmake --build build -j4
+cmake --install build
+cp build/src/server/apps/worldserver env/dist/bin/worldserver
+```
+
+The install prefix in the rig's CMake cache is `env`, not `env/dist`, so the last copy is required
+for the start command above to run the new binary. Keep the previous binary as
+`env/dist/bin/worldserver.pre-<date>` when testing a harness change, so a bad build can be rolled
+back. Restart the rig after installing; the running process keeps the old binary.
+
 ## Reading failures without panicking
 
 A failed run is a **finding, not a disaster**. The rig exists to find broken content on purpose. A
@@ -261,6 +434,52 @@ number and the dungeon; that is all the next fix needs.
 - They never replace a human check of "does this quest play right" — bots prove a dungeon can be
   completed; a human still judges the experience.
 
+## Harness behaviour notes (2026-11-18, Blackfathom Deeps)
+
+The rig's harness was patched during the classic sweep. Current behaviour you can rely on:
+
+- The no-progress clock is held once every roster boss is credited, so the final loot hold cannot
+  lose to the watchdog.
+- Combat progress is sampled across the whole party, not only the tank.
+- A swim step that reads "off the authored polyline" replans with `SwimPathfinder` from the live
+  position instead of abandoning. A genuine teleport still abandons.
+- The Portal of Aku'mai (`21117`) is navigation-ignored: it is never treated as a corridor blocker
+  and never auto-pauses a run.
+
+Two defects remain open in BFD; a run there can still end early:
+
+1. **Empty-path livelock.** Standing on the fires anchor, advance rebuilds a zero-segment path every
+   tick (`path rebuilt ... segs=0` + `reaching end of path polyline`) and never yields to the fires
+   objective. The log grows fast and the CPU sits near half a core.
+2. **Wave gate starvation.** After the third fire, the Barbed Crustacean wave is not pulled; the
+   party stands out of combat and the fourth fire is never clicked.
+
+If a BFD run stops after three fires, that is these two defects, not a content bug. Stop it with
+`.dc test stop` rather than waiting for the timeout.
+
+## If the client returns to the realm list
+
+Login works, the realm list opens, and picking the realm reopens it. That is the client failing to
+reach the rig's world port after the realm row gave it an address. Check the row:
+
+```bash
+mysql -h 127.0.0.1 -u <user> -p -e "SELECT name, address, port, flag FROM acore_pb_auth.realmlist;"
+```
+
+`port` must be `8086` (the rig's world port, not the main server's `8085`) and `flag` must be `0`.
+Fix a wrong row with `UPDATE acore_pb_auth.realmlist SET port=8086 WHERE id=1;` then **restart the
+authserver** so it re-reads the table; a stale process can keep advertising 8085 even though
+`RealmsStateUpdateDelay` reloads the row every 20s. The authserver's boot marks the realm offline,
+so clear the bit after the restart, and confirm the log says
+`Added realm "AzerothCore" at 127.0.0.1:8086`:
+
+```bash
+UPDATE acore_pb_auth.realmlist SET flag=0 WHERE id=1;
+```
+
+If `lsof -nP -iTCP:8086 -sTCP:LISTEN` shows no listener, the worldserver is down and that is the real
+cause.
+
 ## If something looks stuck
 
 1. Check the console: `.dc test status` tells you what the current run is doing.
@@ -270,3 +489,18 @@ number and the dungeon; that is all the next fix needs.
    parties).
 4. Worst case: stop the rig (commands above) and start it again. Nothing is lost except the runs
    that had not finished.
+
+## Troubleshooting
+
+| Symptom | Cause | Fix |
+|---|---|---|
+| `screen -ls` says “No Sockets found” | screen uses a per-session socket directory | `export SCREENDIR=/private/var/folders/n0/qhyplrb17tq7gmrfy0v4f_3h0000gn/T/.screen` |
+| Commands typed via `screen -X stuff` never run | a fresh detached session can ignore `stuff` | drive an attach with `expect`, see “Talking to the bots” |
+| Authserver log says `Could not bind to 0.0.0.0:3725` | an older authserver still owns the port | `pkill -9 -f 'playerbot-rig/env/dist/etc/authserver.conf'`, `screen -wipe`, start again |
+| Realm list reopens after selection | stale authserver advertising 8085, or realm flag 2 | fix `acore_pb_auth.realmlist` to `port=8086, flag=0`, restart authserver, confirm its log says 8086 |
+| Ports stay bound after `pkill -TERM` | bots take ~30s to log out | wait, then `pkill -9`; check with `lsof -nP -iTCP:8086 -sTCP:LISTEN` |
+| `Previous session did not shut down cleanly` at startup | the previous worldserver was force-stopped | expected after a kill; no action |
+| A plan seems stuck at a low count | `.dc test status` was read from an old console frame | resend it; check `TESTPLAN ... launched` and `TESTRUN END` lines in the log |
+| Run refuses to start | unknown token, no free bot for a comp slot, or a character busy | `.dc test list`; wait; retry |
+| Bots stop following commands | the driver character name is case-sensitive | rig config must say `Dcdriver`, not `dcdriver` |
+| Machine becomes sluggish | too many parties or a local build running | keep 5–8 parties; reduce with `.dc test plan edit <planId> concurrent=N` |
