@@ -1,4 +1,4 @@
-"""Unit tests for tools/dev/gen-instance-manifest.py.
+"""Unit tests for tools/dev/gen-addon-manifest.py.
 
 Covers the pure functions only: DBC parsing, collapsing by (map, kind),
 trigger picking, and manifest rendering. The database path is not tested.
@@ -10,8 +10,8 @@ import sys
 import unittest
 from pathlib import Path
 
-SCRIPT = Path(__file__).resolve().parent.parent / "gen-instance-manifest.py"
-SPEC = importlib.util.spec_from_file_location("gen_instance_manifest", SCRIPT)
+SCRIPT = Path(__file__).resolve().parent.parent / "gen-addon-manifest.py"
+SPEC = importlib.util.spec_from_file_location("gen_addon_manifest", SCRIPT)
 assert SPEC and SPEC.loader
 gen = importlib.util.module_from_spec(SPEC)
 sys.modules[SPEC.name] = gen
@@ -126,11 +126,31 @@ class RenderTest(unittest.TestCase):
             "min_level": 19, "max_level": 25, "difficulty": 0,
             "tele": {"x": -16.4, "y": -383.07, "z": 61.78, "o": 1.86},
         }]
-        text = gen.render_manifest(entries)
+        text = "\n".join(gen.render_instances(entries))
         self.assertIn('name = "Quo\\"te \\\\ Map"', text)
         self.assertIn("map = 36", text)
         self.assertIn("x = -16.4000", text)
-        self.assertTrue(text.endswith("}\n"))
+
+    def test_renders_gear_table(self):
+        data = {"MAGE": [{"slot": "Head", "id": 50661, "name": 'Quo"te \\ Helm',
+                          "ilvl": 277}]}
+        text = "\n".join(gen.render_gear(data))
+        self.assertIn("GMHelperGearData = {", text)
+        self.assertIn("MAGE = {", text)
+        self.assertIn('slot = "Head", id = 50661', text)
+        self.assertIn('name = "Quo\\"te \\\\ Helm"', text)
+        self.assertIn("ilvl = 277", text)
+
+    def test_renders_combined_file(self):
+        text = "\n".join(
+            gen.render_instances([{
+                "name": "Deadmines", "map": 36, "expansion": 0, "kind": "dungeon",
+                "min_level": 19, "max_level": 25, "difficulty": 0,
+                "tele": None,
+            }]) + gen.render_gear({"MAGE": [{"slot": "Head", "id": 1,
+                                             "name": "Test", "ilvl": 1}]}))
+        self.assertIn("GMHelperInstancesData = {", text)
+        self.assertIn("GMHelperGearData = {", text)
 
 
 if __name__ == "__main__":

@@ -157,6 +157,10 @@ local function MockEnv(templates, fonts, log)
         if unit == "player" then return "Mock" end
         return nil
     end
+    env.UnitClass = function(unit)
+        if unit == "player" then return "Mage", "MAGE" end
+        return nil
+    end
     env.DEFAULT_CHAT_FRAME = {
         AddMessage = function(_, message) log[#log + 1] = tostring(message) end,
     }

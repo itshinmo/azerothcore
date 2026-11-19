@@ -42,7 +42,7 @@ level range. The list comes from `GMHelperInstances.lua`; regenerate it after cl
 database changes with:
 
 ```bash
-python3 tools/dev/gen-instance-manifest.py
+python3 tools/dev/gen-addon-manifest.py
 ```
 
 ### Self
@@ -57,6 +57,10 @@ Every command acts on the GM's own character, even with another player targeted.
   subcommand)
 - `.modify money 1000g` — 1k gold
 - `.additem <own name> 51809 4` — four Portable Hole 24-slot normal bags
+- `Best gear (self)` — one `.additem <own name> <id>` per slot from the generated best-in-game
+  list for the character's class (generated into GMHelperInstances.lua; regenerable with
+  `python3 tools/dev/gen-addon-manifest.py`: highest item level per slot, class armor type and
+  class weapon types filtered)
 - `.instance unbind all <own name>` and `.instance listbinds`
 
 Pair it with the role presets. A `support` account can use lookup and unstuck; `additem` and other
@@ -71,7 +75,7 @@ higher commands are still denied by the server.
   guess the server state.
 - The Self tab cheat buttons have no state label on purpose: they are server-side toggles and the
   addon cannot read the server state. Click once to flip, click again to flip back.
-- Give-to-self buttons are limited to the two the owner asked for (gold, bags); other grants stay
-  on the CLI/API until the future website provides confirmation and audit flows.
+- Give-to-self buttons are limited to what the owner asked for (gold, bags, best-gear set); other
+  grants stay on the CLI/API until the future website provides confirmation and audit flows.
 - The addon does not store credentials and does not bypass server checks.
 - Command output still appears in the chat frame.

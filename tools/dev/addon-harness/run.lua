@@ -133,7 +133,8 @@ local selfButtons = {
     "GMHelperSelfCasttime", "GMHelperSelfExploreOn", "GMHelperSelfExploreOff",
     "GMHelperSelfCombatStop", "GMHelperSelfLevel", "GMHelperSelfRevive",
     "GMHelperSelfSpeedUp", "GMHelperSelfSpeedReset", "GMHelperSelfGold",
-    "GMHelperSelfBags", "GMHelperSelfUnbind", "GMHelperSelfListBinds",
+    "GMHelperSelfBags", "GMHelperSelfGear", "GMHelperSelfUnbind",
+    "GMHelperSelfListBinds",
 }
 local selfName = "Mock"
 local allowedSelfCommands = {
@@ -147,6 +148,16 @@ local allowedSelfCommands = {
     ".instance unbind all " .. selfName,
     ".instance listbinds",
 }
+-- The gear button sends one additem per generated grant for the mock's class.
+local gearData = env._G.GMHelperGearData
+if gearData and gearData.MAGE then
+    for _, grant in ipairs(gearData.MAGE) do
+        allowedSelfCommands[#allowedSelfCommands + 1] = ".additem " .. selfName .. " " .. grant.id
+    end
+else
+    print("FAIL: GMHelperGearData.MAGE missing")
+    failures = failures + 1
+end
 local selfSent = {}
 local before = #log
 for _, buttonName in ipairs(selfButtons) do

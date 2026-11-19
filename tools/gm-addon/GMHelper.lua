@@ -35,10 +35,8 @@ footer:SetJustifyH("LEFT")
 footer:SetText("Commands are checked by the server. RBAC and audit still apply.")
 
 local function Run(command)
-    if InCombatLockdown() then
-        DEFAULT_CHAT_FRAME:AddMessage("GM Helper: unavailable in combat.")
-        return false
-    end
+    -- No combat lockdown check here: every command is a plain chat send, which
+    -- is legal in combat. (.combatstop is the point of being usable in combat.)
 
     -- Keep the command in the chat history so every click leaves a visible record.
     DEFAULT_CHAT_FRAME:AddMessage("GM Helper: " .. command)
@@ -405,6 +403,19 @@ local function BuildSelf()
     Button(page, "4 big bags (24-slot x4)", function()
         Run(".additem " .. UnitName("player") .. " 51809 4")
     end, 1, y, 252, "GMHelperSelfBags")
+    y = y + 34
+    -- One .additem per slot from the generated best-in-game list for this class.
+    Button(page, "Best gear (self)", function()
+        local classFile = select(2, UnitClass("player"))
+        local grants = GMHelperGearData and GMHelperGearData[classFile]
+        if not grants then
+            DEFAULT_CHAT_FRAME:AddMessage("GM Helper: no gear data for " .. tostring(classFile))
+            return
+        end
+        for _, grant in ipairs(grants) do
+            Run(".additem " .. UnitName("player") .. " " .. grant.id)
+        end
+    end, 0, y, 252, "GMHelperSelfGear")
 
     y = y + 56
     y = Section(page, "Instance lockouts", y)
@@ -447,4 +458,7 @@ SlashCmdList["GMHELPER"] = function()
     end
 end
 
-DEFAULT_CHAT_FRAME:AddMessage("GM Helper 0.3.2 loaded: /gmh")
+DEFAULT_CHAT_FRAME:AddMessage("GM Helper 0.4.3 loaded: /gmh")
+if not GMHelperGearData then
+    DEFAULT_CHAT_FRAME:AddMessage("GM Helper: WARNING gear data missing - GMHelperInstances.lua did not load")
+end
