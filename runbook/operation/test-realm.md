@@ -3,6 +3,10 @@
 ## When to use
 
 Before live e2e, before a risky database change, or when testing GM tools and player-visible behavior.
+During the Phase 1 development cycle (since 2026-11-19) it is **not used at all** — development runs
+against the local realm only, and verify-sql's test-realm apply step is skipped; SQL is linted
+directly and applied by the local worldserver on restart. At deploy we create two additional realms
+named `dev` and `ptr`; the test realm comes back to life only if a launch workflow needs it.
 
 ## Goal
 

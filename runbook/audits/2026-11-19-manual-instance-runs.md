@@ -56,16 +56,30 @@ manual work. Tick an entry only after a run with a recorded result below.
 
 ## Classic — Raids (6)
 
-All unchecked except UBRS: the 2026-11-19 bot batch wiped (`ony`, `mc`) or was aborted before
-progress (`bwl`, `zg`, `aq20`, `aq40`); results are historical, not coverage (ADR-016/ADR-017).
+All cleared manually on 2026-11-19. The 2026-11-19 bot batch's `ony`/`mc` wipes and aborted
+`bwl`/`zg`/`aq20`/`aq40` runs are historical (ADR-016/ADR-017), superseded by the manual results.
 
-- [ ] Ahn'Qiraj Ruins (AQ20)
-- [ ] Ahn'Qiraj Temple (AQ40)
-- [ ] Blackwing Lair
-- [ ] Molten Core
+- [x] Ahn'Qiraj Ruins (AQ20) — manual clear 2026-11-19, no findings.
+- [x] Ahn'Qiraj Temple (AQ40) — manual clear 2026-11-19, one blizzlike-behavior note: Viscidus
+      cannot die to spells alone at the frozen stage (the kill gate requires the attacker to be
+      auto-attacking — a solo caster stalls at 1%). Retail-intended melee-shatter mechanic,
+      documented as intended, left untouched per the blizzlike-verification policy; finished with
+      staff auto-attack during the freeze.
+- [x] Blackwing Lair — manual clear 2026-11-19, one finding: the Chromaggus gate/lever encounter
+      could not start (lever spawned usable but one-shot flag persistence + a GM `.respawn` of the
+      boss re-immuned him mid-run; worked around with `.gobject add temp 179148`). World DB verified
+      correct — retail lever flow intact for normal players; GM-respawn artifact only, no SQL fix
+      needed.
+- [x] Molten Core — manual clear 2026-11-19, no findings.
 - [x] Upper Blackrock Spire — bots cleared it as a dungeon token (`ubrs` 8/8); the addon lists it
       as a raid because `LFGDungeons.dbc` does.
-- [ ] Zul'Gurub
+- [x] Zul'Gurub — manual clear 2026-11-19, two findings (both data quirks, no gameplay blocker):
+      Edge of Madness rotation collapsed — all four game events share the same daily phase
+      (14-day-spaced anchors with 24h occurence), so the brazier script always picks Gri'lek first
+      and the other three spirits are unreachable; and Gurubashi Mojo Madness (19931) has no loot,
+      vendor, or quest source anywhere in the DB, so players cannot obtain it without GM give.
+      Encountered as GM-only content as shipped. Edge of Madness skipped (optional summon); main
+      bosses cleared.
 
 ## The Burning Crusade — Dungeons (16)
 
@@ -143,3 +157,19 @@ Append one line per run: `date | instance | result | findings`.
 
 - 2026-11-19 | Blackfathom Deeps | clear | none reported; server logs clean (Errors.log empty, no
   exceptions)
+- 2026-11-19 | Molten Core | clear | none reported; logs clean
+- 2026-11-19 | Blackwing Lair | clear | one finding: Chromaggus lever encounter could not start —
+  boss spawns SetImmuneToAll(true) and the lever clears it once, but a GM `.respawn` of the boss
+  re-applied the immunity and the lever's own NOT_SELECTABLE flag made it un-reusable; `.gobject
+  add temp 179148` spawned a fresh lever that worked. DB verified correct (door state=1 closed,
+  lever state=1 ready) — GM-respawn artifact, no data or code fix needed. Nefarian unaffected.
+- 2026-11-19 | Zul'Gurub | clear | two data quirks: Edge of Madness rotation collapsed (all four
+  game events share one daily phase; brazier always picks Gri'lek; other spirits unreachable) and
+  Gurubashi Mojo Madness (19931) has no player-obtainable source. Edge of Madness skipped as
+  optional/GM-only content.
+- 2026-11-19 | Ahn'Qiraj Ruins (AQ20) | clear | none reported; logs clean
+- 2026-11-19 | Ahn'Qiraj Temple (AQ40) | clear | one blizzlike note: Viscidus kill gate requires an
+  auto-attacking attacker (spell-only kills stall at 1%) — retail-intended, left as-is per the
+  blizzlike-verification policy; finished with staff auto-attack during the freeze. Also: the
+  addon's blanket combat guard blocked `.combatstop` while in combat — fixed in GM Helper 0.4.3
+  (chat commands are legal in combat).

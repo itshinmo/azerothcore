@@ -20,6 +20,67 @@ last-verified: 2026-11-19 (bot rig paused; manual verification is the current co
   remain out of scope until the base game is done.
 - Branch: `local-server-setup` is the integration branch. Confirm with `git status`.
 
+## Session record — 2026-11-19 (manual classic sweep)
+
+One working session continuing the raid batches: the bot rig stayed paused and the owner ran every
+classic instance manually on a cheated level-80 mage (god mode, instant casts), with the agent
+recording results, sweeping `env/dist/logs/` after each run, and fixing tooling bugs as they
+surfaced.
+
+**Classic verification complete.** 26/26 dungeons (25 bot-green + Blackfathom Deeps manual) and the
+classic raids (MC, BWL, ZG, AQ20, AQ40 manual; UBRS bot-green). Every run cleared; zero server
+errors or exceptions in the logs all day. Results and per-run findings:
+[runbook/audits/2026-11-19-manual-instance-runs.md](../../runbook/audits/2026-11-19-manual-instance-runs.md).
+Onyxia's Lair is still open (listed under WotLK raids — the 3.3.5 rework is a level-80 entry). TBC
+is the next sweep.
+
+**Findings worth keeping (all documented in the checklist, none blocking):**
+
+- BWL Chromaggus: the lever encounter is one-shot by script; a GM `.respawn` of the boss re-applies
+  `SetImmuneToAll(true)` and the lever stays flagged unselectable — GM-respawn artifact only, retail
+  flow intact. Live workaround: `.gobject add temp 179148`. No code or data change (an early SQL
+  "fix" for the portcullises was inverted and reverted before any local apply).
+- ZG Edge of Madness: the four summon events share one daily phase (14-day-spaced anchors, 24h
+  occurence), so the brazier can only ever pick Gri'lek; and Gurubashi Mojo Madness (19931) has no
+  loot/vendor/quest source. Effectively GM-only content as shipped. Candidates for a future data
+  pass if the owner wants it player-reachable.
+- AQ40 Viscidus: the kill gate requires an auto-attacking attacker, so spell-only kills stall at
+  1%. Retail-intended; documented and left untouched per the blizzlike policy.
+- Client map gap: pressing M in classic instances shows the world map — the 3.3.5 client's
+  DungeonMap.dbc has no classic floors. Client-patch pipeline territory, parked.
+
+**GM Helper 0.4.3** (tools/gm-addon/): tabbed frame (Commands / Instances / Self), two-column
+scrollable instance teleport lists (82 entries from LFGDungeons.dbc plus the vanilla sub-wings it
+omits, `.go xyz` to the areatrigger entrance), and a Self tab (solo cheat toggles, level 80, revive,
+speed, 1k gold, 4x Portable Hole bags, best-gear-per-slot grant generated from item_template for
+all 10 classes). Chat echo of every sent command; edit box cleared after send. Combat-guard removed
+(chat commands are legal in combat). Two known client quirks handled: no GameTabButtonTemplate
+template in the WoWSilicon FrameXML, and a generated middle .toc file silently skipped — both data
+tables now ship in the single file GMHelperInstances.lua.
+
+**Offline addon harness** (tools/dev/addon-harness/): extracts the client's real FrameXML
+template/font list from its MPQs, loads the addon against a mock of the WoW API, clicks tabs/rows/
+Self buttons, asserts the exact self-only command forms, flags text wider than its button. Lua
+5.1-parse gate via luajit. New skill `.ai/skills/test-wow-addon` routes every future addon change
+through it. Generators merged into tools/dev/gen-addon-manifest.py (instances + gear, one file,
+hard-fails on incomplete classes).
+
+**Policies recorded:** development targets the local realm only (test realm unused until deploy;
+`dev` and `ptr` realms get created at launch); verification runs confirm blizzlike behavior —
+retail-intended mechanics get documented, not changed.
+
+## Decisions recorded 2026-11-19 (second session)
+
+- Verification runs exist to confirm blizzlike behavior, not to change it. When a mechanic turns
+  out to work as retail intended (even if it inconveniences a solo GM run — e.g. Viscidus's
+  melee-only kill gate), it is documented as intended and left untouched. Only non-blizzlike or
+  broken behavior becomes a fix.
+- Development targets the **local realm only**. The e2e test realm stays as-is and unused until
+  deploy; at launch we create two more realms named **dev** and **ptr**. Do not run `make
+  verify-sql`'s test-realm apply or other test-realm writes during development; lint SQL directly
+  (`python apps/codestyle/codestyle-sql.py`) and let the local worldserver apply pending updates on
+  restart.
+
 ## Decisions recorded 2026-11-19
 
 - Dungeon clears are assumed to work. The classic sweep is the record; the TBC and WotLK 5-man
@@ -287,10 +348,11 @@ Remaining:
    and reports findings per run. The agent correlates `env/dist/logs/` and files or fixes each
    finding. Checklist and results:
    [runbook/audits/2026-11-19-manual-instance-runs.md](../../runbook/audits/2026-11-19-manual-instance-runs.md)
-   — bot-green entries are marked there to skip. The GM Helper addon 0.3.0 adds Instances and Self
-   tabs for these runs (`tools/gm-addon/`, teleports from
-   `tools/dev/gen-instance-manifest.py` output); the new tabs still need a local client test pass
-   ([runbook/gm/addon.md](../../runbook/gm/addon.md)).
+   — bot-green entries are marked there to skip. **Classic era complete 2026-11-19** (26/26
+   dungeons, classic raids all clear; findings in the checklist). Next: TBC dungeons and raids,
+   then WotLK. Onyxia's Lair (the level-80 rework) still open. The GM Helper addon 0.4.3 adds
+   Instances and Self tabs for these runs (`tools/gm-addon/`, teleports from
+   `tools/dev/gen-addon-manifest.py` output; local client pass done during the classic sweep).
 
 ### Phase 2 — custom content
 
