@@ -16,6 +16,9 @@ until the foundation is stable.
 - Procedures: `runbook/`.
 - Upstream coding rules: `.agents/docs/`.
 - Human entry: `README.md` and `CONTRIBUTING.md`.
+- Global agent engineering skills (the Addy Osmani pack, installed in the agent host, outside the
+  repository): generic workflows. Where one conflicts with a house skill, spec, decision, or
+  runbook, the house source wins.
 
 Precedence when sources disagree:
 
