@@ -2,5 +2,6 @@
 ## Title: GM Helper
 ## Notes: GM command menu. Commands remain server-side RBAC-gated and audited.
 ## Author: AzerothCore private server
-## Version: 0.1.0
+## Version: 0.3.2
+GMHelperInstances.lua
 GMHelper.lua

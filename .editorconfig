@@ -12,6 +12,9 @@ indent_style = tab
 indent_size = 4
 tab_width = 4
 
+[tools/gm-addon/GMHelperInstances.lua]
+max_line_length = off
+
 [*.{json,ts,js,yml,sh}]
 charset = utf-8
 indent_style = space
