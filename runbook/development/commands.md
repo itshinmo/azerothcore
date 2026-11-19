@@ -46,6 +46,7 @@ purposes, ports, and databases are in [environment-overview.md](environment-over
 | `make backup` | Dumps auth, characters, and world with a checksum and manifest. |
 | `make test-realm CMD=...` | Runs `setup`, `reset`, `start`, `stop`, or `status` for the test realm. |
 | `make backup-schedule CMD=...` | Installs, removes, or checks the daily backup schedule. |
+| `make cleanup ARGS=...` | Dry-runs disk cleanup; `ARGS="--yes"` deletes. See [cleanup.md](../operation/cleanup.md). |
 | `make clean` | Deletes `build/` and `build-verify/`. |
 
 ## Build

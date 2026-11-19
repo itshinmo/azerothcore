@@ -83,6 +83,8 @@ bash tools/dev/backup-schedule.sh remove
 
 `tools/dev/backup.sh` keeps `BACKUP_RETENTION_DAYS` (default 14) of daily dumps under
 `var/backups/manual/` and prunes older ones. `make backup-schedule CMD=install` is the wrapper.
+`make cleanup` can shorten that window; it keeps the newest 7 dumps per type by default
+([cleanup.md](cleanup.md)).
 
 ## Rules
 

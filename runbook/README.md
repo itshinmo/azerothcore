@@ -30,6 +30,7 @@ I do it"; behavior lives in `specs/`.
 - [health-check.md](operation/health-check.md) — ports, DB, data, logs, login.
 - [logs-and-monitoring.md](operation/logs-and-monitoring.md) — log files, levels, metrics.
 - [backup-restore.md](operation/backup-restore.md) — dump, verify, restore.
+- [cleanup.md](operation/cleanup.md) — reclaim disk space from builds, dumps, and main-server logs.
 - [apply-sql-update.md](operation/apply-sql-update.md) — pending and custom SQL.
 - [rollback.md](operation/rollback.md) — database, binary, and config rollback.
 - [test-realm.md](operation/test-realm.md) — isolated realm for e2e and risky changes.

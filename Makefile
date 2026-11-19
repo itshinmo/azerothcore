@@ -10,7 +10,7 @@ ZLIB_FLAG := $(if $(MACOS_ZLIB),-DMYSQL_EXTRA_LIBRARIES=$(MACOS_ZLIB),)
 MACOS_READLINE := $(shell brew --prefix readline 2>/dev/null)
 READLINE_FLAG := $(if $(MACOS_READLINE),-DREADLINE_INCLUDE_DIR=$(MACOS_READLINE)/include -DREADLINE_LIBRARY=$(MACOS_READLINE)/lib/libreadline.dylib,)
 
-.PHONY: help doctor configure configure-verify build install test test-tools command-index content-audit world-export world-api verify-docs verify-sql verify-cpp verify-smoke verify-full sync-upstream start stop restart status logs console backup clean
+.PHONY: help doctor configure configure-verify build install test test-tools command-index content-audit world-export world-api verify-docs verify-sql verify-cpp verify-smoke verify-full sync-upstream start stop restart status logs console backup cleanup clean
 
 help:
 	@printf '%s\n' \
@@ -30,6 +30,7 @@ help:
 	  'make verify-full      all tiers' \
 	  'make start|stop|restart|status|logs|console' \
 	  'make backup           dump the three databases' \
+	  'make cleanup          dry-run removing build-verify, old backups, and main-server logs' \
 	  'make test-realm CMD=setup|reset|start|stop|status' \
 	  'make backup-schedule CMD=install|remove|status'
 
@@ -122,6 +123,9 @@ console:
 
 backup:
 	@bash tools/dev/backup.sh
+
+cleanup:
+	@bash tools/dev/cleanup.sh $(ARGS)
 
 test-realm:
 	@bash tools/dev/test-realm.sh $(CMD)
