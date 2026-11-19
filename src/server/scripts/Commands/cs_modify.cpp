@@ -414,7 +414,9 @@ public:
     //Edit Player Aspeed
     static bool HandleModifyASpeedCommand(ChatHandler* handler, float allSpeed)
     {
-        Player* target = handler->getSelectedPlayerOrSelf();
+        // Self-only command: it must never follow the current target. The GM
+        // Helper Self tab sends it; targeted players keep their speed.
+        Player* target = handler->GetSession()->GetPlayer();
         if (CheckModifySpeed(handler, target, allSpeed, 0.1f, 50.0f))
         {
             NotifyModification(handler, target, LANG_YOU_CHANGE_ASPEED, LANG_YOURS_ASPEED_CHANGED, allSpeed);
@@ -561,7 +563,9 @@ public:
             return false;
         }
 
-        Player* target = handler->getSelectedPlayer();
+        // Self-only command: it must never follow the current target, so a GM
+        // with a player selected cannot grant money to them by accident.
+        Player* target = handler->GetSession()->GetPlayer();
         if (!target)
         {
             handler->SendErrorMessage(LANG_NO_CHAR_SELECTED);

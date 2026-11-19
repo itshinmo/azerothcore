@@ -203,24 +203,17 @@ public:
 
     static bool HandleExploreCheatCommand(ChatHandler* handler, bool reveal)
     {
-        Player* chr = handler->getSelectedPlayer();
-        if (!chr)
-        {
-            handler->SendErrorMessage(LANG_NO_CHAR_SELECTED);
-            return false;
-        }
+        // Self-only command: it must never follow the current target, matching
+        // the god/casttime/cooldown/power cheat handlers in this file.
+        Player* chr = handler->GetSession()->GetPlayer();
 
         if (reveal)
         {
             handler->PSendSysMessage(LANG_YOU_SET_EXPLORE_ALL, handler->GetNameLink(chr));
-            if (handler->needReportToTarget(chr))
-                ChatHandler(chr->GetSession()).PSendSysMessage(LANG_YOURS_EXPLORE_SET_ALL, handler->GetNameLink());
         }
         else
         {
             handler->PSendSysMessage(LANG_YOU_SET_EXPLORE_NOTHING, handler->GetNameLink(chr));
-            if (handler->needReportToTarget(chr))
-                ChatHandler(chr->GetSession()).PSendSysMessage(LANG_YOURS_EXPLORE_SET_NOTHING, handler->GetNameLink());
         }
 
         for (uint8 i = 0; i < PLAYER_EXPLORED_ZONES_SIZE; ++i)
