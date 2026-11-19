@@ -50,7 +50,7 @@ Owns access control and secret handling. Does not own game balance or individual
   map and VMap liquid. A modified client can skip the swim animation or walk underwater; the server
   does not force the animation.
 - Server-side water movement validation (swim flag vs `GetLiquidData()` status, swim-speed
-  enforcement) is not implemented. Adding it is a hardening task, not current behavior.
+  enforcement) is not implemented and is out of scope.
 - The test realm is not an anti-cheat environment. Do not judge cheat detection there.
 
 ### Database users

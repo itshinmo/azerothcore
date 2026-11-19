@@ -1,6 +1,6 @@
 ---
 description: What this repository is, its current state, the scope of work, and where to start. Read first on any task.
-last-verified: 2026-11-16 (phases: base game, custom content, website, launch)
+last-verified: 2026-11-19 (phases: base game, custom content, website, launch)
 ---
 
 # Overview
@@ -25,6 +25,8 @@ launch. The work now is:
 - GM workflow: handbook, RBAC, audit, GM API, in-game addon; visual layer moves to the future server
   website in Phase 3
 - playtests and a friends-only test VPS as needed
+- manual verification by the owner; the bot rig is paused and kept for a future resume
+  ([ADR-017](../../decisions/ADR-017-bot-rig-paused.md))
 
 The website starts after the base game and custom content
 ([ADR-013](../../decisions/ADR-013-server-and-client-before-website.md)). API-first still applies

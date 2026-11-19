@@ -1,11 +1,13 @@
 # ADR-015 — Playerbot test rig
 
-- Status: accepted for a test-only rig (approved by the repository owner on 2026-11-17); the rig is
-  not built yet — setup is a separate task
+- Status: accepted for a test-only rig (approved by the repository owner on 2026-11-17); rig built
+  2026-11-17; sweep plan amended by [ADR-016](ADR-016-bot-driven-verification.md); rig paused by
+  [ADR-017](ADR-017-bot-rig-paused.md)
 - Date: 2026-11-17
 - Amends: [ADR-011](ADR-011-world-data-and-content-verification.md) (revisits the playerbot
   rejection under its own revisit clause)
-- Related: [ADR-013](ADR-013-server-and-client-before-website.md)
+- Related: [ADR-013](ADR-013-server-and-client-before-website.md),
+  [ADR-016](ADR-016-bot-driven-verification.md), [ADR-017](ADR-017-bot-rig-paused.md)
 
 ## Context
 

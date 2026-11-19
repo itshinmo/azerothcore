@@ -1,6 +1,6 @@
 ---
 description: Current project status, last verified commit, known issues, open decisions, and next tasks. Read after overview on any task.
-last-verified: 2026-11-18 (classic bot batch complete, 24/27 green; GM API hardened; developer docs added)
+last-verified: 2026-11-19 (bot rig paused; manual verification is the current content check)
 ---
 
 # Status
@@ -20,11 +20,31 @@ last-verified: 2026-11-18 (classic bot batch complete, 24/27 green; GM API harde
   remain out of scope until the base game is done.
 - Branch: `local-server-setup` is the integration branch. Confirm with `git status`.
 
+## Decisions recorded 2026-11-19
+
+- Dungeon clears are assumed to work. The classic sweep is the record; the TBC and WotLK 5-man
+  batches are cancelled. A player report is the trigger to run a dungeon again in the rig; the rig
+  keeps its data, worktree, traces, and ledger for that.
+  Policy: [ADR-016](../../decisions/ADR-016-bot-driven-verification.md).
+- Raid batches were the work on 2026-11-19: classic raids
+  (`mc, bwl, zg, aq20, aq40, ony`) and TBC raids (`gruul, kara, kara-chess`), two parties
+  concurrent, 10-bot default. Only `ony` (0/1) and `mc` (0/11) finished, both wipes before speed
+  mode; the rest stopped when the rig worldserver vanished, and the owner then paused the rig.
+  Results:
+  [the ledger](../../runbook/audits/2026-11-17-bot-dungeon-runs.md).
+- Server-side water movement validation is out of scope. It does not fix the client; the root cause
+  is external (WoWSilicon#67). Keep `libSiliconPatch` off.
+- The bot rig is paused from 2026-11-19. Its processes are stopped; data, traces, ledger, worktree,
+  and binaries stay for a future resume. Manual verification by the owner is the current content
+  check. Policy: [ADR-017](../../decisions/ADR-017-bot-rig-paused.md).
+
 ## Decisions recorded 2026-11-18
 
 - The playerbot sweep runs every 5-man dungeon once, then every raid entry once: classic 27 tokens,
   TBC 16, WotLK 16, classic raids 6, TBC raids 3. Deadmines and Shadowfang Keep are skipped because
   they are already green. All four Maraudon tokens run; `kara-chess` counts as its own token.
+  **Superseded by [ADR-016](../../decisions/ADR-016-bot-driven-verification.md) and paused by
+  [ADR-017](../../decisions/ADR-017-bot-rig-paused.md).**
 - The sweep is gated: one batch at a time, each run reported individually, and the next batch starts
   only on the owner's go. Results go in
   [runbook/audits/2026-11-17-bot-dungeon-runs.md](../../runbook/audits/2026-11-17-bot-dungeon-runs.md),
@@ -243,30 +263,29 @@ Remaining:
    character flow, leveling path at 2x, quest chains, dungeons, systems, client behavior,
    stability, and the result-recording procedure. Playing through it is the current Phase 1 work.
 5. Triage the 1,972 minors when content work starts; they are cosmetic or expected data.
-6. Add server-side water movement validation if the cheat risk is accepted: swim flag vs
-   `GetLiquidData()` status, swim-speed enforcement, mismatch logging. Not implemented, and it does
-   not fix the client.
-7. Keep `libSiliconPatch` off until WoWSilicon#67 is fixed; re-test after each launcher update and
+6. Keep `libSiliconPatch` off until WoWSilicon#67 is fixed; re-test after each launcher update and
    keep a second client copy (`~/Games/wotlk-test`) without the mod for client-side behaviour checks.
-8. Test realm death: keep the supervisor log; capture it on the next occurrence, with `screen -ls`
+7. Test realm death: keep the supervisor log; capture it on the next occurrence, with `screen -ls`
    and the unified log, before restarting.
-9. Playerbot test rig ([ADR-015](../../decisions/ADR-015-playerbot-test-rig.md)): built and
-   smoke-tested 2026-11-17. Lives in `~/wow/playerbot-rig/` (fork core + mod-playerbots +
-   mod-dungeon-clear, ports 8086/3725, databases `acore_pb_*` + `acore_playerbots`, all outside the
-   repository). Two full clears: Deadmines 8/8 (~34 min, one self-recovered freeze at Gilnid) and
-   Shadowfang Keep 8/8 (~21 min, no freezes). User guide:
-   [runbook/operation/playerbot-rig.md](../../runbook/operation/playerbot-rig.md), including the
-   in-game camera spectating setup. Run ledger:
+8. Playerbot test rig ([ADR-015](../../decisions/ADR-015-playerbot-test-rig.md),
+   [ADR-016](../../decisions/ADR-016-bot-driven-verification.md)): kept as the debugging tool for
+   player reports, not a standing sweep. Dungeons are assumed green; when a player reports a bug,
+   reproduce it in the rig with `.dc test start <dungeon> [seed=] [trace=1]` and record the run in
+   the ledger. Lives in `~/wow/playerbot-rig/` (fork core + mod-playerbots + mod-dungeon-clear,
+   ports 8086/3725, databases `acore_pb_*` + `acore_playerbots`, all outside the repository); keep
+   its data, worktree, traces, and ledger. User guide:
+   [runbook/operation/playerbot-rig.md](../../runbook/operation/playerbot-rig.md). Ledger:
    [runbook/audits/2026-11-17-bot-dungeon-runs.md](../../runbook/audits/2026-11-17-bot-dungeon-runs.md).
-   Gotchas recorded: the test driver's **character name** lookup is exact and case-sensitive (the
-   config must say `Dcdriver`, not `dcdriver`); SIGTERM triggers shutdown but the process holds its
-   port ~30s while bots log out, so rig restarts need SIGKILL and a free-port check before
-   relaunching. Classic batch `tp-20261118-160918-1` is **complete**: 27/27 tested, 24 success, 3
-   fail. `lbrs` and `brd-db` passed on replay after harness fixes. `bfd` stays open with two
-   harness defects (F3c empty-path livelock, F3d wave gate starvation) and must be replayed before
-   its result counts. TBC, WotLK, classic raids, and TBC raids are the next batches, on the owner's
-   go. Scope, concurrency, raid sizing, and the gating rule are recorded in the ledger and in the
-   decisions above.
+   **Paused 2026-11-19** ([ADR-017](../../decisions/ADR-017-bot-rig-paused.md)): no process runs;
+   resume only on the owner's explicit request. Gotchas: the driver
+   **character name** is exact and case-sensitive (`Dcdriver`); SIGTERM holds the port ~30s, so rig
+   restarts need SIGKILL and a free-port check. `bfd` keeps two open harness defects (`F3c`, `F3d`);
+   replay it only when a player report needs it.
+9. Manual solo verification of dungeons and raids is the current content check, active from
+   2026-11-19: the owner runs each instance on a cheated level-80 character (`.cheat god`,
+   `.cheat power`, `.cheat cooldown`, `.cheat casttime`, `.modify speed`, best gear and class spells)
+   and reports findings per run. The agent correlates `env/dist/logs/` and files or fixes each
+   finding.
 
 ### Phase 2 — custom content
 
@@ -355,8 +374,8 @@ never on a production server and never inside this repository.
    rebuilds an empty path every tick (`segs=0`) and never yields to the objective action — a CPU
    livelock that produced 4,003 identical log lines. `F3d`: after the third fire,
    `KillCreatureEngage(Barbed Crustacean, 1, 90yd)` never pulls the wave, which stood 33–73 yd away,
-   so the fourth fire was never clicked. Both live in the rig harness, not this repository; fix and
-   replay seed `3150551725` before BFD counts as tested. Details:
+   so the fourth fire was never clicked. Both live in the rig harness, not this repository.
+   Deferred until a player report needs a BFD replay. Details:
    [ledger](../../runbook/audits/2026-11-17-bot-dungeon-runs.md).
 
 ## Open decisions

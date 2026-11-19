@@ -8,20 +8,77 @@ table summarizes each run; the exact `TESTRUN START`/`END` lines live in the rig
 replayable with `.dc test start <dungeon> seed=N`. Failures become findings in the
 [checklist](../operation/base-game-verification.md) results or `data/sql` fixes.
 
+## Scope change (2026-11-19)
+
+Dungeons are assumed to work. The classic sweep below is the record, and the TBC and WotLK 5-man
+batches are cancelled by the owner. A player report is now the trigger to run a dungeon again; the
+rig keeps its data, traces, and this ledger for that. Policy:
+[ADR-016](../../decisions/ADR-016-bot-driven-verification.md). Raid batches were launched on
+2026-11-19 and then paused by [ADR-017](../../decisions/ADR-017-bot-rig-paused.md); their results are
+historical.
+
 ## Sweep plan (2026-11-18)
 
 - Classic 5-mans: 27 tokens, including all four Maraudon tokens, plan `tp-20261118-160918-1`, four
   parties concurrent (later raised to 5, then 7, then 8), bag pick so every dungeon runs exactly once.
-- TBC 5-mans: 16 tokens, same form, on the owner's go. **Not run yet.**
-- WotLK 5-mans: 16 tokens, same form, on the owner's go. **Not run yet.** The registry has no WotLK
-  raid entries.
-- Classic raids: `mc, bwl, zg, aq20, aq40, ony`, two parties concurrent. **Not run yet.**
+- TBC 5-mans: 16 tokens, same form, on the owner's go. **Cancelled 2026-11-19** (dungeons assumed
+  green; ADR-016).
+- WotLK 5-mans: 16 tokens, same form, on the owner's go. **Cancelled 2026-11-19** (dungeons assumed
+  green; ADR-016). The registry has no WotLK raid entries.
+- Classic raids: `mc, bwl, zg, aq20, aq40, ony`, two parties concurrent. **Launched 2026-11-19,
+  then paused (ADR-017).**
 - TBC raids: `gruul, kara, kara-chess`, two parties concurrent; `kara-chess` is a scenario slice of
-  Karazhan and counts as its own token. **Not run yet.**
-- Pool plans launch raids at the catalogue default of 10 bots. A raid that fails there is rerun at
-  the map cap (`.dc test start <raid> size=25` or `size=40`) before any finding is filed.
+  Karazhan and counts as its own token. **Launched 2026-11-19, then paused (ADR-017).**
+- Pool plans launch raids at the catalogue default of 10 bots. A raid that fails there gets one
+  rerun at its map cap before a finding is filed: 40 for `mc`, `bwl`, `aq40`; 20 for `zg`, `aq20`;
+  25 for `gruul`; 10 for `ony`, `kara`, `kara-chess`. The paused batches never reached the reruns.
 - Measured batches are watched with the camera only. A GM body enters an instance only on
   throwaway runs, because a nearby real player can change bot behavior.
+
+## Raid batches (2026-11-19)
+
+Classic raids: `mc, bwl, zg, aq20, aq40, ony`, two parties concurrent. TBC raids: `gruul, kara,
+kara-chess`, two parties concurrent; `kara-chess` is a scenario slice of Karazhan and counts as its
+own token. Both batches launch at the catalogue default of 10 bots; a failed raid is rerun once at
+its map cap before a finding is filed: 40 for `mc`, `bwl`, `aq40`; 20 for `zg`, `aq20`; 25 for
+`gruul`; 10 for `ony`, `kara`, `kara-chess`. The pause stopped the batches before any rerun.
+
+Rig config change for this batch: `DungeonClear.TestRun.OverallTimeoutS` raised 7200 → 21600, because
+a 10-bot classic raid can exceed two hours. Config backup:
+`env/dist/etc/modules/mod_dungeon_clear.conf.pre-raid`.
+
+Plan `tp-20261119-132403-1` (classic raids) launched 2026-11-19; it recorded the `ony` and `mc`
+wipes, then `aq20` and `aq40` were aborted by the speed-mode restart and left no records. Plan
+`tp-20261119-134727-1` relaunched the classic pool under speed mode.
+
+### Speed mode (2026-11-19)
+
+To fit every raid token into one session the rig now runs weakened creatures:
+`Rate.Creature.*.HP = 0.2` and `Rate.Creature.*.Damage` / `.SpellDamage = 0.5` in
+`env/dist/etc/worldserver.conf` (backup `worldserver.conf.pre-raid-speed`). A 10-bot raid against
+25–40-player content otherwise wipes on trash. The run proves the party can start, progress, and
+finish without errors; it does not judge combat tuning. Rows 1–2 ran before this change; later rows
+use it. A finding counts only if it survives a replay under the same settings.
+
+| # | Date | Run id | Raid | Seed | Result | Bosses | Duration | Notes |
+|---|------|--------|------|------|--------|--------|----------|-------|
+| 1 | 2026-11-19 | tr-20261119-132408-2 | `ony` | 2269105357 | wipe | 0/1 | 653s | Party wiped to trash: Onyxian Whelp (entry 11262), last standing Yolana. Pre-speed-mode. Rerun cancelled (ADR-017). |
+| 2 | 2026-11-19 | tr-20261119-133501-3 | `mc` | 690188609 | wipe | 0/11 | 164s | Party wiped to trash: Lava Spawn (entry 12265), last standing Jaltraa. Pre-speed-mode. Rerun cancelled (ADR-017). |
+
+### Plan interruption (2026-11-19 14:08)
+
+Plan `tp-20261119-134727-1` stopped when the rig worldserver process disappeared about 21 minutes
+in (`mc` 3/11, `aq20` 3/6). No shutdown lines and no crash report were written, which points at a
+SIGKILL under host memory pressure: 16 GB RAM, ~60 MB free pages, Valheim plus three Firefox
+instances running. The partial runs left no records. Resume only on the owner's explicit request
+(ADR-017); the host-pressure cause is not a content finding.
+
+## Pause (2026-11-19)
+
+The rig is paused on the owner's decision; see
+[ADR-017](../../decisions/ADR-017-bot-rig-paused.md). No process runs. The databases, worktree,
+traces, rollback binaries, and this ledger stay for a future resume. The owner tests content
+manually in the meantime, and bot results below remain historical, not coverage.
 
 ## Classic batch result (2026-11-18)
 
@@ -73,7 +130,8 @@ Same seeds, `trace=1`, on the patched rig. Traces live in
 | 33 | tr-20261118-203726-1 | `bfd` | 3150551725 | paused_timeout | 8/10 | 2210s | F3b: portal door false block. Fixed, see below. |
 | 34 | tr-20261118-211939-1 | `bfd` | 3150551725 | aborted | 8/10 | 2221s | Stopped by hand after F3c/F3d livelock; see findings. |
 
-Next runs start only on the owner's explicit go; the TBC, WotLK, and raid batches wait for it.
+Raid batches start only on the owner's explicit go. Dungeon batches are closed unless a player
+report reopens one.
 
 ## How to read this table
 

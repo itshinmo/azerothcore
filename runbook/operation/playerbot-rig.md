@@ -3,6 +3,10 @@
 This page is for running the bot test rig. No engineering knowledge needed: everything is copy-paste
 commands and one chat panel.
 
+**Paused 2026-11-19** ([ADR-017](../../decisions/ADR-017-bot-rig-paused.md)). No rig process runs.
+The data, traces, ledger, worktree, and binaries are kept. Resume only on the owner's explicit
+request; this guide stays current for that day.
+
 ## What this is
 
 The rig is a **second, private copy of the game** that lives next to your real server. Its only job
@@ -314,6 +318,12 @@ Useful dungeon names (short versions work; use `.dc test list` for the complete 
 | `brd-db`, `brd-uc` | Blackrock Depths (Detention Block, Upper City) |
 | `scholo` | Scholomance |
 | `strat` | Stratholme |
+| `mc`, `ony`, `bwl`, `zg`, `aq20`, `aq40` | Classic raids |
+| `gruul`, `kara`, `kara-chess` | TBC raids; `kara-chess` is the Karazhan chess scenario slice |
+
+Raids launch at the catalogue default of 10 bots. A failed raid gets one rerun at its map cap
+before it counts as a finding: 40 for `mc`, `bwl`, `aq40`; 20 for `zg`, `aq20`; 25 for `gruul`;
+10 for `ony`, `kara`, `kara-chess`.
 
 ### Running many runs at once
 
@@ -456,6 +466,22 @@ Two defects remain open in BFD; a run there can still end early:
 
 If a BFD run stops after three fires, that is these two defects, not a content bug. Stop it with
 `.dc test stop` rather than waiting for the timeout.
+
+## Debugging a player report with the rig
+
+Dungeons are assumed to work until a player reports one ([ADR-016](../../decisions/ADR-016-bot-driven-verification.md)).
+A report is the trigger to run that dungeon again:
+
+1. Map the report to a token (table above) and start one run: `.dc test start <dungeon>`.
+2. If the report names a repeatable spot or failure, run it with `trace=1` for the end-of-run
+   analysis. Every run's seed is in `dc_testruns.jsonl`; `.dc test start <dungeon> seed=<seed>`
+   replays it exactly.
+3. Read the failure as a finding: note the creature or gameobject entry, the dungeon, and the
+   decisive log lines.
+4. Record the run in the [ledger](../audits/2026-11-17-bot-dungeon-runs.md) under a "Player report"
+   row, with the report reference.
+5. Fix the cause in the right place: content in `data/sql` in this repository, harness defects in
+   the rig only. Replay the same seed before calling it fixed.
 
 ## If the client returns to the realm list
 

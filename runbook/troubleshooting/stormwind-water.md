@@ -174,11 +174,6 @@ client is not authoritative. Keep a second client copy for verification, for exa
    in `dlls.txt`.
 2. The data check is done: the played client's 246 DBCs and 5744 map files are byte-identical to
    `DataDir`. A vmap comparison is order-sensitive and was inconclusive; it is not needed now.
-3. Separately, decide whether to add server-side water movement validation:
-   - validate `MOVEMENTFLAG_SWIMMING` against `GetLiquidData()` status at the reported position;
-   - enforce swim speed when the server liquid status is in or under water;
-   - log mismatches before enforcing.
-   This is not implemented and does not fix the client.
 
 ## References
 
