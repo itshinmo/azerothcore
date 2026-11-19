@@ -86,6 +86,7 @@ Core:
 - [`pending-sql-import`](skills/pending-sql-import/SKILL.md) — apply pending/custom SQL.
 - [`verify-change`](skills/verify-change/SKILL.md) — choose and run the verification tier.
 - [`write-unit-test`](skills/write-unit-test/SKILL.md) — Google Test or Node test.
+- [`test-wow-addon`](skills/test-wow-addon/SKILL.md) — offline addon harness + client screenshots.
 - [`write-e2e-test`](skills/write-e2e-test/SKILL.md) — live-stack Go e2e, only when asked.
 - [`review-change`](skills/review-change/SKILL.md) — review a diff or PR.
 - [`spec-drift-sync`](skills/spec-drift-sync/SKILL.md) — reconcile code and docs.

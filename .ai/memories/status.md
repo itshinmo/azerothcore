@@ -285,7 +285,12 @@ Remaining:
    2026-11-19: the owner runs each instance on a cheated level-80 character (`.cheat god`,
    `.cheat power`, `.cheat cooldown`, `.cheat casttime`, `.modify speed`, best gear and class spells)
    and reports findings per run. The agent correlates `env/dist/logs/` and files or fixes each
-   finding.
+   finding. Checklist and results:
+   [runbook/audits/2026-11-19-manual-instance-runs.md](../../runbook/audits/2026-11-19-manual-instance-runs.md)
+   — bot-green entries are marked there to skip. The GM Helper addon 0.3.0 adds Instances and Self
+   tabs for these runs (`tools/gm-addon/`, teleports from
+   `tools/dev/gen-instance-manifest.py` output); the new tabs still need a local client test pass
+   ([runbook/gm/addon.md](../../runbook/gm/addon.md)).
 
 ### Phase 2 — custom content
 
