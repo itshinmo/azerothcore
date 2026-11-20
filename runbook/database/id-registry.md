@@ -36,6 +36,7 @@ the same change.
 | 950102 | Auth RBAC role | economy | GM role preset | repo owner | 2026-11-12 |
 | 950103 | Auth RBAC role | admin | GM role preset | repo owner | 2026-11-12 |
 | 950104 | Auth RBAC role | superadmin | GM role preset | repo owner | 2026-11-12 |
+| 910012 | Creature entry | Warpweaver | transmogrifier template + 10 capital spawns (`collections_npc_spawns.sql`, spawn GUID block 5400001–5400010) | collections (ADR-020) | 2026-11-20 |
 
 World content IDs are still unallocated. The RBAC rows live in `acore_auth`, not `acore_world`.
 
