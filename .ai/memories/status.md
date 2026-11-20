@@ -92,10 +92,10 @@ retail-intended mechanics get documented, not changed.
   verified-bundle entry below.)
 - **Client bundle verified 2026-11-20** (owner in-game, 120 FPS): the supported client is the
   WoWSilicon exe + its d3d9 + Ascension patch-A (client MPQ + 8 server DBCs) + Reforged patches
-  B–U + the ForeverUI in-game addon on `~/Games/wotlk-clean`. The St0ny exe measured 14 FPS (x87
-  emulation) and was reverted; St0ny's patcher and ForeverUIPatcher are incompatible in either
-  order; ForeverUI's loose GlueXML conflicted with the Ascension glue and was removed; named
-  creation/barber choices dropped. Record:
+  B–U + the Transmog/Journal/GM Helper addons on `~/Games/wotlk-clean`. The St0ny exe measured 14
+  FPS (x87 emulation) and was reverted; St0ny's patcher and ForeverUIPatcher are incompatible in
+  either order; mod-forever-ui was removed entirely by owner decision (its glue conflicted with
+  the Ascension glue). Record:
   [runbook/operation/client-bundle.md](../../runbook/operation/client-bundle.md).
 - Branch: `modernization/realm-cleanup-and-features` (worktree) carries the removal plus the
   modernization research/RFCs; `local-server-setup` is untouched until merge.

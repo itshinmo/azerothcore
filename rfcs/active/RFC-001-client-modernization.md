@@ -1,6 +1,6 @@
 # RFC-001 — Client modernization: Reforged + Ascension customization + modern UI
 
-- Status: accepted (bundle verified 2026-11-20; launcher work gated to launch)
+- Status: accepted (bundle verified 2026-11-20; launcher work gated to launch; mod-forever-ui dropped from the bundle by owner decision — see ADR-020 for the collections addons that replaced it)
 - Date: 2026-11-20
 - Author: agent session (modernization/realm-cleanup-and-features)
 - Decisions: made by the owner on 2026-11-20 (see Decision record below)
@@ -81,6 +81,8 @@ Resolved by the owner on 2026-11-20:
    compatible with our addon stack: it is one self-contained UI addon plus an exe patch that only
    touches creation/barber naming; it conflicts only with other full-UI-replacement suites
    (DragonUI-class), not with frame-building addons (GM Helper, Transmog, Journal).
+   (Superseded 2026-11-20: removed entirely from the bundle — its glue screens conflict with the
+   Ascension glue; see the table row and ADR-020.)
 
 ## Decision record
 
@@ -104,7 +106,7 @@ Download bundle (owner-side, delivered 2026-11-20; final state per the verified 
 | Project Reforged patch set minus patch-A (B,C,D,E,G,I,M,N,P,S,U) | https://projectreforged.github.io/wotlk/downloads/ | multi-GB | ✅ | in use — all 11 MPQs in the client |
 | St0ny's AIO EXE Patcher + Reforged preset | linked from the Reforged downloads page | small | ✅ | rejected — 14 FPS on the Apple Silicon host; patcher removed |
 | DXVK 3.1.1 x86 (`d3d9.dll` from the release) | https://github.com/doitsujin/dxvk/releases/tag/v3.1.1 | small | ✅ | rejected — WoWSilicon's own d3d9 is active; removed |
-| mod-forever-ui (release/installer from the repo README) | https://github.com/Adrestie/mod-forever-ui | small | ✅ | partially in use — in-game addon + art; glue and exe patch dropped (conflicts) |
+| mod-forever-ui (release/installer from the repo README) | https://github.com/Adrestie/mod-forever-ui | small | ✅ | rejected and removed entirely on 2026-11-20 — glue screens conflict with the Ascension glue; the collections addons (Transmog/Journal, ADR-020) took the modern-UI slot |
 | LuxVelum (optional) | linked from the Reforged downloads page | small | ✅ | rejected — needs the St0ny loader; removed |
 
 <!-- When accepted, fold the durable content into specs/ or decisions/ and move the RFC to archived/. -->

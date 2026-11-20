@@ -37,6 +37,8 @@ the same change.
 | 950103 | Auth RBAC role | admin | GM role preset | repo owner | 2026-11-12 |
 | 950104 | Auth RBAC role | superadmin | GM role preset | repo owner | 2026-11-12 |
 | 910012 | Creature entry | Warpweaver | transmogrifier template + 10 capital spawns (`collections_npc_spawns.sql`, spawn GUID block 5400001–5400010) | collections (ADR-020) | 2026-11-20 |
+| 950110–950119 | Misc (POI) | city Warpweaver markers | `points_of_interest` rows behind the guard gossip options (`collections_guard_directions.sql`) | collections (ADR-020) | 2026-11-20 |
+| 950120 | Misc (npc_text) | guard answer | shared gossip answer text in `collections_guard_directions.sql` | collections (ADR-020) | 2026-11-20 |
 
 World content IDs are still unallocated. The RBAC rows live in `acore_auth`, not `acore_world`.
 

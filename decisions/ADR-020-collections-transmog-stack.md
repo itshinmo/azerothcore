@@ -36,6 +36,14 @@
 5. **Player-facing access stays addon-first**; at launch the addon folders embed into the shipped
    client MPQ patch ([RFC-002](../rfcs/active/RFC-002-collections-transmog.md)). The GM API, RBAC,
    and audit are untouched — collections is player self-service.
+6. **City guards point at the Warpweaver** (owner request, 2026-11-20): each capital's
+   direction-giving NPC gets a "The transmogrifier" gossip option with a minimap marker, via the
+   server's `points_of_interest` table + `gossip_menu_option.ActionPoiID` → `SMSG_GOSSIP_POI`
+   (`GossipDef.cpp` `SendPointOfInterest` — no client data involved). POIs 950110–950119 and the
+   shared answer `npc_text` 950120 (misc range, registered). NPCs: Stormwind City Guard,
+   Ironforge Guard, Darnassus Sentinel, Exodar Peacekeeper, Orgrimmar Grunt, Undercity Guardian,
+   Bluffwatcher (Thunder Bluff's direction NPC), Silvermoon City Guardian, Shattrath City
+   Peacekeeper, and Dalaran's Violet Citadel teleport-service NPCs (Dalaran has no guards).
 
 ## Consequences
 
