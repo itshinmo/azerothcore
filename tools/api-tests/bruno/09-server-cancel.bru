@@ -33,7 +33,7 @@ docs {
       present but is unused.
     - `{"action": "shutdown", "delaySeconds": 30}` — schedules shutdown after 1-3600 seconds.
       Optional `reason` (max 255) is recorded. After the timer fires, `worldserver` exits; restart
-      the stack with `make start` (local) or the supervisor (test realm).
+      the stack with `make start` (local). Future `dev`/`ptr` stacks need their own supervisor.
     - `{"action": "restart", "delaySeconds": 30}` — same as shutdown with the restart exit code.
       A restart is only an exit: an external supervisor must start the process again.
     - `delaySeconds` is **required** for shutdown and restart (1-3600). Omitting it, or sending

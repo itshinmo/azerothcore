@@ -32,7 +32,7 @@ mysql -h 127.0.0.1 -u acore -p acore_world -e "SELECT name,state FROM updates OR
 1. Stop the server if it is still running.
 2. Read the exact file and statement from `Errors.log`.
 3. Restore the pre-update backup if partial data was written.
-4. Fix the SQL on the test realm.
+4. Fix the SQL (lint it with `python apps/codestyle/codestyle-sql.py`).
 5. Reapply. Never edit an applied file; add a new one.
 
 ## Connection loss

@@ -24,14 +24,13 @@ help:
 	  'make world-export     export world data artifacts for the public site' \
 	  'make world-api        serve the exported world data on loopback' \
 	  'make verify-docs      markdown link check and command index check' \
-	  'make verify-sql       SQL lint; test-realm apply when configured' \
+	  'make verify-sql       SQL lint; local worldserver applies pending/custom SQL on restart' \
 	  'make verify-cpp       C++ lint, -Werror build, unit tests' \
 	  'make verify-smoke     start, health-check, stop' \
 	  'make verify-full      all tiers' \
 	  'make start|stop|restart|status|logs|console' \
 	  'make backup           dump the three databases' \
 	  'make cleanup          dry-run removing build-verify, old backups, and main-server logs' \
-	  'make test-realm CMD=setup|reset|start|stop|status' \
 	  'make backup-schedule CMD=install|remove|status'
 
 doctor:
@@ -126,9 +125,6 @@ backup:
 
 cleanup:
 	@bash tools/dev/cleanup.sh $(ARGS)
-
-test-realm:
-	@bash tools/dev/test-realm.sh $(CMD)
 
 backup-schedule:
 	@bash tools/dev/backup-schedule.sh $(CMD)

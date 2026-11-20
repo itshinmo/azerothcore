@@ -45,7 +45,8 @@ startup and writes to `Errors.log`.
 ## Safety
 
 - Back up before any write batch: `make backup`.
-- Test on the test realm first.
+- Verify SQL by linting (`python apps/codestyle/codestyle-sql.py`); the local worldserver applies
+  pending/custom updates on restart (ADR-018).
 - Never use `root` for tools or agents.
 - Never run an unbounded `UPDATE`/`DELETE`; require a primary key or a narrow, reviewed `WHERE`.
 - `DELETE` + `INSERT` for idempotency; `SQLTransaction` for multi-statement writes.

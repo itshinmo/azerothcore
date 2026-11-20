@@ -33,7 +33,7 @@ purposes, ports, and databases are in [environment-overview.md](environment-over
 | `make world-export` | Export world data artifacts; see [world-export.md](../operation/world-export.md). |
 | `make world-api` | Serve the exported catalog on loopback (parked until Phase 3); see [world-api.md](../operation/world-api.md). |
 | `make verify-docs` | Checks knowledge-layer Markdown links and the generated command index. |
-| `make verify-sql` | Runs the SQL linter; applies pending/custom SQL to the test realm when configured. |
+| `make verify-sql` | Runs the SQL linter; the local worldserver applies pending/custom SQL on restart ([ADR-018](../../decisions/ADR-018-realm-strategy.md)). |
 | `make verify-cpp` | C++ codestyle, cppcheck (2.22.x), `-Werror` build, unit tests. |
 | `make verify-smoke` | Starts the local stack, health-checks it, stops it. |
 | `make verify-full` | Runs docs, C++, SQL, and smoke in order. |
@@ -44,7 +44,6 @@ purposes, ports, and databases are in [environment-overview.md](environment-over
 | `make logs` | Tails the main server logs. |
 | `make console` | Attaches to the worldserver `screen` console. |
 | `make backup` | Dumps auth, characters, and world with a checksum and manifest. |
-| `make test-realm CMD=...` | Runs `setup`, `reset`, `start`, `stop`, or `status` for the test realm. |
 | `make backup-schedule CMD=...` | Installs, removes, or checks the daily backup schedule. |
 | `make cleanup ARGS=...` | Dry-runs disk cleanup; `ARGS="--yes"` deletes. See [cleanup.md](../operation/cleanup.md). |
 | `make clean` | Deletes `build/` and `build-verify/`. |
@@ -172,12 +171,8 @@ Scans the project knowledge layer for broken relative Markdown links and checks 
 make verify-sql
 ```
 
-- Runs `python3 apps/codestyle/codestyle-sql.py`.
-- If `env/test/etc/worldserver.conf` exists and pending/custom SQL files exist, backs up the test
-  databases, applies the SQL with `worldserver -d -c env/test/etc/worldserver.conf`, and checks
-  `updates` and `creature` rows.
-- `VERIFY_SQL_APPLY=0` forces lint only.
-- `VERIFY_SQL_APPLY=1` forces an apply and fails if the test config is missing.
+- Runs `python3 apps/codestyle/codestyle-sql.py`; the local worldserver applies pending/custom SQL on
+  restart ([ADR-018](../../decisions/ADR-018-realm-strategy.md)).
 
 ### Smoke gate
 
@@ -205,8 +200,9 @@ cd e2e
 go test -tags=e2e ./smoke -count=1 -v -timeout 30m -parallel 1
 ```
 
-Requires a running test realm or local stack with `Warden.Enabled=0`. See `e2e/README.md` and
-[runbook/operation/test-realm.md](../operation/test-realm.md).
+Requires a running stack with `Warden.Enabled=0`. Dormant since the test realm was removed
+([ADR-018](../../decisions/ADR-018-realm-strategy.md)); it comes back with the launch `dev`/`ptr`
+realms. See `e2e/README.md`.
 
 ## Server lifecycle
 
@@ -239,7 +235,7 @@ cd env/dist/bin
 ```
 
 - `-d` / `--dry-run` applies database updates and exits. It is not a read-only SQL check.
-- `-c` selects a config; use it for the test realm.
+- `-c` selects a config; use it for a non-default realm config.
 - `--config-policy` overrides config severity.
 
 Start order is MySQL → worldserver → authserver. Stop order is authserver → worldserver.
@@ -304,22 +300,6 @@ python3 apps/codestyle/codestyle-sql.py
 
 Use DBeaver for browsing, queries, and small edits. See
 [runbook/database/dbeaver.md](../database/dbeaver.md).
-
-### Test realm
-
-```bash
-export TEST_DB_PASSWORD='<test-password>'
-export MYSQL_ADMIN_USER='acore_admin'
-export MYSQL_ADMIN_PASSWORD='<admin-password>'
-bash tools/dev/test-realm.sh setup
-bash tools/dev/test-realm.sh start
-bash tools/dev/test-realm.sh status
-bash tools/dev/test-realm.sh stop
-bash tools/dev/test-realm.sh reset
-```
-
-Ports 3824 (auth) and 8185 (world). Uses `env/test/etc` and `env/test/logs`. The script refuses
-`root` and refuses setup/reset while the test stack is running.
 
 ## Backups
 

@@ -31,15 +31,15 @@ Owns the process and configuration contract. Does not own gameplay content or da
 - `RealmID` matches the `realmlist` row.
 - `Updates.EnableDatabases=7` and `Updates.AutoSetup=1` for automatic schema setup.
 - `Console.Enable=1` only while an attached terminal or screen/tmux client keeps stdin open; `0`
-  for detached services and the test realm. With `1` and null stdin, the console thread spins on EOF
+  for detached services. With `1` and null stdin, the console thread spins on EOF
   and fills the console log.
 
-### Local and test
+### Realms
 
 - Local: native macOS build in `build/`, install prefix `env/dist/`.
-- Test realm: separate databases or a documented reset; `Warden.Enabled=0` for AzerothGhost e2e.
-- Test realm servers run in detached `screen` sessions. The start script does not tie them to a
-  client session. Start and stop explicitly with `make test-realm CMD=start|stop`.
+- The test realm was removed on 2026-11-20 ([ADR-018](../decisions/ADR-018-realm-strategy.md)).
+  At launch, the local realm is reset and renamed `live`, and `dev` + `ptr` realms are created; e2e
+  realms run detached with `Warden.Enabled=0` and explicit start/stop.
 - Production: Ubuntu 24.04 LTS, native binaries, MySQL on the same host, systemd, firewall.
 
 ### Lifecycle
@@ -67,7 +67,8 @@ version-mismatch flag; the authserver refuses to start while every realm has fla
 ## Security
 
 - No credentials in the repository.
-- Warden is enabled on local and production configurations and disabled on the e2e test realm. It
+- Warden is enabled on local and production configurations and disabled on e2e realms (the future
+  `dev`/`ptr` realms, ADR-018). It
   is runtime anti-cheat, not a full client file-integrity scan. Client-trust details, including the
   OS and client build checks: [security.md](security.md).
 - SOAP and RA disabled unless explicitly needed and protected.
@@ -87,4 +88,3 @@ version-mismatch flag; the authserver refuses to start while every realm has fla
 - [runbook/operation/start-stop.md](../runbook/operation/start-stop.md)
 - [runbook/operation/health-check.md](../runbook/operation/health-check.md)
 - [runbook/troubleshooting/stormwind-water.md](../runbook/troubleshooting/stormwind-water.md)
-- [runbook/troubleshooting/test-realm-stops.md](../runbook/troubleshooting/test-realm-stops.md)

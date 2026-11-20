@@ -50,11 +50,11 @@ permission to the role, not a separate API permission; there is no second permis
 ## Presets
 
 Tracked SQL: `data/sql/custom/db_auth/gm_rbac_presets.sql`. The examples below use `acore_auth`;
-substitute `acore_test_auth` on the test realm.
+substitute another auth database for the launch `dev`/`ptr` realms ([ADR-018](../../decisions/ADR-018-realm-strategy.md)).
 
 - The file upserts the five role rows and replaces their linked permissions. It never deletes a role
   row, so existing account grants survive a re-apply.
-- Apply it with the startup updater, or on the test realm with `make verify-sql`.
+- Apply it with the startup updater.
 - Grant a role to an account:
 
   ```sql
@@ -101,7 +101,7 @@ substitute `acore_test_auth` on the test realm.
 2. Confirm the permission row exists in `rbac_permissions`.
 3. Build the smallest group. Do not grant a broad `gmlevel` when a permission set is enough.
 4. Write tracked SQL with `DELETE` + `INSERT` for the role's grants.
-5. Apply to the test realm after a backup.
+5. Apply after a backup.
 6. Create a dedicated test account per role.
 7. Verify:
    - the role can run its commands;
@@ -119,10 +119,10 @@ substitute `acore_test_auth` on the test realm.
 
 ## Open work
 
-The five roles were live-tested on the test realm on 2026-11-12. Support, content-tester, economy,
-and admin allowed and denied the expected commands. Superadmin was spot-checked with safe commands.
-The command audit module is built; role tests should also confirm the audit rows. Automated role
-account setup and a repeatable permission matrix test are still open.
+The five roles were live-tested on 2026-11-12. Support, content-tester, economy, and admin allowed
+and denied the expected commands. Superadmin was spot-checked with safe commands. The command audit
+module is built; role tests should also confirm the audit rows. Automated role account setup and a
+repeatable permission matrix test are still open.
 
 ## References
 

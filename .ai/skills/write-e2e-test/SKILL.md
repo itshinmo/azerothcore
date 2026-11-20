@@ -1,6 +1,6 @@
 ---
 name: write-e2e-test
-description: Use only when the user explicitly asked for live-stack coverage or an existing e2e test broke. Writes a deterministic AzerothGhost test against the test realm.
+description: Use only when the user explicitly asked for live-stack coverage or an existing e2e test broke. Writes a deterministic AzerothGhost test against an e2e realm (dormant until the launch `dev`/`ptr` realms exist; ADR-018).
 ---
 
 # write-e2e-test
@@ -8,7 +8,7 @@ description: Use only when the user explicitly asked for live-stack coverage or 
 ## Prerequisites
 
 - The user explicitly asked for e2e coverage, or an existing test broke.
-- A running test realm with `Warden.Enabled=0`.
+- A running e2e realm with `Warden.Enabled=0` (dormant until the launch `dev`/`ptr` realms; ADR-018).
 - Go 1.26+ and `e2e/` dependencies.
 - Read `e2e/README.md` and `.agents/docs/e2e-policy.md`.
 

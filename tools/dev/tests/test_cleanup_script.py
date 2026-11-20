@@ -56,18 +56,6 @@ class CleanupScriptTest(unittest.TestCase):
             self.assertTrue((Path(tmp) / "20260102-000000").exists())
             self.assertTrue((Path(tmp) / "20260103-000000").exists())
 
-    def test_test_db_rejects_root(self):
-        result = subprocess.run(
-            ["bash", "-c", 'source "$1"; MYSQL_ADMIN_USER=root; require_admin', "bash", str(SCRIPT)],
-            cwd=ROOT,
-            capture_output=True,
-            text=True,
-            timeout=60,
-            check=False,
-        )
-        self.assertNotEqual(0, result.returncode)
-        self.assertIn("refusing root", result.stderr)
-
 
 if __name__ == "__main__":
     unittest.main()

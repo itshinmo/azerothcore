@@ -39,7 +39,7 @@ The rig is **not part of this repository** and you do not create it here. It alr
 - about 510 bot characters, so a party is always available;
 - one client copy, `~/Games/wotlk-test`, already pointed at port 3725.
 
-Do not reuse the local or test-realm databases, configs, or client copy. Changes in the main
+Do not reuse the local databases, configs, or client copy. Changes in the main
 repository never reach the rig until the rig is rebuilt (see “Updating the rig code”).
 
 | Path | What it is |

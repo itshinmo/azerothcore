@@ -24,7 +24,7 @@ description: Use when creating a GM role, granting or revoking a permission, aud
    - `admin` — bans, RBAC, server commands.
    - `superadmin` — all; restricted to named human accounts.
 4. Apply changes through tracked SQL, not ad-hoc `UPDATE`s.
-5. Test with a dedicated account per role on the test realm.
+5. Test with a dedicated account per role on the realm under test.
 6. Verify that a lower role is denied a higher command.
 7. Record the role, permissions, accounts, and test result.
 

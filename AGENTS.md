@@ -130,7 +130,7 @@ make build           # configure, build, install into env/dist
 make test            # build the test target and run unit tests
 make command-index   # regenerate the GM command index
 make verify-docs     # markdown link check and generated command index check
-make verify-sql      # SQL lint; auto-applies pending/custom SQL to test realm when configured
+make verify-sql      # SQL lint; local worldserver applies pending/custom SQL on restart
 make verify-cpp      # codestyle, cppcheck, -Werror build, unit tests
 make verify-smoke    # start the local stack, health-check, stop
 make verify-full     # all applicable tiers
@@ -140,7 +140,6 @@ make status          # show process and port status
 make logs            # tail server logs
 make console         # attach to the worldserver screen console
 make backup          # dump auth, characters, and world
-make test-realm CMD=setup|start|stop|status|reset
 make backup-schedule CMD=install|remove|status
 ```
 
@@ -167,7 +166,8 @@ New content is currently out of scope. When it returns:
 - Use `PreparedStatement` and the typed helpers in C++; never concatenate player input into SQL.
 - Before any write batch, run `make backup` or the procedure in
   `runbook/operation/backup-restore.md`.
-- Test SQL on the test realm first. Production writes are human-only.
+- Test SQL by linting (`python apps/codestyle/codestyle-sql.py`) and restarting the local
+  worldserver, which applies pending/custom updates (ADR-018). Production writes are human-only.
 - Direct database clients use least-privilege users and a read-only production connection. Never use
   `root`. Back up before a write batch; DBeaver has no audit or pre-write backup.
 - `smart_scripts` edits rewrite the full `(entryorguid, source_type)` block with `DELETE` + `INSERT`.

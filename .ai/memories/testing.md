@@ -1,6 +1,6 @@
 ---
-description: Test levels, the test realm, live e2e, static checks, and the tiered verification gate. Read before writing tests or claiming a change is done.
-last-verified: 2026-11-12
+description: Test levels, realm targets, live e2e, static checks, and the tiered verification gate. Read before writing tests or claiming a change is done.
+last-verified: 2026-11-20 (test realm removed, ADR-018)
 ---
 
 # Testing
@@ -15,7 +15,7 @@ The contract is [specs/testing-and-release.md](../../specs/testing-and-release.m
 - **In-process integration** — Google Test with multiple components; no client login.
 - **Live e2e** — Go under `e2e/`, `//go:build e2e`, AzerothGhost bots against a running auth+world+
   MySQL stack. Use only when the user asked or an existing test broke.
-- **SQL/data checks** — apply to a test database, verify row counts and sample rows. No e2e for
+- **SQL/data checks** — apply to the local databases, verify row counts and sample rows. No e2e for
   static data.
 - **Static content** — the content audit against `acore_world`: dangling references, quest chain
   integrity, SmartAI validity, and script registry cross-checks. Read-only, no server. Contract:
@@ -34,10 +34,12 @@ The contract is [specs/testing-and-release.md](../../specs/testing-and-release.m
   [specs/content-pipeline.md](../../specs/content-pipeline.md#verification), procedure in
   [runbook/operation/content-audit.md](../../runbook/operation/content-audit.md).
 
-## Test realm
+## Realm targets
 
-- Separate databases or a documented reset. Never point tests at production.
-- `Warden.Enabled=0` for AzerothGhost. Keep it on in production.
+- The test realm was removed ([ADR-018](../../decisions/ADR-018-realm-strategy.md)). Verification
+  runs against the local realm; a backup before any write.
+- Never point tests at production. Keep `Warden.Enabled` on locally; e2e realms (future `dev`/`ptr`)
+  run with `Warden.Enabled=0`.
 - Dedicated GM accounts; do not reuse player accounts.
 - Unique character prefixes and cleanup after each e2e test.
 
@@ -46,7 +48,7 @@ The contract is [specs/testing-and-release.md](../../specs/testing-and-release.m
 | Tier | Applies to | Must pass |
 |------|------------|-----------|
 | T0 | docs | link check, command index check, reviewer |
-| T1 | SQL/tooling | SQL lint; content audit clean or waived once the tool exists; auto apply when configured; row checks, backup; `VERIFY_SQL_APPLY=0` disables |
+| T1 | SQL/tooling | SQL lint; content audit clean or waived once the tool exists; the local worldserver applies pending/custom SQL on restart (ADR-018) |
 | T2 | C++/scripts | codestyle, cppcheck, `-Werror` build, unit tests |
 | T3 | player-visible | T2 + startup smoke + manual checklist + clean errors; live e2e when asked |
 | T4 | production | T3 + backup + staging + rollback plan + human approval |

@@ -57,9 +57,9 @@ GmApi.AllowServerControl = 0
 - `GmApi.AllowServerControl` defaults to `0`. It gates shutdown, restart, and cancel even when writes
   are enabled. A restart exits the process; an external supervisor must start it again.
 - Bind loopback or a private VPN address. Never expose it publicly.
-- The local and test realm configs both default to `GmApi.Port = 8090`. Start only one stack, or give
-  one config a different port. Otherwise the second worldserver logs `Could not bind GmApi` and its
-  API is unreachable while the other stack answers.
+- The local config defaults to `GmApi.Port = 8090`; keep the port exclusive per realm — a second
+  worldserver with the same port logs `Could not bind GmApi` and its API is unreachable while the
+  other stack answers. The launch `dev`/`ptr` realms (ADR-018) need distinct ports.
 - The secret is a credential. Keep it out of the repository, logs, and chat.
 - Restart `worldserver` after changing the config.
 

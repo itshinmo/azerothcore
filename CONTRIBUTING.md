@@ -6,7 +6,7 @@ humans and agents. Binding rules live in [AGENTS.md](AGENTS.md); procedures live
 
 New to the project? Read
 [runbook/development/environment-overview.md](runbook/development/environment-overview.md) first: it
-explains the local server, the test realm, and the bot rig, with ports and databases.
+explains the local server and the bot rig, with ports and databases.
 
 ## Scope
 
@@ -84,7 +84,7 @@ change gets an RFC first.
 | Change | Must pass |
 |--------|-----------|
 | Documentation | link check, reviewer |
-| SQL, RBAC, schema | SQL lint; auto test-realm apply when configured and SQL files are pending; row checks, backup; `VERIFY_SQL_APPLY=0` disables |
+| SQL, RBAC, schema | SQL lint; the local worldserver applies pending/custom SQL on restart (ADR-018) |
 | C++ or scripts | codestyle, cppcheck, `-Werror` build, unit tests |
 | Player-visible or critical | the C++ gate plus startup smoke and a manual checklist; live e2e when asked |
 | Production | all of the above plus backup, staging, rollback plan, human approval |

@@ -42,7 +42,8 @@ Owns access control and secret handling. Does not own game balance or individual
   `warden_checks`. It is not a full client file-integrity scan. It only covers `Win` clients:
   `WorldSession::InitWarden` creates `WardenWin` for `Win` and leaves the `OSX` branch disabled
   because it crashed the client, so a macOS client gets no checks even with `Warden.Enabled=1`.
-  Warden is enabled on local and production configurations and disabled on the e2e test realm. When
+  Warden is enabled on local and production configurations and will be disabled on the launch
+  `dev`/`ptr` realms used for e2e ([ADR-018](../decisions/ADR-018-realm-strategy.md)). When
   enabled, the worldserver also rejects an account whose stored OS is not `Win` or `OSX` before the
   session starts (`network`: invalid client OS).
 - The client is authoritative for rendering, local collision, and animation. The server validates
@@ -51,7 +52,8 @@ Owns access control and secret handling. Does not own game balance or individual
   does not force the animation.
 - Server-side water movement validation (swim flag vs `GetLiquidData()` status, swim-speed
   enforcement) is not implemented and is out of scope.
-- The test realm is not an anti-cheat environment. Do not judge cheat detection there.
+- No currently running realm is an anti-cheat test environment; judge cheat detection only on a
+  dedicated stack with Warden off (the future `dev`/`ptr` realms, ADR-018).
 
 ### Database users
 
@@ -136,6 +138,5 @@ Website work starts in Phase 3, after the base game and custom content ([ADR-013
 - [specs/gm-tools.md](gm-tools.md)
 - [.ai/memories/security.md](../.ai/memories/security.md)
 - [runbook/troubleshooting/stormwind-water.md](../runbook/troubleshooting/stormwind-water.md)
-- [runbook/troubleshooting/test-realm-stops.md](../runbook/troubleshooting/test-realm-stops.md)
 - [runbook/database/dbeaver.md](../runbook/database/dbeaver.md)
 - [runbook/gm/rbac-roles.md](../runbook/gm/rbac-roles.md)

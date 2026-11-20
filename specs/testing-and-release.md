@@ -6,7 +6,7 @@ Define how changes are verified and how they reach the test and production envir
 
 ## Scope
 
-Unit, integration, live e2e, SQL/data checks, static checks, the test realm, fork CI, and release.
+Unit, integration, live e2e, SQL/data checks, static checks, fork CI, and release.
 
 ## Boundary
 
@@ -22,24 +22,25 @@ feature spec.
 | Unit | `src/test/` | pure logic, parsers, flags, helpers, extracted behavior |
 | Integration | `src/test/` | multiple components, no client login |
 | Live e2e | `e2e/` | protocol/client-observed behavior on a running stack |
-| SQL/data | test database | row counts, constraints, sample rows |
+| SQL/data | local world database | row counts, constraints, sample rows |
 | Static content | `acore_world` via the content audit | dangling references, quest chains, SmartAI, script registry |
-| Manual | test realm and `tools/api-tests/bruno/` | player-visible behavior and GM API requests the harness cannot express |
+| Manual | local realm and `tools/api-tests/bruno/` | player-visible behavior and GM API requests the harness cannot express |
 
 ### Tiers
 
 | Tier | Applies to | Must pass |
 |------|------------|-----------|
 | T0 docs | Markdown, ADRs, runbooks | link check, command index check, reviewer |
-| T1 SQL/tooling | SQL, RBAC, schema, content data | SQL lint; content audit clean or waived once the audit tool exists; auto test-realm apply when configured and SQL files are pending; row checks, backup; `VERIFY_SQL_APPLY=0` disables |
+| T1 SQL/tooling | SQL, RBAC, schema, content data | SQL lint; content audit clean or waived once the audit tool exists; the local worldserver applies pending/custom SQL on restart (ADR-018) |
 | T2 C++/scripts | core, modules, scripts | codestyle, cppcheck, `-Werror` build, unit tests |
 | T3 player-visible | GM tools, DB writes, behavior | T2 + startup smoke + manual checklist + clean errors; live e2e when the change needs it and the user asked |
 | T4 production | deploy, config, DB | T3 + backup + staging + rollback plan + human approval |
 
-### Test realm
+### Realm targets
 
-- Separate databases or a documented reset.
-- `Warden.Enabled=0` for AzerothGhost.
+- The test realm was removed on 2026-11-20 ([ADR-018](../decisions/ADR-018-realm-strategy.md));
+  verification runs against the local realm. Live e2e is dormant until the launch `dev`/`ptr`
+  realms exist, and then requires a stack with `Warden.Enabled=0` for AzerothGhost.
 - Start and stop explicitly; the realm is not tied to a client session.
 - Dedicated GM accounts per role.
 - Unique character prefixes; cleanup after each e2e test.
@@ -71,9 +72,8 @@ feature spec.
 ### Release
 
 - Local build and install.
-- Test realm verification.
-- Content audit report attached, with zero unwaived blockers, once the audit tool exists; the
-  coverage number is recorded when available.
+- Verification per the tiers above; content audit report attached, with zero unwaived blockers, once
+  the audit tool exists; the coverage number is recorded when available.
 - Production: Ubuntu 24.04, native binaries, systemd, MySQL on the same host.
 - Backup before deploy; rollback plan; health check after.
 - Production writes are human-only.
@@ -96,14 +96,13 @@ feature spec.
 ## Observability
 
 - CI job logs.
-- Test realm `Errors.log`.
+- `Errors.log` of the realm under test.
 - Deploy log with commit, backup path, and health result.
 
 ## References
 
 - [.ai/memories/testing.md](../.ai/memories/testing.md)
 - [.agents/docs/e2e-policy.md](../.agents/docs/e2e-policy.md)
-- [runbook/operation/test-realm.md](../runbook/operation/test-realm.md)
 - [runbook/operation/production-deploy.md](../runbook/operation/production-deploy.md)
 - [decisions/ADR-007-verification-gates-and-fork-ci.md](../decisions/ADR-007-verification-gates-and-fork-ci.md)
 - [decisions/ADR-014-bruno-api-test-client.md](../decisions/ADR-014-bruno-api-test-client.md)

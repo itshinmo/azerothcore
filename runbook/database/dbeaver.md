@@ -39,15 +39,11 @@ brew install --cask sequel-ace
 4. Finish, then open the database. Repeat for `acore_auth` and `acore_characters`, or switch the
    current database in the SQL editor with `USE acore_auth;`.
 
-## Test realm connection
+## Extra realms
 
-Use the same host and port, but:
-
-- User: `acore_test`
-- Password: the value in the test config (`env/test/etc/worldserver.conf`) or `tools/dev/config.env`
-- Databases: `acore_test_auth`, `acore_test_characters`, `acore_test_world`
-
-Never point the test connection at the live `acore_*` databases.
+The test realm was removed on 2026-11-20 ([ADR-018](../../decisions/ADR-018-realm-strategy.md));
+only the local `acore_*` databases exist. At launch, `dev` and `ptr` realms get their own
+connections, credentials, and least-privilege users.
 
 ## Production connection
 
@@ -136,9 +132,9 @@ Common read-only queries are in [common-queries.md](common-queries.md).
 - **Public Key Retrieval is not allowed:** add `allowPublicKeyRetrieval=true`, or use SSL.
 - **Access denied:** user/host grant mismatch; check the user's `@host` (bootstrap creates
   `acore`@`localhost`; a TCP connection may match `acore`@`127.0.0.1`) and the password.
-- **Unknown database:** wrong database name; use `acore_*` or `acore_test_*`.
+- **Unknown database:** wrong database name; use the local `acore_*` names.
 - **Communications link failure:** MySQL down, wrong port, or tunnel closed.
-- **Read-only error:** expected on production; use the local/test connection.
+- **Read-only error:** expected on production; use the local connection.
 - **Lock wait timeout:** another transaction holds rows; roll back and retry with a narrower scope.
 
 ## Verification

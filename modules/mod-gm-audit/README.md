@@ -4,11 +4,8 @@ Records GM command attempts in `acore_auth.gm_audit_log`.
 
 ## Apply
 
-The table is created by `data/sql/custom/db_auth/gm_audit.sql`. Apply it with the startup updater or:
-
-```bash
-./env/dist/bin/worldserver -d -c env/test/etc/worldserver.conf
-```
+The table is created by `data/sql/custom/db_auth/gm_audit.sql`. Lint it, then let the startup
+updater apply it (`make stop && make start`).
 
 If the insert returns a non-fatal error, the command is aborted. A missing table or column is a schema
 error: the core treats it as fatal and shuts the server down. Apply the SQL before enabling the module.

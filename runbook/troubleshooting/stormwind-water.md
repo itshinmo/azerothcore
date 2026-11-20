@@ -162,8 +162,8 @@ client is not authoritative. Keep a second client copy for verification, for exa
   skip the swim animation or walk underwater. The server still applies underwater state and breath
   from the map/VMap liquid, but it does not force the swim animation. Server-side water movement
   validation is not implemented.
-- The test realm has Warden off by design. Do not use it to judge anti-cheat behavior or to test
-  untrusted clients.
+- With `Warden` on, a modified client can be rejected or flagged; client-trust testing belongs on a
+  stack with Warden off (the future `dev`/`ptr` realms, [ADR-018](../../decisions/ADR-018-realm-strategy.md)).
 - This is a general 3.3.5a client-trust gap, not a GM or RBAC bypass. GM mode is server-granted.
 
 ## Next steps

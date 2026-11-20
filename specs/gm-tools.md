@@ -50,7 +50,7 @@ Owns the GM workflow and tooling. Does not own the game commands themselves; the
 - Roles are permission sets, not `gmlevel` aliases.
 - Changes are tracked SQL in `data/sql/custom/db_auth/`; presets live in
   `gm_rbac_presets.sql` and are documented in [runbook/gm/rbac-roles.md](../runbook/gm/rbac-roles.md).
-- Test each role with a dedicated account on the test realm.
+- Test each role with a dedicated account on the realm under test.
 
 ### Audit
 
@@ -132,7 +132,7 @@ Owns the GM workflow and tooling. Does not own the game commands themselves; the
 - Manual API: Bruno collection (`tools/api-tests/bruno/`) plus the curl recipe for skew, nonce
   replay, rate limit, input validation, actor missing/unknown, RBAC denial, target offline,
   self-target, busy target.
-- Integration: test realm with each role; read endpoint, kick/unstuck write, denied write, audit row
+- Integration: live stack with each role; read endpoint, kick/unstuck write, denied write, audit row
   with the outcome.
 - Manual: in-game addon install, command execution, audit review.
 - Negative: expired signature, replayed nonce, wrong role, offline target, audit failure.

@@ -27,31 +27,28 @@ gate (ADR-013).
 They can run at the same time because every port and database is different. Never point one
 environment's client at another environment's ports.
 
-| | Local (development) | Test realm | Bot rig |
-|---|---|---|---|
-| Purpose | Normal play, manual testing, GM API | Risky changes and e2e before local | Automated playerbot dungeon runs |
-| Directory | this checkout | this checkout | `~/wow/playerbot-rig` (outside the repo) |
-| Auth port | 3724 | 3824 | 3725 |
-| World port | 8085 | 8185 | 8086 |
-| GM API port | 8090 | 8090 | not installed |
-| Databases | `acore_auth`, `acore_characters`, `acore_world` | `acore_test_auth`, `acore_test_characters`, `acore_test_world` | `acore_pb_auth`, `acore_pb_characters`, `acore_pb_world` |
-| Client copy | `~/Games/WoTLK` (currently a remote realm; point it at 127.0.0.1 to play local) | `~/Games/wotlk-clean` (already points at 3824) | `~/Games/wotlk-test` (already points at 3725) |
-| Start with | `make start` | `make test-realm CMD=start` | manual `screen` commands, see [playerbot-rig.md](../operation/playerbot-rig.md) |
+| | Local (development) | Bot rig |
+|---|---|---|
+| Purpose | Normal play, manual testing, GM API | Automated playerbot dungeon runs |
+| Directory | this checkout | `~/wow/playerbot-rig` (outside the repo) |
+| Auth port | 3724 | 3725 |
+| World port | 8085 | 8086 |
+| GM API port | 8090 | not installed |
+| Databases | `acore_auth`, `acore_characters`, `acore_world` | `acore_pb_auth`, `acore_pb_characters`, `acore_pb_world` |
+| Client copy | `~/Games/WoTLK` (currently a remote realm; point it at 127.0.0.1 to play local) | `~/Games/wotlk-test` (already points at 3725) |
+| Start with | `make start` | manual `screen` commands, see [playerbot-rig.md](../operation/playerbot-rig.md) |
 
 Warnings:
 
-- **GM API port 8090 is shared by local and test.** Do not run both stacks at once; the second one
-  cannot bind and its API will not answer.
 - The bot rig is a **separate checkout and build**. Changes in this repository do not reach it until
   the rig is rebuilt.
-- The bot rig's databases are disposable copies. Playerbot runs never touch the local or test
-  characters.
+- The bot rig's databases are disposable copies. Playerbot runs never touch the local characters.
 
 ## How the pieces fit
 
 ```text
 game client
-    |  login (3724 / 3824 / 3725)
+    |  login (3724 / 3725)
     v
 authserver ---- MySQL: accounts, realmlist, bans, session keys
     |  realm list (world port + address)
@@ -91,7 +88,8 @@ A healthy local start looks like this:
 | Write code, run unit tests | Local build only; no server needed |
 | Play the game and check behavior | Local |
 | GM commands, addon, GM API | Local |
-| Risky SQL or e2e checks | Test realm |
+| Risky SQL checks | Local, after a backup (lint first; ADR-018) |
+| Live e2e | Dormant until the launch `dev`/`ptr` realms (ADR-018) |
 | Automated dungeon/quest verification | Bot rig |
 | Content audits and exports | Local database, read-only |
 
@@ -145,8 +143,7 @@ Rules:
 
 - **Never run a second worldserver against `acore_characters`.** Local uses `acore_*`, the rig uses
   `acore_pb_*`; a third worldserver on either character DB can corrupt characters.
-- Keep the GM API on `127.0.0.1:8090`. It is not a LAN service, and the test realm also wants 8090,
-  so local and test realm cannot run together.
+- Keep the GM API on `127.0.0.1:8090`. It is not a LAN service.
 - DHCP can move the LAN IP; reserve it or re-check before each session.
 - If the macOS firewall is enabled, allow incoming connections for `worldserver` and `authserver`.
 
@@ -157,7 +154,6 @@ Rules:
 | `build/` | normal build, ignored |
 | `build-verify/` | tests and `-Werror` build, ignored |
 | `env/dist/bin`, `env/dist/etc`, `env/dist/logs` | local install: binaries, live configs, logs, ignored |
-| `env/test/etc`, `env/test/logs` | test realm config and logs, ignored |
 | `src/` | C++ source |
 | `data/sql/` | schema, updates, custom project SQL |
 | `modules/` | project and external modules |
@@ -192,6 +188,5 @@ Rules:
 - [commands.md](commands.md)
 - [start-stop.md](../operation/start-stop.md)
 - [health-check.md](../operation/health-check.md)
-- [test-realm.md](../operation/test-realm.md)
 - [playerbot-rig.md](../operation/playerbot-rig.md)
 - [logs-and-monitoring.md](../operation/logs-and-monitoring.md)

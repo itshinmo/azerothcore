@@ -23,6 +23,6 @@ change updates its spec in the same change.
 - [`gm-tools.md`](gm-tools.md) — GM handbook, RBAC, audit, GM API, future website, in-game addon.
 - [`gm-api.openapi.yaml`](gm-api.openapi.yaml) — wire contract for the GM API endpoints
   (machine-readable; skips the prose spec template on purpose).
-- [`testing-and-release.md`](testing-and-release.md) — test levels, tiers, test realm, CI, release.
+- [`testing-and-release.md`](testing-and-release.md) — test levels, tiers, realm targets, CI, release.
 - [`security.md`](security.md) — threat model, database users, client access, GM API, secrets, audit.
 - [`shop.md`](shop.md) — shop policy and open trust decision. No implementation yet.

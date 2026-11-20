@@ -28,16 +28,11 @@ for those commands are `<redacted>`.
 
 ## Apply
 
-Table SQL: `data/sql/custom/db_auth/gm_audit.sql`.
+Table SQL: `data/sql/custom/db_auth/gm_audit.sql`. Lint it, then let the startup updater apply it:
 
 ```bash
-make verify-sql
-```
-
-or:
-
-```bash
-./env/dist/bin/worldserver -d -c env/test/etc/worldserver.conf
+python3 apps/codestyle/codestyle-sql.py
+make stop && make start
 ```
 
 ## Query

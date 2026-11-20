@@ -21,7 +21,10 @@ Authoring rules for the existing suite live in the harness:
 1. Running AzerothCore **3.3.5a** authserver + worldserver.
 2. MySQL with `acore_auth`, `acore_characters`, and `acore_world` (world DB is required for spawn cleanup and many fixtures).
 3. Go **1.26+** and network reachability to auth (default `127.0.0.1:3724`).
-4. `Warden.Enabled = 0` on the worldserver, until the harness bug below is fixed upstream.
+4. A stack with `Warden.Enabled = 0` — **dormant since the test realm was removed**
+   ([ADR-018](../decisions/ADR-018-realm-strategy.md)); the local realm keeps Warden on. When the
+   launch `dev`/`ptr` realms exist, run the harness against one of them, until the harness bug
+   below is fixed upstream.
    Symptom: every login fails with `attempted to log in using invalid client OS ()`.
    `WorldSocket::HandleAuthSession` reads `account.os` from the database and, when Warden is
    active, rejects anything that is not `Win` or `OSX`. That column is written by the

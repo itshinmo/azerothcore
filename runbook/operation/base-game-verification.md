@@ -99,7 +99,6 @@ Record the map id of any problem (`.gps` shows it) so the audit can trace the cr
 ## Known-issue watchlist
 
 - `libSiliconPatch` stays off until WoWSilicon#67 closes; keep the second client copy without mods.
-- Test realm death log capture (supervisor log) on next occurrence.
 - 16 remaining C-06 phase-reachability findings from the content audit — consult when a phase
   script misbehaves in the field.
 

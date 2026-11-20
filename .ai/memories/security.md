@@ -20,8 +20,8 @@ The contract is [specs/security.md](../../specs/security.md).
 - Auth checks the account and accepted client build. `StrictVersionCheck=1` adds an executable SHA1
   check; MPQs are not checked at login.
 - Warden is runtime anti-cheat (memory, Lua, driver/module, configured MPQ checks), not a full file
-  scan. It is off on the e2e test realm. With Warden on, a non-`Win`/`OSX` account OS is rejected
-  before the session starts.
+  scan. It is off on e2e realms (the future `dev`/`ptr` realms, ADR-018). With Warden on, a
+  non-`Win`/`OSX` account OS is rejected before the session starts.
 - Client collision and animation are not server-authoritative. A modified client can skip the swim
   animation; the server still applies underwater and breath state from map/VMap liquid. Water
   movement validation is not implemented. Diagnosis:

@@ -5,7 +5,7 @@
 First-time local setup, or rebuilding a Mac after a clean checkout.
 
 Read [environment-overview.md](environment-overview.md) first if you do not yet know the difference
-between the local server, the test realm, and the bot rig. This page only covers the local one.
+between the local server and the bot rig. This page only covers the local one.
 
 ## What you are setting up
 
@@ -82,8 +82,8 @@ game client is not part of this repository; it needs `DataDir` with `dbc/`, `map
    ls "$DATA_DIR"/mmaps | head
    ```
 
-7. Optional: copy `tools/dev/config.env.example` to `tools/dev/config.env` for test-realm and backup
-   overrides. Do not commit it.
+7. Optional: copy `tools/dev/config.env.example` to `tools/dev/config.env` for backup overrides.
+   Do not commit it.
 
 8. Start the stack and create a GM account:
 
@@ -112,7 +112,7 @@ game client is not part of this repository; it needs `DataDir` with `dbc/`, `map
    ```
 
 10. Point a client at the local realm. Use a copy whose `Data/enUS/realmlist.wtf` says
-    `set realmlist 127.0.0.1`; do not reuse the test-realm or bot-rig client copy. The local
+    `set realmlist 127.0.0.1`; do not reuse the bot-rig client copy. The local
     `acore_auth.realmlist` row must carry `port = 8085` and `flag = 0`.
 
 ## Verification

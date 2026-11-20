@@ -33,7 +33,6 @@ I do it"; behavior lives in `specs/`.
 - [cleanup.md](operation/cleanup.md) — reclaim disk space from builds, dumps, and main-server logs.
 - [apply-sql-update.md](operation/apply-sql-update.md) — pending and custom SQL.
 - [rollback.md](operation/rollback.md) — database, binary, and config rollback.
-- [test-realm.md](operation/test-realm.md) — isolated realm for e2e and risky changes.
 - [content-audit.md](operation/content-audit.md) — read-only world content audit and waivers.
 - [bug-reports.md](operation/bug-reports.md) — player bug reports: triage lifecycle and fix loop.
 - [base-game-verification.md](operation/base-game-verification.md) — Phase 1 playtest checklist and
@@ -73,8 +72,6 @@ I do it"; behavior lives in `specs/`.
 - [performance.md](troubleshooting/performance.md)
 - [stormwind-water.md](troubleshooting/stormwind-water.md) — Stormwind canal water and swim
   animation diagnosis.
-- [test-realm-stops.md](troubleshooting/test-realm-stops.md) — test realm stops after the client
-  exits.
 
 ### Audits
 

@@ -1,6 +1,6 @@
 ---
 name: build-and-run-server
-description: Use when building, installing, starting, stopping, or restarting authserver and worldserver locally or on the test realm.
+description: Use when building, installing, starting, stopping, or restarting authserver and worldserver locally or on another realm stack.
 ---
 
 # build-and-run-server

@@ -8,7 +8,6 @@ Removes disposable build, backup, and log artifacts. Dry-run by default; nothing
 ```bash
 make cleanup                          # dry run: list what would go
 make cleanup ARGS="--yes"             # delete
-make cleanup ARGS="--yes --test-db"   # also drop acore_test_* schemas
 tools/dev/cleanup.sh --help           # same options without make
 ```
 
@@ -17,7 +16,6 @@ tools/dev/cleanup.sh --help           # same options without make
 | `--yes`, `-y` | off | Delete. Without it the script only reports sizes |
 | `--backups-keep N` | `7` | Keep the N newest dump directories in `var/backups/manual/` and `var/backups/verify/`; N must be at least 1 |
 | `--logs-days N` | `7` | Delete main-server `*.log*` older than N days in `env/dist/logs/` |
-| `--test-db` | off | Drop `acore_test_auth`, `acore_test_characters`, `acore_test_world` |
 
 ## What it removes
 
@@ -25,8 +23,6 @@ tools/dev/cleanup.sh --help           # same options without make
 - Old database dumps under `var/backups/`. The newest N dumps of each type stay. This is stricter
   than the 14-day prune in `tools/dev/backup.sh`; the dumps themselves are unchanged.
 - Age-gated main-server logs. Active logs have a current mtime and are never matched.
-- Optionally, the three `acore_test_*` databases, dropped **without a backup**. They are a
-  disposable schema copy and are re-imported when a test realm is next needed.
 
 ## What it never touches
 
@@ -39,17 +35,6 @@ tools/dev/cleanup.sh --help           # same options without make
 
 - Dry run unless `--yes` is passed.
 - Refuses to delete `build-verify` while a `verify-cpp` build is active.
-- `--test-db` refuses to run while the test realm is listening on its auth or world port, rejects
-  `root`, and needs a dedicated admin account:
-
-```bash
-export MYSQL_ADMIN_USER=acore_admin
-export MYSQL_ADMIN_PASSWORD=...
-tools/dev/cleanup.sh --yes --test-db
-```
-
-`TEST_DB_HOST` and `TEST_DB_PORT` select the target instance (default `127.0.0.1:3306`). Prefer
-exporting the credentials over typing them on the command line.
 
 ## Weekly schedule on the VPS
 

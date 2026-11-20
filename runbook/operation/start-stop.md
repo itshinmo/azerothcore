@@ -2,7 +2,8 @@
 
 ## When to use
 
-Starting the local or test stack, restarting after a config change, or shutting down cleanly.
+Starting the local stack, restarting after a config change, or shutting down cleanly. Other realm
+stacks (`dev`/`ptr` at launch) use their own configs and procedures.
 
 ## Prerequisites
 
@@ -37,10 +38,10 @@ Starting the local or test stack, restarting after a config change, or shutting 
    background inside detached `screen` sessions.
 
    authserver marks every realm offline on boot, after the worldserver has already cleared that bit.
-   `make start` and `make test-realm CMD=start` clear the offline bit for this realm after authserver
-   starts and check the database row. authserver caches the realm list and refreshes it every
-   `RealmsStateUpdateDelay` seconds (default 20), so a client can still see the realm as offline for
-   up to that long. For a manual start, run:
+   `make start` clears the offline bit for this realm after authserver starts and checks the database
+   row. authserver caches the realm list and refreshes it every `RealmsStateUpdateDelay` seconds
+   (default 20), so a client can still see the realm as offline for up to that long. For a manual
+   start, run:
 
    ```sql
    UPDATE acore_auth.realmlist SET flag = flag & ~2 WHERE id = <realm id>;

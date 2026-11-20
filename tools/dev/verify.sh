@@ -8,7 +8,6 @@ ensure_dirs
 
 JOBS="$(sysctl -n hw.ncpu 2>/dev/null || nproc 2>/dev/null || echo 4)"
 VERIFY_BUILD="$ROOT/build-verify"
-TEST_WORLD_CONF="$ROOT/env/test/etc/worldserver.conf"
 
 run_docs() {
     printf '\n== docs ==\n'
@@ -24,100 +23,7 @@ run_tools() {
 run_sql() {
     printf '\n== sql ==\n'
     python3 "$ROOT/apps/codestyle/codestyle-sql.py"
-
-    local apply_mode="${VERIFY_SQL_APPLY:-auto}"
-    if [ "$apply_mode" = "0" ]; then
-        printf 'SQL apply disabled (VERIFY_SQL_APPLY=0); lint only.\n'
-        return 0
-    fi
-    if [ ! -f "$TEST_WORLD_CONF" ]; then
-        if [ "$apply_mode" = "1" ]; then
-            printf 'VERIFY_SQL_APPLY=1 but %s is missing; set up the test realm first.\n' "$TEST_WORLD_CONF" >&2
-            return 1
-        fi
-        printf 'test realm not configured; SQL lint only. See runbook/operation/test-realm.md.\n'
-        return 0
-    fi
-
-    local pending_count
-    pending_count="$(find "$ROOT"/data/sql/updates/pending_db_* "$ROOT/data/sql/custom" -type f -name '*.sql' 2>/dev/null | wc -l | tr -d ' ')"
-    if [ "$apply_mode" = "auto" ] && [ "$pending_count" -eq 0 ]; then
-        printf 'test realm configured but no pending/custom SQL files; lint only.\n'
-        printf 'Set VERIFY_SQL_APPLY=1 to force an update run.\n'
-        return 0
-    fi
-
-    local local_world local_auth local_char test_world test_auth test_char
-    local_world="$(config_value 'WorldDatabaseInfo' "$WORLD_CONF")"
-    local_auth="$(config_value 'LoginDatabaseInfo' "$AUTH_CONF")"
-    local_char="$(config_value 'CharacterDatabaseInfo' "$WORLD_CONF")"
-    test_world="$(config_value 'WorldDatabaseInfo' "$TEST_WORLD_CONF")"
-    test_auth="$(config_value 'LoginDatabaseInfo' "$TEST_WORLD_CONF")"
-    test_char="$(config_value 'CharacterDatabaseInfo' "$TEST_WORLD_CONF")"
-
-    check_test_db() {
-        local label="$1" local_info="$2" test_info="$3" local_db test_db
-        local_db="$(db_field "$local_info" 5)"
-        test_db="$(db_field "$test_info" 5)"
-        if [ -z "$test_db" ] || [ "$local_db" = "$test_db" ] \
-            || ! printf '%s' "$test_db" | grep -qi 'test'; then
-            printf '%s test database is not distinct: local=%s test=%s\n' "$label" "$local_db" "$test_db" >&2
-            return 1
-        fi
-    }
-
-    check_test_db world "$local_world" "$test_world" || return 1
-    check_test_db auth "$local_auth" "$test_auth" || return 1
-    check_test_db characters "$local_char" "$test_char" || return 1
-
-    local test_auth_db test_char_db test_world_db
-    test_auth_db="$(db_field "$test_auth" 5)"
-    test_char_db="$(db_field "$test_char" 5)"
-    test_world_db="$(db_field "$test_world" 5)"
-    if [ "$test_auth_db" = "$test_char_db" ] || [ "$test_auth_db" = "$test_world_db" ] \
-        || [ "$test_char_db" = "$test_world_db" ]; then
-        printf 'test auth, characters, and world databases must be distinct\n' >&2
-        return 1
-    fi
-
-    if [ "$(db_field "$test_world" 1)/$(db_field "$test_world" 3)" != "$(db_field "$test_auth" 1)/$(db_field "$test_auth" 3)" ] \
-        || [ "$(db_field "$test_world" 1)/$(db_field "$test_world" 3)" != "$(db_field "$test_char" 1)/$(db_field "$test_char" 3)" ]; then
-        printf 'test databases use different hosts or users; extend this check\n' >&2
-        return 1
-    fi
-
-    local old_umask stamp backup_dir
-    stamp="$(date +%Y%m%d-%H%M%S)"
-    backup_dir="$BACKUP_DIR/verify/$stamp"
-    old_umask="$(umask)"
-    umask 077
-    mkdir -p "$backup_dir"
-    chmod 700 "$backup_dir"
-    printf 'backing up test databases to %s ...\n' "$backup_dir"
-    MYSQL_PWD="$(db_field "$test_world" 4)" mysqldump \
-        -h "$(db_field "$test_world" 1)" -P "$(db_field "$test_world" 2)" \
-        -u "$(db_field "$test_world" 3)" --single-transaction --routines --triggers \
-        --no-tablespaces --databases "$(db_field "$test_auth" 5)" "$(db_field "$test_char" 5)" "$(db_field "$test_world" 5)" \
-        >"$backup_dir/test.sql"
-    umask "$old_umask"
-
-    printf 'applying SQL updates to the test realm with worldserver -d ...\n'
-    "$BIN_DIR/worldserver" -d -c "$TEST_WORLD_CONF" >"$RUN_DIR/worldserver-test-apply.log" 2>&1
-
-    local updates creatures
-    updates="$(mysql_from_info "$test_world" "$(db_field "$test_world" 5)" "SELECT COUNT(*) FROM updates")"
-    creatures="$(mysql_from_info "$test_world" "$(db_field "$test_world" 5)" "SELECT COUNT(*) FROM creature")"
-    if [ "${updates:-0}" -lt 1 ] || [ "${creatures:-0}" -lt 1 ]; then
-        printf 'test-realm row checks failed: updates=%s creatures=%s\n' "${updates:-0}" "${creatures:-0}" >&2
-        return 1
-    fi
-    printf 'test-realm apply ok: updates=%s creatures=%s log=%s\n' "$updates" "$creatures" "$RUN_DIR/worldserver-test-apply.log"
-    printf 'test backup: %s\n' "$backup_dir/test.sql"
-
-    local retention_days="${VERIFY_BACKUP_RETENTION_DAYS:-7}" old
-    while IFS= read -r -d '' old; do
-        rm -rf "$old"
-    done < <(find "$BACKUP_DIR/verify" -maxdepth 1 -type d -name '20*' -mtime +"$retention_days" -print0)
+    printf 'SQL lint only; the local worldserver applies pending/custom updates on restart (ADR-018).\n'
 }
 
 run_cpp() {

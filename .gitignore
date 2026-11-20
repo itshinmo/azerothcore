@@ -20,8 +20,6 @@
 !/var/ccache/.gitkeep
 /env/dist/*
 !/env/dist/.gitkeep
-/env/test/*
-!/env/test/.gitkeep
 /env/export/*
 /env/export.tmp/*
 /env/export.old/*

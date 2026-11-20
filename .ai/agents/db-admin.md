@@ -30,7 +30,8 @@ description: Use when inspecting or changing the database, designing a schema, w
 
 1. Read `runbook/database/schema-guide.md` and the relevant table definitions.
 2. Take a backup with `make backup` or `runbook/operation/backup-restore.md`.
-3. Test on the test realm first.
+3. Test the SQL with the linter first (`python apps/codestyle/codestyle-sql.py`); the local
+   worldserver applies pending/custom updates on restart (ADR-018).
 4. Write re-applicable SQL; use a transaction where MySQL supports it.
 5. Verify with row counts and before/after samples.
 6. Record the audit entry and hand off the evidence.

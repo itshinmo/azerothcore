@@ -8,7 +8,8 @@ description: Use before handing a change to review. Picks the right verification
 ## Prerequisites
 
 - The change and its acceptance criteria.
-- The test realm for anything player-visible.
+- The target realm for anything player-visible (the local realm until the launch `dev`/`ptr` realms
+  exist; ADR-018).
 - A backup for any database write.
 
 ## Tiers
@@ -16,7 +17,7 @@ description: Use before handing a change to review. Picks the right verification
 | Tier | Applies to | Commands |
 |------|------------|----------|
 | T0 docs | Markdown, ADRs, runbooks | `make verify-docs` |
-| T1 SQL/tooling | SQL, RBAC, schema | `make verify-sql` (auto test-realm apply for pending/custom SQL when configured; `VERIFY_SQL_APPLY=0` lint only) |
+| T1 SQL/tooling | SQL, RBAC, schema | `make verify-sql` (lint; the local worldserver applies pending/custom SQL on restart, ADR-018) |
 | T2 C++/scripts | core, modules, scripts | `make verify-cpp` |
 | T3 player-visible | GM tools, DB writes, behavior | `make verify-smoke`, then `make verify-full`; live e2e when asked |
 | T4 production | deploy, config, DB | T3 + backup + staging + rollback plan |
@@ -48,4 +49,3 @@ A pass/fail table per check, exact commands, results, backup paths, and untested
 
 - [specs/testing-and-release.md](../../../specs/testing-and-release.md)
 - [.ai/memories/testing.md](../../memories/testing.md)
-- [runbook/operation/test-realm.md](../../../runbook/operation/test-realm.md)

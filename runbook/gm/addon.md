@@ -90,7 +90,7 @@ server state.
 
 ## Test
 
-1. Log in with a role account on the test realm.
+1. Log in with a role account on the local realm.
 2. Run `/gmhelper`; the three tabs render, **Commands** is active.
 3. Click `.server info`; output appears in chat.
 4. Click **GM mode** twice; chat shows `.gm on` then `.gm off`, and the label follows.
@@ -106,12 +106,11 @@ server state.
 11. Open **Self**: click **God mode**; chat shows the command and god mode flips. Click again to
     flip back. **Level 80 (self)** and **Clear my lockouts** behave as their typed equivalents.
 12. Try a command the role does not have, such as `.additem` from `support`; the server denies it.
-13. Confirm attempts in `acore_test_auth.gm_audit_log` on the test realm (or `acore_auth` locally),
-    or via the GM API.
+13. Confirm attempts in `acore_auth.gm_audit_log` (locally), or via the GM API.
 
 Checked on the local realm on 2026-11-13: menu, GM mode toggle, visibility buttons, lookups,
 teleport, and input rendering. Instances, Self, and the two-column teleport list (0.3.0) are new and need the same local
-client pass. Test realm client login remains unverified; use the local realm for client checks.
+client pass. Use the local realm for client checks.
 
 ## Test offline (no client)
 

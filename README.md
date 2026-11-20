@@ -16,7 +16,7 @@ comes later:
 - base-game verification: scripts, quests, NPC spawns and behavior, client-observed behavior,
   stability
 - agent and human knowledge layer under `.ai/`, `specs/`, `decisions/`, and `runbook/`
-- local development, test realm, backup, and verification tooling
+- local development, backup, and verification tooling
 - a documented database access workflow using DBeaver
 - GM workflow: command handbook, least-privilege roles, audit, GM API with read and audited write
   endpoints, in-game addon, Bruno API collection

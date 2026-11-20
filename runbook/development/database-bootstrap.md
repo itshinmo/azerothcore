@@ -2,7 +2,7 @@
 
 ## When to use
 
-First-time setup, a clean test realm, or rebuilding a database from the SQL tree.
+First-time setup or rebuilding a database from the SQL tree.
 
 ## Prerequisites
 

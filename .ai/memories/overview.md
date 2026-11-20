@@ -20,7 +20,7 @@ launch. The work now is:
 - base-game verification: scripts, quests, NPC spawns and behavior, client-observed behavior,
   stability
 - agent and human knowledge layer
-- local development, test realm, backup, and verification tooling
+- local development, backup, and verification tooling
 - database access through DBeaver (no in-repo database GUI)
 - GM workflow: handbook, RBAC, audit, GM API, in-game addon; visual layer moves to the future server
   website in Phase 3
@@ -38,13 +38,13 @@ does not collide.
 
 - Build: `build/`, Release, Apple clang, `SCRIPTS=static`, `MODULES=static`, PCH on.
 - Install prefix: `env/dist/` with `bin/authserver`, `bin/worldserver`, `etc/`, `logs/`.
-- MySQL 8.4 is used. Databases `acore_auth`, `acore_characters`, and `acore_world` are imported;
-  isolated test databases are `acore_test_auth`, `acore_test_characters`, `acore_test_world`.
+- MySQL 8.4 is used. Databases `acore_auth`, `acore_characters`, and `acore_world` are imported. The
+  former `acore_test_*` databases and the test realm were removed on 2026-11-20
+  ([ADR-018](../../decisions/ADR-018-realm-strategy.md)).
 - Client data: `DataDir` points to a local `Data/` tree with `dbc/`, `maps/`, `vmaps/`, `mmaps/`.
-- Ports: local authserver 3724, worldserver 8085; test realm authserver 3824, worldserver 8185.
-- Test realm: built and usable with `make test-realm CMD=setup|start|stop|status|reset`; see
-  [runbook/operation/test-realm.md](../../runbook/operation/test-realm.md). Production: not deployed.
-  Warden is on in the local config and must be off on the dedicated e2e test realm.
+- Ports: local authserver 3724, worldserver 8085. Production: not deployed; at launch the local
+  realm is reset and renamed `live`, and `dev` + `ptr` realms are created.
+  Warden is on in the local config and must be off on e2e realms.
 
 ## Where things are
 

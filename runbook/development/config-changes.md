@@ -31,7 +31,7 @@ Key settings:
 | `RealmID` | realm row |
 | `WorldServerPort` | 8085 default |
 | `Updates.EnableDatabases` / `Updates.AutoSetup` | schema updater |
-| `Warden.Enabled` | runtime anti-cheat; off on e2e test realm |
+| `Warden.Enabled` | runtime anti-cheat; keep on locally; off on the future `dev`/`ptr` realms (ADR-018) |
 | `SOAP.Enabled` / `Ra.Enable` | remote admin; off unless protected |
 | `Console.Enable` | interactive console thread; 0 for a service with null stdin |
 

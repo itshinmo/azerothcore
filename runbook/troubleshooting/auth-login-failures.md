@@ -44,8 +44,8 @@ session.
    default it does not verify the executable checksum (`StrictVersionCheck=1` adds a SHA1 proof from
    `build_info`), and MPQs are not hashed at login. With Warden enabled, the worldserver rejects an
    account whose stored OS is not `Win` or `OSX` before the session starts (`network`: invalid client
-   OS). Test realm: `Warden.Enabled=0`; production: keep it on. Contract:
-   [specs/security.md](../../specs/security.md).
+   OS). Local and production keep Warden on; e2e realms (future `dev`/`ptr`, ADR-018) run with
+   `Warden.Enabled=0`. Contract: [specs/security.md](../../specs/security.md).
 
 ## Common causes
 
