@@ -27,12 +27,13 @@
    Toys stay per character with the journal's 69 baseline seeds; no custom toys.
 4. **Transmogrifier NPC**: entry `910012` ("Warpweaver", remapped from the upstream default 190012,
    which sits below the reserved creature range per [the ID registry](../runbook/database/id-registry.md);
-   `npc_transmogrifier` is script-name driven, so only the SQL changes). Spawned in the ten capitals
-   (Stormwind, Ironforge, Darnassus, Exodar, Orgrimmar, Undercity, Thunder Bluff, Silvermoon,
-   Shattrath, Dalaran) by `data/sql/custom/db_world/collections_npc_spawns.sql`, spawn GUID block
-   `5400001–5400010` (kept ~100k above the table's max GUID so upstream spawn updates do not land
-   in it). The file's re-apply DELETEs every spawn of the template, so test `.npc add` strays do
-   not survive. Players without the addon use the NPC gossip; the addon path is primary.
+   `npc_transmogrifier` is script-name driven, so only the SQL changes). Spawned **next to each
+   capital's auction house** — where players gather (owner decision 2026-11-20; Shattrath's stands
+   at the Lower City bank, that city has no auction house) — by
+   `data/sql/custom/db_world/collections_npc_spawns.sql`, spawn GUID block `5400001–5400010`
+   (kept ~100k above the table's max GUID so upstream spawn updates do not land in it). The
+   file's re-apply DELETEs every spawn of the template, so test `.npc add` strays do not survive.
+   Players without the addon use the NPC gossip; the addon path is primary.
 5. **Player-facing access stays addon-first**; at launch the addon folders embed into the shipped
    client MPQ patch ([RFC-002](../rfcs/active/RFC-002-collections-transmog.md)). The GM API, RBAC,
    and audit are untouched — collections is player self-service.
