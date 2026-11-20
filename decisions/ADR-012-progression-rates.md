@@ -116,3 +116,23 @@ default they stay leveling accelerators, never the fastest path. Target feel: sl
 3. **Not affected:** the 2x default, the no-per-account-override rule, and the everything-else-at-1x
    rule stand unchanged. Riding training and the first mount are out of scope by owner decision
    (RFC-003 amendment; the "free mount at 20" item was removed before implementation).
+
+## Revision 2026-11-20 (2) — dungeon XP split
+
+Same owner decision session as the revision above (RFC-003 Group A wrap-up): with the rate
+analysis showing repeat dungeon clears at roughly ~260k XP/h — competitive with world questing
+(~300k/h) — dungeon spam was the obvious "blast to 80" path. Adopted the retail/Wow-Forever split
+(`modules/mod-dungeon-xp`, owner picked "decrease the mob rate more than half"):
+
+1. **Dungeon mob XP reduced:** `DungeonXp.KillFactor = 0.33` — kill XP (mob + boss) inside
+   instance maps is a third of normal, putting repeat clears at roughly ~85k XP/h. The gate is
+   `Map::IsDungeon()` (instances + raids, `DungeonXp.IncludeRaids`); battleground kills keep
+   their per-BG rates, outdoor elites and rares keep full rate.
+2. **Dungeon quest XP raised:** `DungeonXp.QuestFactor = 2.0` on top of the global rate —
+   dungeon quests pay 4x, one-time per character. Detection is data-driven (quest zone ->
+   area -> instance map); quests with no dungeon zone fail open to the world rate. First visit
+   through a dungeon now pays more than a repeat ever did.
+3. **Intent:** dungeons are story events with loot, not repeatable XP farms; world content stays
+   the leveling backbone. Both factors are playtest knobs, configuration not policy (same rule as
+   the sources above); the 0.33 depth is the owner's call and tunable in the conf without a
+   rebuild.

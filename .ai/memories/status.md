@@ -40,6 +40,14 @@ travel time, retail-authentic, no fix. Client bundle stays on WoSSilicon; Object
 
 Next: Group C AoE loot; Group D core. Instance reports flow per ADR-019.
 
+**Dungeon XP split** ([ADR-012](../../decisions/ADR-012-progression-rates.md) revision 2026-11-20
+(2), owner decision from the rate discussion): `mod-dungeon-xp` — dungeon/raid mob XP × 0.33
+(owner asked deeper than the proposed 0.5), dungeon quest XP ×2 on top of the global rate (4x
+one-time); data-driven detection via QuestSortID → area → instance map; repeat dungeons ≈85k XP/h
+vs questing ~300k/h, so spam is no longer the meta. Rate discussion outcome: 2x stays (bonus
+sources measured as supplements: rares ~1% of journey, gathering 2-4%, never outruns questing;
+real fast paths are rested casuals and DF spam — the latter now closed).
+
 **RFC-003 Group A complete** ([ADR-012](../../decisions/ADR-012-progression-rates.md) revision
 2026-11-20): `mod-xp-bonus` (rare kills 100×lvl, gathering 15×lvl with daily cap 200, BG wins
 75×lvl — all × `Rate.XP.Kill`, skill gates mirrored from the core so forged casts cannot farm XP)
