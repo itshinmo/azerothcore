@@ -34,5 +34,6 @@ decision supersedes one and both link each other.
 | [ADR-018](ADR-018-realm-strategy.md) | accepted | test realm deleted; local realm reset + renamed `live` at launch; `dev` + `ptr` realms created at launch; e2e dormant until then |
 | [ADR-019](ADR-019-instance-scope-closed.md) | accepted | manual instance sweep closed (classic complete + 7 TBC dungeons, TBC zero findings); remaining content assumed functioning, verified via player reports |
 | [ADR-020](ADR-020-collections-transmog-stack.md) | accepted | collections stack: mod-transmog-plus + mod-account-bound + mod-forever-journal vendored; licenses, storage, config, and the Warpweaver NPC (910012, ten capitals) recorded |
+| [ADR-021](ADR-021-leveling-qol-batch-1.md) | accepted | leveling QoL batch 1: auto-learn class spells via `mod-auto-learn-spells` (core trainer data, no spell list), dual spec at level 30 free, auto flight paths dropped |
 
 Open questions: [OPEN-QUESTIONS.md](OPEN-QUESTIONS.md).

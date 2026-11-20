@@ -20,6 +20,27 @@ last-verified: 2026-11-19 (bot rig paused; manual verification is the current co
   remain out of scope until the base game is done.
 - Branch: `local-server-setup` is the integration branch. Confirm with `git status`.
 
+## Session record — 2026-11-20 (collections live + QoL batch 1)
+
+Collections verified in game by the owner; the transmog outfit panel needed two rounds of fixes in
+the vendored addon (`outfits.lua`: complete per-slot save snapshot incl. `slot,0`, model undress +
+real-item preview on load, pending glows from `RefreshPendingGlows` only — local divergences in
+`modules/mod-transmog-plus/README.md`, commit `2603dc2bd`). Cast-bar "delay" diagnosed as missile
+travel time, retail-authentic, no fix. Client bundle stays on WoSSilicon; ObjectFade (sets
+`objectFade 0`) ships inside Reforged `patch-E.mpq`, harmless.
+
+**RFC-003 Group A batch 1 landed** ([ADR-021](../../decisions/ADR-021-leveling-qol-batch-1.md)):
+- `mod-auto-learn-spells` (new local module): class trainer spells learned automatically at
+  level-up/each login via the core `Trainer` availability filter; no spell list, no config.
+  LEARN_SPELL wrappers (class mounts, druid flight forms) stay trainer visits.
+- Dual spec at level 30, free (`MinDualSpecLevel = 30` in `worldserver.conf.dist` + live config).
+- Auto flight paths **dropped** by owner decision (players discover FPs; RFC-003 amended).
+- Build green, `make test` green, server restarted clean (0 errors). Owner in-game checklist in
+  the ADR pending.
+
+Next: RFC-003 ADR-012 revision (XP small-balance) + Ancestral Wisdom (+10%); then Group C AoE loot;
+Group D core. Instance reports flow per ADR-019.
+
 ## Session record — 2026-11-19 (manual classic sweep)
 
 One working session continuing the raid batches: the bot rig stayed paused and the owner ran every

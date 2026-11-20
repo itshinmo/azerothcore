@@ -93,4 +93,10 @@ core social layer + shared guilds + mail + same-group PvP suppression; faction-b
 skipped; sequencing per this RFC's Group order. Each group lands as its own ADR + module + tests +
 verification. Implementation waits for the Phase 1 gate release and the owner's explicit go.
 
+**Amendment 2026-11-20** (implementation session, [ADR-021](../../decisions/ADR-021-leveling-qol-batch-1.md)):
+auto flight paths are **dropped** from Group A — players must discover flight paths (the core
+`AllFlightPaths` config stays off). Dual spec is fixed at **level 30, free** (core verified free;
+level gate lowered from 40). Auto-learn class ships as `mod-auto-learn-spells`, driven by the core
+trainer data instead of a hand-maintained spell list.
+
 <!-- When accepted, fold the durable content into specs/ or decisions/ and move the RFC to archived/. -->

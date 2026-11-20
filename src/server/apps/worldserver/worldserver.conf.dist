@@ -2132,9 +2132,9 @@ MaxPlayerLevel = 80
 #
 #    MinDualSpecLevel
 #        Description: Level requirement for Dual Talent Specialization
-#        Default:     40
+#        Default:     40 (upstream; 30 in this fork, retail unlock level, learning stays free)
 
-MinDualSpecLevel = 40
+MinDualSpecLevel = 30
 
 #
 #    WaterBreath.Timer
