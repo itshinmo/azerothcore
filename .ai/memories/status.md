@@ -69,6 +69,29 @@ hard-fails on incomplete classes).
 `dev` and `ptr` realms get created at launch); verification runs confirm blizzlike behavior —
 retail-intended mechanics get documented, not changed.
 
+## Decisions recorded 2026-11-20
+
+- The test realm was deleted: `acore_test_*` databases, `acore_test`/`acore_admin` users,
+  `tools/dev/test-realm.sh`, the `make test-realm` target, `verify-sql`'s apply step, and the
+  test-realm runbooks. Development runs on the local realm only. At launch, the local realm is fully
+  reset and renamed **live**; a **dev** and a **ptr** realm are created then; e2e stays dormant until
+  they exist. Policy: [ADR-018](../../decisions/ADR-018-realm-strategy.md).
+- The manual instance sweep closed: classic complete (2026-11-19) + 7/16 TBC dungeons (2026-11-20),
+  zero findings, zero server errors all day. Remaining TBC/WotLK instances are assumed functioning
+  until a player ticket or bug report triggers a run. Policy:
+  [ADR-019](../../decisions/ADR-019-instance-scope-closed.md).
+- The 5-instances-per-hour account limit (retail rule) was hit during the sweep; mechanism
+  documented in the audit record (`acore_characters.account_instance_times`, per account, re-saved
+  at logout — a delete only sticks while logged out). Owner cleared it themselves.
+- Modernization planning done; RFCs 001–003 drafted with the owner's decisions recorded (client
+  bundle = Reforged + Ascension Character Customization + mod-forever-ui; collections =
+  transmog-plus + account-bound + forever-journal; QoL/social slate with small-balance bonus XP,
+  Ancestral Wisdom at +10%, and an extended cross-faction scope including shared guilds and mail).
+  RFC-001 implementation waits for the owner's client downloads and explicit go; RFC-002/003 wait
+  for the owner's go, with collections first in build order.
+- Branch: `modernization/realm-cleanup-and-features` (worktree) carries the removal plus the
+  modernization research/RFCs; `local-server-setup` is untouched until merge.
+
 ## Decisions recorded 2026-11-19 (second session)
 
 - Verification runs exist to confirm blizzlike behavior, not to change it. When a mechanic turns
@@ -266,7 +289,7 @@ uses `set realmlist <LAN-IP>:3724`. Do not run a second worldserver against `aco
   [runbook/troubleshooting/stormwind-water.md](../../runbook/troubleshooting/stormwind-water.md).
 - Test realm lifecycle: after the client exited, both test servers were stopped and the `screen`
   sessions were dead. The start script does not stop on logout; root cause unconfirmed. See
-  [runbook/troubleshooting/test-realm-stops.md](../../runbook/troubleshooting/test-realm-stops.md).
+  `runbook/troubleshooting/test-realm-stops.md` (removed 2026-11-20, ADR-018).
 - Client trust: auth checks the client build; `StrictVersionCheck=1` adds an executable SHA1 check;
   MPQs are not checked at login. Warden is runtime anti-cheat with configured checks and is off on
   the test realm. `specs/security.md` updated.
@@ -285,7 +308,7 @@ uses `set realmlist <LAN-IP>:3724`. Do not run a second worldserver against `aco
   bottle did not stop them either. WoWSilicon's force quit only SIGKILLs Wine-matching PIDs; that
   predicate matched zero processes and none of the server PIDs. The 2026-11-14 death is still
   unexplained. Instrumentation, code reference, and log format:
-  [test-realm-stops.md](../../runbook/troubleshooting/test-realm-stops.md).
+  `runbook/troubleshooting/test-realm-stops.md` (removed 2026-11-20, ADR-018).
 - `PacketLogFile` writes nothing useful alone: the file is created on the first packet, but packets
   are only logged for sessions that enabled `.packetlog on`. Use the client's `IsSwimming()` and
   `.gps` instead.
@@ -326,8 +349,8 @@ Remaining:
 5. Triage the 1,972 minors when content work starts; they are cosmetic or expected data.
 6. Keep `libSiliconPatch` off until WoWSilicon#67 is fixed; re-test after each launcher update and
    keep a second client copy (`~/Games/wotlk-test`) without the mod for client-side behaviour checks.
-7. Test realm death: keep the supervisor log; capture it on the next occurrence, with `screen -ls`
-   and the unified log, before restarting.
+7. ~~Test realm death instrumentation.~~ Moot: the test realm was deleted on 2026-11-20
+   ([ADR-018](../../decisions/ADR-018-realm-strategy.md)).
 8. Playerbot test rig ([ADR-015](../../decisions/ADR-015-playerbot-test-rig.md),
    [ADR-016](../../decisions/ADR-016-bot-driven-verification.md)): kept as the debugging tool for
    player reports, not a standing sweep. Dungeons are assumed green; when a player reports a bug,
@@ -342,17 +365,14 @@ Remaining:
    **character name** is exact and case-sensitive (`Dcdriver`); SIGTERM holds the port ~30s, so rig
    restarts need SIGKILL and a free-port check. `bfd` keeps two open harness defects (`F3c`, `F3d`);
    replay it only when a player report needs it.
-9. Manual solo verification of dungeons and raids is the current content check, active from
-   2026-11-19: the owner runs each instance on a cheated level-80 character (`.cheat god`,
-   `.cheat power`, `.cheat cooldown`, `.cheat casttime`, `.modify speed`, best gear and class spells)
-   and reports findings per run. The agent correlates `env/dist/logs/` and files or fixes each
-   finding. Checklist and results:
-   [runbook/audits/2026-11-19-manual-instance-runs.md](../../runbook/audits/2026-11-19-manual-instance-runs.md)
-   — bot-green entries are marked there to skip. **Classic era complete 2026-11-19** (26/26
-   dungeons, classic raids all clear; findings in the checklist). Next: TBC dungeons and raids,
-   then WotLK. Onyxia's Lair (the level-80 rework) still open. The GM Helper addon 0.4.3 adds
-   Instances and Self tabs for these runs (`tools/gm-addon/`, teleports from
-   `tools/dev/gen-addon-manifest.py` output; local client pass done during the classic sweep).
+9. Manual solo verification of dungeons and raids ran from 2026-11-19 and **closed 2026-11-20**
+   ([ADR-019](../../decisions/ADR-019-instance-scope-closed.md)): classic complete (26/26 dungeons,
+   classic raids all clear, findings documented in the checklist) plus 7/16 TBC dungeons with zero
+   findings and a zero-server-error record for both days. Remaining TBC/WotLK instances are assumed
+   functioning; a player ticket or bug report triggers a run.
+   Checklist and results:
+   [runbook/audits/2026-11-19-manual-instance-runs.md](../../runbook/audits/2026-11-19-manual-instance-runs.md).
+   Onyxia's Lair (the level-80 rework) is verified on a player report like the rest.
 
 ### Phase 2 — custom content
 
@@ -436,7 +456,7 @@ never on a production server and never inside this repository.
    session and `wineserver -k`; WoWSilicon's force quit only targets Wine-matching PIDs, which
    excludes the servers. `tools/dev/test-realm.sh` now writes
    `env/test/logs/<name>.supervisor.log` with `start`, `signal=`, and `exit=` lines to name the
-   signal on the next occurrence. See [test-realm-stops.md](../../runbook/troubleshooting/test-realm-stops.md).
+   signal on the next occurrence. See `runbook/troubleshooting/test-realm-stops.md` (removed 2026-11-20, ADR-018).
 6. **BFD has two open harness defects.** `F3c`: while standing on the fires anchor, `DcAdvanceAction`
    rebuilds an empty path every tick (`segs=0`) and never yields to the objective action — a CPU
    livelock that produced 4,003 identical log lines. `F3d`: after the third fire,
