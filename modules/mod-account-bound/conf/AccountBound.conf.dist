@@ -1,0 +1,116 @@
+#
+# AccountBound
+# One configurable account-wide module for AzerothCore WotLK.
+#
+
+# Master switch for every category below.
+AccountBound.Enable = 1
+
+# Skip every AccountBound feature for accounts whose usernames begin with this prefix.
+# The default RND excludes Playerbot random-bot accounts. Leave empty to disable.
+# like this AccountBound.ExcludedAccountNamePrefix =  #So even Playerbot will sync
+AccountBound.ExcludedAccountNamePrefix = RND
+
+#
+# Achievements
+#
+AccountBound.Achievements.Enable = 1
+AccountBound.Achievements.StartupBackfill = 1
+AccountBound.Achievements.SameFactionOnly = 0
+AccountBound.Achievements.SyncOnCreate = 1
+AccountBound.Achievements.SyncRealmFirst = 0
+AccountBound.Achievements.SyncHidden = 0
+AccountBound.Achievements.ConvertFactionSpecific = 1
+AccountBound.Achievements.SyncUnpairedFactionSpecific = 0
+AccountBound.Achievements.AllowList = all
+AccountBound.Achievements.BlockList = ""
+
+#
+# Mounts
+#
+AccountBound.Mounts.Enable = 1
+AccountBound.Mounts.StartupBackfill = 1
+AccountBound.Mounts.SyncOnCreate = 1
+AccountBound.Mounts.RespectFactionRestrictions = 1
+AccountBound.Mounts.ConvertFactionSpecific = 1
+AccountBound.Mounts.RequireRiding = 1
+AccountBound.Mounts.SyncClassMounts = 1
+AccountBound.Mounts.RequireClass = 1
+AccountBound.Mounts.ClassMountsSameFactionOnly = 1
+AccountBound.Mounts.CleanupInvalid = 1
+AccountBound.Mounts.BackfillOnRidingSkillChange = 1
+AccountBound.Mounts.AllowList = all
+AccountBound.Mounts.BlockList = ""
+
+#
+# Companion pets
+# This intentionally shares vanity companions, not hunter stable pets.
+#
+AccountBound.Pets.Enable = 1
+AccountBound.Pets.StartupBackfill = 1
+AccountBound.Pets.SyncOnCreate = 1
+AccountBound.Pets.SameFactionOnly = 0
+AccountBound.Pets.IncludeCompanionSkillLine = 1
+AccountBound.Pets.IncludeMinipetSummons = 1
+AccountBound.Pets.AllowList = all
+AccountBound.Pets.BlockList = ""
+
+#
+# Titles
+#
+AccountBound.Titles.Enable = 1
+AccountBound.Titles.StartupBackfill = 1
+AccountBound.Titles.SyncOnCreate = 1
+AccountBound.Titles.SyncOnSave = 1
+AccountBound.Titles.SyncRealmFirst = 0
+AccountBound.Titles.ConvertFactionSpecific = 1
+AccountBound.Titles.AllowList = all
+AccountBound.Titles.BlockList = ""
+
+#
+# Reputations
+# Values only move upward. Faction-specific equivalents are converted.
+#
+AccountBound.Reputations.Enable = 1
+AccountBound.Reputations.StartupBackfill = 1
+AccountBound.Reputations.SyncOnCreate = 1
+AccountBound.Reputations.SyncOnChange = 1
+AccountBound.Reputations.SameFactionOnly = 1
+AccountBound.Reputations.ConvertFactionSpecific = 1
+AccountBound.Reputations.SyncUnpairedCrossFaction = 0
+AccountBound.Reputations.AllowList = all
+AccountBound.Reputations.BlockList = ""
+
+#
+# Professions
+# Supports English/Spanish names or skill IDs in the primary lists.
+#
+AccountBound.Professions.Enable = 1
+AccountBound.Professions.MaxPrimaryProfessions = 11
+AccountBound.Professions.Primary.AllowList = all
+AccountBound.Professions.Primary.BlockList = ""
+AccountBound.Professions.Primary.CountOnlyAllowed = 1
+AccountBound.Professions.Primary.EnforceAllowedList = 0
+AccountBound.Professions.MaxSkillValue = 450
+AccountBound.Professions.StartupBackfill = 1
+AccountBound.Professions.SyncOnCreate = 1
+AccountBound.Professions.SyncOnLearn = 1
+AccountBound.Professions.IncludeSecondaryProfessions = 1
+AccountBound.Professions.SyncSkillProgress = 1
+AccountBound.Professions.SyncProfessionRanks = 1
+AccountBound.Professions.SyncRecipes = 1
+AccountBound.Professions.SyncSkillGrantedSpells = 1
+AccountBound.Professions.RequireRecipeSkill = 1
+AccountBound.Professions.SpellAllowList = ""
+AccountBound.Professions.SpellBlockList = ""
+
+#
+# Friends
+# Mirrors the normal friend list and notes across characters on the account.
+#
+AccountBound.Friends.Enable = 1
+AccountBound.Friends.SyncOnCreate = 1
+AccountBound.Friends.SyncOnlineChanges = 1
+AccountBound.Friends.SameFactionOnly = 0
+AccountBound.Friends.SyncIntervalSeconds = 3
+AccountBound.Friends.StartupBackfill = 1

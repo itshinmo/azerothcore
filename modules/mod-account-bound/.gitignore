@@ -1,0 +1,15 @@
+# Build and editor artifacts
+.vs/
+.vscode/
+build/
+cmake-build-*/
+*.user
+*.suo
+*.VC.db
+*.VC.VC.opendb
+*.obj
+*.pdb
+*.log
+
+# Active server config
+conf/AccountBound.conf
