@@ -1,0 +1,11 @@
+#
+# Ancestral Wisdom
+# Bonus experience per max-level character on the account (ADR-012 revision 2026-11-20).
+#
+
+# Percent experience bonus per max-level character on the account. 0 disables the module.
+AncestralWisdom.PercentPerChar = 10
+
+# Upper bound on the total bonus in percent. 0 = uncapped (owner decision: +10% per
+# max-level character, no cap; the cap is an anti-abuse knob for playtest tuning).
+AncestralWisdom.MaxBonusPercent = 0

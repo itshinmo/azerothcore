@@ -2,8 +2,9 @@
 
 - Status: accepted (approved by the repository owner on 2026-11-14); revised 2026-11-16 — default
   lowered to 2x and the per-account override removed (approved by the repository owner on
-  2026-11-16)
-- Date: 2026-11-14, revised 2026-11-16
+  2026-11-16); revised 2026-11-20 — small-balance bonus XP sources and Ancestral Wisdom added
+  (approved by the repository owner on 2026-11-20, [RFC-003](../rfcs/active/RFC-003-qol-social-slate.md) Group A)
+- Date: 2026-11-14, revised 2026-11-16, revised 2026-11-20
 - Related: [ADR-006](ADR-006-shop-policy.md), [ADR-011](ADR-011-world-data-and-content-verification.md)
 
 ## Context
@@ -76,3 +77,42 @@ is a retention bet taken before the content has been verified.
 - Low-level zones stay relevant long enough to be tested by real players.
 - The configuration template ships 2x. Existing local, test, and production configuration files
   keep their current values until they are regenerated or edited; check them after pulling.
+
+## Revision 2026-11-20 — bonus XP sources and Ancestral Wisdom
+
+The owner amended this ADR with RFC-003 Group A's XP items under the **small-balance rule**: bonus
+XP sources award a small base experience that passes through the global rate above, so at the 2x
+default they stay leveling accelerators, never the fastest path. Target feel: slow but not too slow.
+
+1. **Bonus XP sources** (`modules/mod-xp-bonus`), bases x player level, each multiplied by
+   `Rate.XP.Kill` (the global rate, 2x at default). Every award routes through the core XP hook
+   before `GiveXP`, so Ancestral Wisdom stacks with these sources too (owner decision
+   2026-11-20: Wisdom applies to all XP):
+
+   | Source | Base config | Default | Anti-abuse |
+   |--------|-------------|---------|------------|
+   | Rare / rare-elite kill | `XpBonus.RareKill.PerLevel` | 100 | none needed — rares are scarce; world bosses excluded; paid per credited player (group + pet owners), like normal kill XP |
+   | Gathering (herb/mine nodes, skinnable corpses) | `XpBonus.Gathering.PerLevel` | 15 | `XpBonus.Gathering.DailyNodeCap` = 200 gathers/day per character |
+   | Battleground win | `XpBonus.BgWin.PerLevel` | 75 | none needed — arena matches, losers and aborted BGs get nothing |
+
+   The gathering award happens at cast time; the core's own CheckCast normally vets the cast
+   first, but directly triggered casts skip CheckCast entirely, so the module mirrors the core's
+   skill gates (`CanOpenLock` for node locks, the skinning block of `CheckCast` for corpses) — no
+   path can earn XP without the required skill. A node taken mid-cast stays a possible small
+   overcount, bounded by the cap.
+   The gathering cap counter is in-memory and resets on server restart; a documented limit — if
+   playtest shows abuse, upgrade it to a persisted counter (own change, revises this ADR again).
+   All values are playtest-tuning knobs in `XpBonus.conf.dist`; changing them is configuration,
+   not policy.
+2. **Ancestral Wisdom** (`modules/mod-ancestral-wisdom`): **+10% experience per max-level
+   character on the account**, owner-reduced from Whitemane's +15%, and experience only —
+   Whitemane's reputation component is not adopted (owner decision names XP; adopting reputation
+   later is its own decision). Multiplies base XP before rested/recruit-a-friend, so it stacks,
+   and it applies to every XP source including the bonus sources above (owner decision
+   2026-11-20: "all XP").
+   `AncestralWisdom.PercentPerChar` = 10, `AncestralWisdom.MaxBonusPercent` = 0 (uncapped per the
+   owner decision; the cap is an anti-abuse knob). The account-wide collection tab (RFC-002 /
+   ADR-020) is the visible counterpart.
+3. **Not affected:** the 2x default, the no-per-account-override rule, and the everything-else-at-1x
+   rule stand unchanged. Riding training and the first mount are out of scope by owner decision
+   (RFC-003 amendment; the "free mount at 20" item was removed before implementation).

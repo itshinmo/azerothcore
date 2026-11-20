@@ -1,0 +1,23 @@
+#
+# XP bonus sources
+# Small base experience from gathering, rare kills and battleground wins (ADR-012
+# revision 2026-11-20, small-balance rule). Every base is multiplied by Rate.XP.Kill,
+# the server's global experience rate, before being awarded.
+#
+
+# Rare and rare-elite kills: base XP per kill = value x player level. World bosses are
+# excluded. 0 disables.
+XpBonus.RareKill.PerLevel = 100
+
+# Gathering nodes (herbalism, mining, skinning): base XP per node = value x player level.
+# 0 disables.
+XpBonus.Gathering.PerLevel = 15
+
+# Anti-abuse cap: gathering nodes that award bonus XP per character per day. 0 = uncapped.
+# The counter lives in memory and resets on server restart (documented limit; upgrade to a
+# persisted counter if abuse shows up in playtest).
+XpBonus.Gathering.DailyNodeCap = 200
+
+# Battleground wins: base XP per win = value x player level. Losers and aborted
+# battlegrounds award nothing. 0 disables.
+XpBonus.BgWin.PerLevel = 75

@@ -38,8 +38,13 @@ travel time, retail-authentic, no fix. Client bundle stays on WoSSilicon; Object
 - Build green, `make test` green, server restarted clean (0 errors). Owner in-game checklist in
   the ADR pending.
 
-Next: RFC-003 ADR-012 revision (XP small-balance) + Ancestral Wisdom (+10%); then Group C AoE loot;
-Group D core. Instance reports flow per ADR-019.
+Next: Group C AoE loot; Group D core. Instance reports flow per ADR-019.
+
+**RFC-003 Group A complete** ([ADR-012](../../decisions/ADR-012-progression-rates.md) revision
+2026-11-20): `mod-xp-bonus` (rare kills 100×lvl, gathering 15×lvl with daily cap 200, BG wins
+75×lvl — all × `Rate.XP.Kill`, skill gates mirrored from the core so forged casts cannot farm XP)
+and `mod-ancestral-wisdom` (+10% XP per max-level account char, owner picked "all XP" so it
+multiplies the bonus sources too). Owner in-game checklist pending; values are playtest knobs.
 
 ## Session record — 2026-11-19 (manual classic sweep)
 
