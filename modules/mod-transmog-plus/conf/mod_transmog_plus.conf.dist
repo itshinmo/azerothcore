@@ -1,0 +1,345 @@
+[worldserver]
+
+###################################################################################################
+#    Transmogrification config
+###################################################################################################
+#
+#    SETTINGS
+#
+#    Transmog.Enable
+#        Description: Enables/Disables transmog.
+#                     Players won't be able to see any transmogrified item while disabled, however, database data remains intact.
+#        Default:     1
+#
+#    Transmog.PriceCopper
+#        Description: Flat copper cost per transmogrified slot.
+#        Default:     1000 (10 Silver)
+#
+#    Transmog.Allowed
+#        Description: A list of item entries that are allowed for transmogrification (skips quality and CanUseItem check)
+#                     Example: "25 35674 5623"
+#        Default:    ""
+#
+#    Transmog.NotAllowed
+#        Description: A list of item entries that are NOT allowed for transmogrification
+#                     Example: "25 35674 5623"
+#        Default:    ""
+#
+
+Transmog.Enable = 1
+Transmog.PriceCopper = 1000
+Transmog.Allowed = ""
+Transmog.NotAllowed = ""
+
+#
+#    REQUIREMENTS
+#
+#    Transmog.AllowPoor
+#        Description: Allow poor quality items to be used as source and target items
+#        Default:    1
+#
+#    Transmog.AllowCommon
+#        Description: Allow common quality items to be used as source and target items
+#        Default:    1
+#
+#    Transmog.AllowUncommon
+#        Description: Allow uncommon quality items to be used as source and target items
+#        Default:    1
+#
+#    Transmog.AllowRare
+#        Description: Allow rare quality items to be used as source and target items
+#        Default:    1
+#
+#    Transmog.AllowEpic
+#        Description: Allow epic quality items to be used as source and target items
+#        Default:    1
+#
+#    Transmog.AllowLegendary
+#        Description: Allow legendary quality items to be used as source and target items
+#        Default:    1
+#
+#    Transmog.AllowArtifact
+#        Description: Allow artifact quality items to be used as source and target items
+#        Default:    1
+#
+#    Transmog.AllowHeirloom
+#        Description: Allow heirloom quality items to be used as source and target items
+#        Default:    1
+#
+#    Transmog.AllowMixedArmorTypes
+#        Description: Allow cloth items to be transmogrified with plate for example
+#        Default:    0
+#
+#    Transmog.AllowLowerTiers
+#        Description: Allows using any armor tier the player can equip (i.e. Warrior plate->cloth | Mage cloth)
+#        Default:    0
+#
+#    Transmog.AllowMixedOffhandArmorTypes
+#        Description: Allow shields, offhands (i.e. lamps), and bucklers to be used interchangeably
+#        Default:    0
+#
+#    Transmog.AllowMixedWeaponTypes
+#        Description: Allow axe to be transmogrified with dagger for example
+#        Possible options:
+#            Default:    0 - STRICT - Fully restricted like original Blizzard 4.3 transmog - Weapons must be the same weapon type (exceptions: Guns, Crossbows, or Bows)
+#                        1 - MODERN - Like later retail WoW, allow swords to be transmogged to axes, etc.
+#                        2 - FULL - No restrictions, allow any weapon to be transmogrified to any other weapon
+#
+#    Transmog.AllowMixedWeaponHandedness
+#        Description: Normally main-hand and off-hand weapons can only be transmogged to this same type. Enable to remove this restriction.
+#                     Not necessary when AllowMixedWeaponTypes is set to FULL.
+#        Default:    1
+#
+#    Transmog.AllowFishingPoles
+#        Description: Allow fishing poles to be transmogrified
+#        Default:    0
+#
+#    Transmog.IgnoreReqRace
+#        Description: Ignore required race for source items
+#        Default:    0
+#
+#    Transmog.IgnoreReqClass
+#        Description: Ignore required class for source items
+#        Default:    0
+#
+#    Transmog.IgnoreReqSkill
+#        Description: Ignore required skill for source items
+#        Default:    0
+#
+#    Transmog.IgnoreReqSpell
+#        Description: Ignore required spell for source items
+#        Default:    0
+#
+#    Transmog.IgnoreReqEvent
+#        Description: Ignore required event for source items
+#        Default:    0
+#
+#    Transmog.IgnoreReqStats
+#        Description: Ignore stat count > 0 requirement for source items
+#        Default:    0
+#
+
+Transmog.AllowPoor = 1
+Transmog.AllowCommon = 1
+Transmog.AllowUncommon = 1
+Transmog.AllowRare = 1
+Transmog.AllowEpic = 1
+Transmog.AllowLegendary = 1
+Transmog.AllowArtifact = 1
+Transmog.AllowHeirloom = 1
+
+Transmog.AllowMixedArmorTypes = 0
+Transmog.AllowLowerTiers = 0
+Transmog.AllowMixedOffhandArmorTypes = 0
+
+Transmog.AllowMixedWeaponTypes = 1
+Transmog.AllowMixedWeaponHandedness = 1
+Transmog.AllowFishingPoles = 0
+
+Transmog.IgnoreReqRace = 0
+Transmog.IgnoreReqClass = 0
+Transmog.IgnoreReqSkill = 0
+Transmog.IgnoreReqSpell = 0
+Transmog.IgnoreReqEvent = 0
+Transmog.IgnoreReqStats = 0
+
+#
+#    COLLECTING
+#
+#    Equipping an item always adds its appearance to the account's collection. These settings add
+#    the retail ways of collecting on top of that.
+#
+#    Transmog.Collect.OnPickup
+#        Description: Collect a weapon or armor appearance as soon as the item lands in your bags,
+#                     bound or not: loot, vendors, quest rewards, crafting, trades, mail (so also
+#                     the auction house) and the guild bank.
+#        Default:     1
+#
+#    Transmog.Collect.OnDisenchant
+#        Description: Collect the appearance of an item when you disenchant it, and of an item
+#                     you win with a Disenchant roll in a group (that item never reaches your
+#                     bags, so OnPickup can't catch it).
+#        Default:     1
+#
+#    Transmog.Collect.ScanOnLogin
+#        Description: On every login, collect the appearances of everything equipped, in your bags
+#                     and in your bank, and report how many were new in one chat line.
+#        Default:     1
+#
+#    Transmog.Collect.QuestRewards
+#        Description: Turning in a quest collects every item it offers: all the reward choices, not
+#                     only the one you picked, plus the fixed rewards. On login this also collects
+#                     the rewards of every quest the character has already turned in, so quests
+#                     done before this was on (or before the module was installed) count too.
+#        Default:     1
+#
+#    Transmog.Collect.AltBots
+#        Description: Playerbots only. Let your own characters played as bots collect for your
+#                     account while you're grouped with them. Random bots never collect through
+#                     the settings above, so their accounts don't fill the collection table.
+#        Default:     1
+#
+
+Transmog.Collect.OnPickup = 1
+Transmog.Collect.OnDisenchant = 1
+Transmog.Collect.ScanOnLogin = 1
+Transmog.Collect.QuestRewards = 1
+Transmog.Collect.AltBots = 1
+
+#
+#    ANYWHERE
+#
+#    Transmog.OpenAnywhere
+#        Description: With the addon, /transmog opens the transmog window anywhere, not only at a
+#                     transmogrifier NPC. Set to 0 to make players visit the NPC. This only stops
+#                     /transmog; it doesn't check distance on the addon's apply requests.
+#        Default:     1
+#
+
+Transmog.OpenAnywhere = 1
+
+#
+#    ILLUSIONS
+#
+#    Transmog.Illusions.Enable
+#        Description: Collect weapon enchant visuals (illusions) and show a chosen one on the main
+#                     hand or off hand weapon. An illusion unlocks for the account when you enchant
+#                     a weapon, or have an enchanted weapon equipped, in your bags or in the bank.
+#                     Applying one costs Transmog.PriceCopper; removing or hiding the glow is free.
+#        Default:     1
+#
+
+Transmog.Illusions.Enable = 1
+
+#
+#    BACKPACKS
+#
+#    Transmog.Backpacks.Enable
+#        Description: Backpacks worn on the character's back, picked in the window's Backpacks tab.
+#                     Each one is a hidden aura whose model comes from the realm's client patch
+#                     (spells 90170-90178, from buildthehomelab/wow-mod-visible-bags). Unlocks and
+#                     the choice are per character. The list is the world table
+#                     mod_transmog_plus_backpacks.
+#        Default:     1
+#
+
+Transmog.Backpacks.Enable = 1
+
+#
+#    Transmog.Backpacks.HideCloak
+#        Description: Hide the cloak while a backpack is shown. The cloak stays equipped.
+#        Default:     1
+#
+
+Transmog.Backpacks.HideCloak = 1
+
+#
+#    Transmog.Backpacks.PhaseQuestBase
+#        Description: mod-individual-progression records phase n as cleared by rewarding quest
+#                     base + n. A backpack with UnlockPhase n unlocks once that quest is rewarded.
+#        Default:     66000
+#
+
+Transmog.Backpacks.PhaseQuestBase = 66000
+
+#
+#    Transmog.Backpacks.Mail.Enable
+#        Description: Send every character (bots excepted) one letter introducing backpacks, with
+#                     the item that unlocks the first one. Characters get it on their next login.
+#        Default:     1
+#
+
+Transmog.Backpacks.Mail.Enable = 1
+
+#
+#    Transmog.Backpacks.Mail.Item
+#        Description: The item in the letter. Its item_template row needs ScriptName
+#                     'transmog_backpack_unlock' and a mod_transmog_plus_backpacks row naming it.
+#        Default:     27621 (Halfhill Farmer's Backpack)
+#
+
+Transmog.Backpacks.Mail.Item = 27621
+
+#
+#    Transmog.Backpacks.Mail.Sender
+#        Description: creature_template entry the letter comes from (MAIL_CREATURE).
+#        Default:     9500000 ("Blizzard Services", from mod-server-mail)
+#
+
+Transmog.Backpacks.Mail.Sender = 9500000
+
+#
+#    Transmog.Backpacks.Mail.Subject
+#    Transmog.Backpacks.Mail.Body
+#        Description: The letter's text. In the body, \n starts a new line. Leave Body unset for
+#                     the built-in text.
+#        Default:     "Something for your back"
+#
+
+Transmog.Backpacks.Mail.Subject = "Something for your back"
+
+###################################################################################################
+
+###################################################################################################
+#    DRUID FORMS
+#
+#    Transmog.Forms.Enable
+#        Description: Druids pick a look for each shapeshift form (bear, cat, travel, aquatic,
+#                     flight, moonkin, tree) from the Forms tab. The looks come from a look pack,
+#                     a module of its own with its client patch (mod-retail-druid-forms, patch-R):
+#                     without one installed there are no looks and no Forms tab, whatever this
+#                     says. Looks unlock per individual progression phase cleared (the phase
+#                     quests are Transmog.Backpacks.PhaseQuestBase + n). The list is the world
+#                     table mod_transmog_plus_forms.
+#        Default:     1 - (Enabled when a pack is installed)
+#                     0 - (Disabled)
+#
+
+Transmog.Forms.Enable = 1
+
+#
+#    Transmog.Forms.WaterSwap
+#        Description: A druid with the same look picked for Travel Form and Aquatic Form (a look
+#                     that's in both lists, like an otter) changes between the two on entering and
+#                     leaving water, like retail's Travel Form: no mana, no global cooldown. Two
+#                     different looks leave both forms as they are.
+#        Default:     1 - (Enabled)
+#                     0 - (Disabled)
+#
+
+Transmog.Forms.WaterSwap = 1
+
+###################################################################################################
+#    SHAMAN TOTEMS
+#
+#    Transmog.Totems.Enable
+#        Description: Shamans pick a look for each totem element (fire, earth, water, air) from
+#                     the Totems tab: the client's own race totems, and retail totem models. The
+#                     looks come from a look pack, a module of its own with its client patch
+#                     (mod-retail-shaman-totems, patch-V): without one installed there are no
+#                     looks and no Totems tab, whatever this says. Looks unlock per individual
+#                     progression phase cleared, like the druid forms, and share their table
+#                     (mod_transmog_plus_forms).
+#        Default:     1 - (Enabled when a pack is installed)
+#                     0 - (Disabled)
+#
+
+Transmog.Totems.Enable = 1
+
+###################################################################################################
+#    WARLOCK DEMONS
+#
+#    Transmog.Demons.Enable
+#        Description: Warlocks pick a look for each demon (imp, voidwalker, succubus, felhunter,
+#                     felguard, infernal, doomguard) from the Demons tab. The looks come from a
+#                     look pack, a module of its own (mod-retail-warlock-pets): without one
+#                     installed there are no looks and no Demons tab, whatever this says. Looks
+#                     unlock per individual progression phase cleared, like the druid forms, and
+#                     share their table (mod_transmog_plus_forms).
+#        Default:     1 - (Enabled when a pack is installed)
+#                     0 - (Disabled)
+#
+
+Transmog.Demons.Enable = 1
+
+###################################################################################################
