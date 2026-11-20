@@ -51,7 +51,17 @@ AllowTwoSide config flips (chat, channels, groups, guilds, arena teams, shared n
 suppression is native (group check before FFA). `mod-cfbg` vendored for cross-faction BGs/arenas
 (Wintergrasp off; live CFBG.conf required — code defaults would disable the module). aoe-loot
 module SQL restructured base→updates for the codestyle gate. Deferred: mod-Faction-Free (core
-file replacement, unvendorable), solo queue/personal teams/queue-anywhere/currency (sequencing).
+file replacement, unvendorable). Solo queue/personal teams/queue-anywhere landed the next day
+(ADR-024, below); currency consolidation still deferred (RFC sequencing).
+
+**Group D PvP queueing slice** ([ADR-024](../../decisions/ADR-024-pvp-queueing-slice.md),
+2026-11-21): `mod-arena-3v3-solo-queue` vendored (`.qsolo rated`, solo MMR from 1500, NPC
+template 1000003) — upstream issue #61 (slot-4 character-cache OOB, open upstream) closed at the
+fork level with bounds guards in `src/server/game/Cache/CharacterCache.cpp` (write+read; deliberate
+fork core change). `mod-join-anywhere`: `.queue bg <name>` solo BG queue from anywhere, full
+battlemaster ladder mirrored (disable-table + no-play-time checks included).
+`mod-personal-arena-teams`: rated premades auto-create the leader's personal team and re-sync
+members on every queue attempt. Owner full-session test list prepared, delivery on request.
 
 **Dungeon XP split** ([ADR-012](../../decisions/ADR-012-progression-rates.md) revision 2026-11-20
 (2), owner decision from the rate discussion): `mod-dungeon-xp` — dungeon/raid mob XP × 0.33

@@ -1,0 +1,9 @@
+#
+# Personal arena teams
+# Rated arena premades queue without a charter (ADR-024, RFC-003 Group D).
+#
+
+# When a group leader queues rated for 2v2/3v3/5v5 without a team of that bracket, a team named
+# after the leader is created free and the group joins it. Solo rated 3v3 is the solo-queue
+# module's job, not this one.
+PersonalArenaTeams.Enable = 1

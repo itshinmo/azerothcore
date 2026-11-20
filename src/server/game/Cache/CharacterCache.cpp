@@ -200,6 +200,14 @@ void CharacterCache::UpdateCharacterArenaTeamId(ObjectGuid const& guid, uint8 sl
         return;
     }
 
+    // Fork guard (ADR-024): mod-arena-3v3-solo-queue maps its fake bracket to arena slot 4,
+    // which has no cache entry (ArenaTeamId is MAX_ARENA_SLOT = 4 wide). Cache the slot only
+    // if it exists; solo-queue reads its team id from the DB, not this cache.
+    if (slot >= MAX_ARENA_SLOT)
+    {
+        return;
+    }
+
     itr->second.ArenaTeamId[slot] = arenaTeamId;
 }
 
@@ -347,6 +355,13 @@ uint32 CharacterCache::GetCharacterArenaTeamIdByGuid(ObjectGuid guid, uint8 type
 {
     auto itr = _characterCacheStore.find(guid);
     if (itr == _characterCacheStore.end())
+    {
+        return 0;
+    }
+
+    // Fork guard (ADR-024): slots beyond the cache array (mod-arena-3v3-solo-queue's slot 4)
+    // are not cached; the module reads its team id from the DB instead.
+    if (type >= MAX_ARENA_SLOT)
     {
         return 0;
     }
