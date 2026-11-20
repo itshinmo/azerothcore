@@ -1,14 +1,18 @@
 # Manual solo instance runs — checklist and results
 
-The owner runs every dungeon and raid solo on a cheated level-80 character; see
+The owner runs dungeons and raids solo on a cheated level-80 character; see
 `.ai/memories/status.md` task 9 and [ADR-017](../../decisions/ADR-017-bot-rig-paused.md). This page
 is the checklist and the result record. The instance list matches the GM Helper addon Instances tab
 exactly (`tools/gm-addon/GMHelperInstances.lua`, generated from `LFGDungeons.dbc` plus the vanilla
 sub-wings it omits).
 
+**The sweep closed on 2026-11-20** ([ADR-019](../../decisions/ADR-019-instance-scope-closed.md)):
+remaining unvisited instances are assumed functioning; a player ticket or bug report triggers a run.
+
 Checked entries are already covered: `bots` means the playerbot rig cleared the instance and the
-result is recorded in the [bot ledger](2026-11-17-bot-dungeon-runs.md). Unchecked entries are the
-manual work. Tick an entry only after a run with a recorded result below.
+result is recorded in the [bot ledger](2026-11-17-bot-dungeon-runs.md). Unchecked entries marked
+"assumed functioning (ADR-019)" have no scheduled run; others are the manual work. Tick an entry
+only after a run with a recorded result below.
 
 ## How to run
 
@@ -83,63 +87,73 @@ All cleared manually on 2026-11-19. The 2026-11-19 bot batch's `ony`/`mc` wipes 
 
 ## The Burning Crusade — Dungeons (16)
 
-Never bot-run (batch cancelled). All manual.
+Sweep ended on 2026-11-20 after Shattered Halls per the owner's decision
+([ADR-019](../../decisions/ADR-019-instance-scope-closed.md)): the remaining TBC and WotLK
+dungeons and raids are **assumed functioning** until a player ticket or bug report triggers a run.
+7 of 16 cleared manually, zero findings, zero server errors.
 
-- [ ] Auchenai Crypts
-- [ ] Blood Furnace
-- [ ] Hellfire Ramparts
-- [ ] Mana-Tombs
-- [ ] Sethekk Halls
-- [ ] Shadow Labyrinth
-- [ ] Shattered Halls
-- [ ] Slave Pens
-- [ ] The Arcatraz
-- [ ] The Black Morass
-- [ ] The Botanica
-- [ ] The Escape From Durnholde
-- [ ] The Mechanar
-- [ ] The Steamvault
-- [ ] Underbog
-- [ ] Magisters' Terrace
+- [x] Auchenai Crypts — manual clear 2026-11-20, no findings; logs clean.
+- [x] Blood Furnace — manual clear 2026-11-20, no findings; logs clean.
+- [x] Hellfire Ramparts — manual clear 2026-11-20, no findings; logs clean.
+- [x] Mana-Tombs — manual clear 2026-11-20, no findings; logs clean.
+- [x] Sethekk Halls — manual clear 2026-11-20, no findings; logs clean.
+- [x] Shadow Labyrinth — manual clear 2026-11-20, no findings; logs clean.
+- [x] Shattered Halls — manual clear 2026-11-20, no findings; logs clean.
+- [ ] Slave Pens — assumed functioning (ADR-019)
+- [ ] The Arcatraz — assumed functioning (ADR-019)
+- [ ] The Black Morass — assumed functioning (ADR-019)
+- [ ] The Botanica — assumed functioning (ADR-019)
+- [ ] The Escape From Durnholde — assumed functioning (ADR-019)
+- [ ] The Mechanar — assumed functioning (ADR-019)
+- [ ] The Steamvault — assumed functioning (ADR-019)
+- [ ] Underbog — assumed functioning (ADR-019)
+- [ ] Magisters' Terrace — assumed functioning (ADR-019)
 
 ## The Burning Crusade — Raids (9)
 
-Never bot-run. All manual.
+Never bot-run. Manual sweep ended before reaching raids; per
+[ADR-019](../../decisions/ADR-019-instance-scope-closed.md) they are assumed functioning until a
+player report triggers a run.
 
-- [ ] Black Temple
-- [ ] Gruul's Lair
-- [ ] Hyjal Past
-- [ ] Karazhan
-- [ ] Magtheridon's Lair
-- [ ] Serpentshrine Cavern
-- [ ] Tempest Keep
-- [ ] The Sunwell
-- [ ] Zul'Aman
+- [ ] Black Temple — assumed functioning (ADR-019)
+- [ ] Gruul's Lair — assumed functioning (ADR-019)
+- [ ] Hyjal Past — assumed functioning (ADR-019)
+- [ ] Karazhan — assumed functioning (ADR-019)
+- [ ] Magtheridon's Lair — assumed functioning (ADR-019)
+- [ ] Serpentshrine Cavern — assumed functioning (ADR-019)
+- [ ] Tempest Keep — assumed functioning (ADR-019)
+- [ ] The Sunwell — assumed functioning (ADR-019)
+- [ ] Zul'Aman — assumed functioning (ADR-019)
 
 ## Wrath of the Lich King — Dungeons (16)
 
-Never bot-run (batch cancelled). All manual.
+Never bot-run (batch cancelled). Manual sweep ended before reaching WotLK dungeons; per
+[ADR-019](../../decisions/ADR-019-instance-scope-closed.md) they are assumed functioning until a
+player report triggers a run.
 
-- [ ] Ahn'kahet: The Old Kingdom
-- [ ] Azjol-Nerub
-- [ ] Drak'Tharon Keep
-- [ ] Gundrak
-- [ ] Halls of Lightning
-- [ ] Halls of Reflection
-- [ ] Halls of Stone
-- [ ] Pit of Saron
-- [ ] The Culling of Stratholme
-- [ ] The Forge of Souls
-- [ ] The Nexus
-- [ ] The Oculus
-- [ ] Trial of the Champion
-- [ ] Utgarde Keep
-- [ ] Utgarde Pinnacle
-- [ ] Violet Hold
+- [ ] Ahn'kahet: The Old Kingdom — assumed functioning (ADR-019)
+- [ ] Azjol-Nerub — assumed functioning (ADR-019)
+- [ ] Drak'Tharon Keep — assumed functioning (ADR-019)
+- [ ] Gundrak — assumed functioning (ADR-019)
+- [ ] Halls of Lightning — assumed functioning (ADR-019)
+- [ ] Halls of Reflection — assumed functioning (ADR-019)
+- [ ] Halls of Stone — assumed functioning (ADR-019)
+- [ ] Pit of Saron — assumed functioning (ADR-019)
+- [ ] The Culling of Stratholme — assumed functioning (ADR-019)
+- [ ] The Forge of Souls — assumed functioning (ADR-019)
+- [ ] The Nexus — assumed functioning (ADR-019)
+- [ ] The Oculus — assumed functioning (ADR-019)
+- [ ] Trial of the Champion — assumed functioning (ADR-019)
+- [ ] Utgarde Keep — assumed functioning (ADR-019)
+- [ ] Utgarde Pinnacle — assumed functioning (ADR-019)
+- [ ] Violet Hold — assumed functioning (ADR-019)
 
 ## Wrath of the Lich King — Raids (9)
 
-All unchecked.
+Never bot-run. Manual sweep ended before reaching WotLK raids; per
+[ADR-019](../../decisions/ADR-019-instance-scope-closed.md) they are assumed functioning until a
+player report triggers a run, including Onyxia's Lair (the level-80 rework; the `ony` bot wipe is
+historical).
 
 - [ ] Icecrown Citadel
 - [ ] Naxxramas
@@ -161,7 +175,7 @@ Append one line per run: `date | instance | result | findings`.
 - 2026-11-19 | Blackwing Lair | clear | one finding: Chromaggus lever encounter could not start —
   boss spawns SetImmuneToAll(true) and the lever clears it once, but a GM `.respawn` of the boss
   re-applied the immunity and the lever's own NOT_SELECTABLE flag made it un-reusable; `.gobject
-  add temp 179148` spawned a fresh lever that worked. DB verified correct (door state=1 closed,
+add temp 179148` spawned a fresh lever that worked. DB verified correct (door state=1 closed,
   lever state=1 ready) — GM-respawn artifact, no data or code fix needed. Nefarian unaffected.
 - 2026-11-19 | Zul'Gurub | clear | two data quirks: Edge of Madness rotation collapsed (all four
   game events share one daily phase; brazier always picks Gri'lek; other spirits unreachable) and
@@ -173,3 +187,15 @@ Append one line per run: `date | instance | result | findings`.
   blizzlike-verification policy; finished with staff auto-attack during the freeze. Also: the
   addon's blanket combat guard blocked `.combatstop` while in combat — fixed in GM Helper 0.4.3
   (chat commands are legal in combat).
+- 2026-11-20 | Auchenai Crypts | clear | none reported; logs clean (Server.log 0 ERROR/FATAL,
+  Errors.log empty)
+- 2026-11-20 | Blood Furnace | clear | none reported; logs clean
+- 2026-11-20 | Hellfire Ramparts | clear | none reported; logs clean
+- 2026-11-20 | Mana-Tombs | clear | none reported; logs clean
+- 2026-11-20 | Sethekk Halls | clear | none reported; logs clean
+- 2026-11-20 | Shadow Labyrinth | clear | none reported; logs clean; owner cleared the 5-instances-per-hour
+  account limit themselves after Mana-Tombs (mechanism documented: `acore_characters.account_instance_times`,
+  loaded at login, re-saved at logout — a delete only sticks when logged out)
+- 2026-11-20 | Shattered Halls | clear | none reported; logs clean. Sweep ended here per the owner:
+  the remaining TBC and WotLK instances are assumed functioning until a player ticket or bug report
+  triggers a run ([ADR-019](../../decisions/ADR-019-instance-scope-closed.md))
