@@ -44,7 +44,14 @@ default per character (upstream default; `.aoeloot off` to toggle); group loot r
 mail for full bags off by default. Upstream companion config `Rate.Corpse.Decay.Looted = 0.01`
 recorded in the ADR as a playtest revisit, not set.
 
-Next: Group D core (cross-faction social layer + shared guilds/mail — scoping ADR first).
+**Group D core landed** ([ADR-023](../../decisions/ADR-023-cross-faction-social-layer.md)): 7
+AllowTwoSide config flips (chat, channels, groups, guilds, arena teams, shared neutral AH with
+15%/25% neutral-cut cost, calendar); RBAC 25/26/27/28/29/51 granted to Player role 195 via
+`data/sql/custom/db_auth/crossfaction_player_rbac.sql` (moderator-only before); same-group PvP
+suppression is native (group check before FFA). `mod-cfbg` vendored for cross-faction BGs/arenas
+(Wintergrasp off; live CFBG.conf required — code defaults would disable the module). aoe-loot
+module SQL restructured base→updates for the codestyle gate. Deferred: mod-Faction-Free (core
+file replacement, unvendorable), solo queue/personal teams/queue-anywhere/currency (sequencing).
 
 **Dungeon XP split** ([ADR-012](../../decisions/ADR-012-progression-rates.md) revision 2026-11-20
 (2), owner decision from the rate discussion): `mod-dungeon-xp` — dungeon/raid mob XP × 0.33

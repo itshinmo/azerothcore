@@ -36,5 +36,6 @@ decision supersedes one and both link each other.
 | [ADR-020](ADR-020-collections-transmog-stack.md) | accepted | collections stack: mod-transmog-plus + mod-account-bound + mod-forever-journal vendored; licenses, storage, config, and the Warpweaver NPC (910012, ten capitals) recorded |
 | [ADR-021](ADR-021-leveling-qol-batch-1.md) | accepted | leveling QoL batch 1: auto-learn class spells via `mod-auto-learn-spells` (core trainer data, no spell list), dual spec at level 30 free, auto flight paths dropped |
 | [ADR-022](ADR-022-aoe-looting.md) | accepted | AoE looting via vendored `mod-aoe-loot` (official module, AGPL-3.0, defaults kept; `.aoeloot on/off`, group rules respected) |
+| [ADR-023](ADR-023-cross-faction-social-layer.md) | accepted | cross-faction social layer: 7 AllowTwoSide config flips (chat, channels, groups, guilds, arena teams, shared AH, calendar), RBAC already shipped, mod-cfbg vendored (Wintergrasp off), quest/rep access deferred (unvendorable module) |
 
 Open questions: [OPEN-QUESTIONS.md](OPEN-QUESTIONS.md).
