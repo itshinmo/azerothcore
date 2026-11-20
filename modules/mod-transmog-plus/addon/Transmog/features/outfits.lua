@@ -95,6 +95,18 @@ function Transmog_LoadOutfit(self, outfit)
 
     Transmog:hideItemBorders()
 
+    -- Reset the model before staging the outfit: TryOn(0) and TryOn(999999) are no-ops (the fake
+    -- "hidden" id is not a real item), so without Undress the preview keeps the previous outfit
+    -- (local fix; upstream never undresses here).
+    TransmogFramePlayerModel:Undress()
+
+    -- Loading an outfit means "staged state = the outfit". Slots the snapshot does not carry
+    -- (incompatible appearances, older partial saves) fall back to the server state instead of
+    -- keeping whatever the previous selection staged (local fix).
+    for slotName, slotId in pairs(Transmog.inventorySlots) do
+        Transmog.transmogStatusToServer[slotId] = Transmog.transmogStatusFromServer[slotId]
+    end
+
     for slot, itemID in pairs(transmogOutfits[outfit]) do
 
         if not Transmog:IsOutfitAppearanceCompatible(slot, itemID) then
@@ -106,6 +118,13 @@ function Transmog_LoadOutfit(self, outfit)
 
         if GetInventoryItemLink('player', slot) then
             hasItemEquipped = true
+        end
+
+        -- The item to preview on the model: for state 0 ("show the real item") that is the
+        -- equipped item itself — TryOn(0) is a no-op and would leave the previous outfit staged.
+        local previewItem = itemID
+        if itemID == 0 and hasItemEquipped then
+            previewItem = tonumber(GetInventoryItemLink('player', slot):match("item:(%d+)")) or 0
         end
 
         if hasItemEquipped then
@@ -126,34 +145,25 @@ function Transmog_LoadOutfit(self, outfit)
             frame = Transmog:frameFromInvType(eq_slot, slot)
 
             if hasItemEquipped then
-                TransmogFramePlayerModel:TryOn(itemID)
+                TransmogFramePlayerModel:TryOn(previewItem)
             end
 
             if frame then
 
                 getglobal(frame:GetName() .. "ItemIcon"):SetTexture(tex)
 
-                if Transmog.transmogStatusToServer[slot] ~= itemID then
-                    getglobal(frame:GetName() .. 'BorderHi'):Show()
-                    getglobal(frame:GetName() .. 'AutoCast'):SetAlpha(0.3)
-                end
-
-                if itemID == 0 or not hasItemEquipped then
-                    getglobal(frame:GetName() .. 'BorderHi'):Hide()
-                    getglobal(frame:GetName() .. 'AutoCast'):Hide()
-                end
-
             end
 
             Transmog.transmogStatusToServer[slot] = itemID
-            if frame then
-                Transmog:UpdateSlotGlow(frame:GetName(), slot)
-            end
         end
 
         end
 
     end
+    -- RefreshPendingGlows is the single source of the pending-change indicator: it compares the
+    -- staged state against the server state for every slot, so an outfit that stages a removal
+    -- (slot,0) marks the slot exactly like a manual reset click does.
+    Transmog:RefreshPendingGlows()
     Transmog:calculateCost()
 end
 
@@ -261,18 +271,17 @@ function Transmog:CleanOutfitName(name)
     return out
 end
 
--- Saves the current transmog selections as a saved outfit.
+-- Saves the current transmog selections as a saved outfit. The snapshot is complete: slots whose
+-- state is 0 ("show the real item") are stored as `slot,0` so loading an outfit can clear a
+-- transmog another outfit set (local fix; upstream skips zeros, which makes a shown slot vanish
+-- from the outfit and two outfits that differ only in a hidden slot load the same).
 function Transmog_SaveOutfit()
 	transmogOutfits[Transmog.currentOutfit] = {}
     for InventorySlotId, itemID in pairs(Transmog.transmogStatusFromServer) do
-        if itemID ~= 0 then
-            transmogOutfits[Transmog.currentOutfit][InventorySlotId] = itemID
-        end
+        transmogOutfits[Transmog.currentOutfit][InventorySlotId] = itemID
     end
     for InventorySlotId, itemID in pairs(Transmog.transmogStatusToServer) do
-        if itemID ~= 0 then
-            transmogOutfits[Transmog.currentOutfit][InventorySlotId] = itemID
-        end
+        transmogOutfits[Transmog.currentOutfit][InventorySlotId] = itemID
     end
     TransmogFrameSaveOutfit:Disable()
     Transmog:PushOutfit(Transmog.currentOutfit)

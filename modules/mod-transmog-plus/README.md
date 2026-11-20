@@ -11,6 +11,16 @@ it collects appearances the retail way (see below) and ships a migration from mo
 
 > Local fork note: the transmog NPC entry is remapped from the upstream default 190012 to
 > **910012** (our reserved creature range; see this repository's ID registry).
+>
+> Local fork note (2026-11-20): `addon/Transmog/features/outfits.lua` — the outfit save snapshot
+> now includes slots whose state is 0 ("show the real item"). Upstream skips zeros, so an outfit
+> with only an un-transmogged slot saved empty and two outfits differing only in a hidden slot
+> loaded the same. The outfit load also undresses the model before staging (TryOn(0) and the fake
+> hidden id are no-ops, so the preview kept the previous outfit until the panel reopened), previews
+> the real equipped item for cleared (state-0) slots, falls back to the server state for slots the
+> snapshot does not carry, and derives the pending-change glow only from
+> `RefreshPendingGlows` (staged vs server state) — the old manual show/hide dance
+> suppressed the "will be cleared" indicator for cleared slots.
 
 ## Features
 
