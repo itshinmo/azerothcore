@@ -38,7 +38,13 @@ travel time, retail-authentic, no fix. Client bundle stays on WoSSilicon; Object
 - Build green, `make test` green, server restarted clean (0 errors). Owner in-game checklist in
   the ADR pending.
 
-Next: Group C AoE loot; Group D core. Instance reports flow per ADR-019.
+**Group C landed** ([ADR-022](../../decisions/ADR-022-aoe-looting.md)): vendored official
+`mod-aoe-loot` (AGPL-3.0, glue removed, module_string SQL self-applied). AoE loot is ON by
+default per character (upstream default; `.aoeloot off` to toggle); group loot rules respected;
+mail for full bags off by default. Upstream companion config `Rate.Corpse.Decay.Looted = 0.01`
+recorded in the ADR as a playtest revisit, not set.
+
+Next: Group D core (cross-faction social layer + shared guilds/mail — scoping ADR first).
 
 **Dungeon XP split** ([ADR-012](../../decisions/ADR-012-progression-rates.md) revision 2026-11-20
 (2), owner decision from the rate discussion): `mod-dungeon-xp` — dungeon/raid mob XP × 0.33
