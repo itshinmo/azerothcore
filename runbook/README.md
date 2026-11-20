@@ -31,6 +31,7 @@ I do it"; behavior lives in `specs/`.
 - [logs-and-monitoring.md](operation/logs-and-monitoring.md) — log files, levels, metrics.
 - [backup-restore.md](operation/backup-restore.md) — dump, verify, restore.
 - [cleanup.md](operation/cleanup.md) — reclaim disk space from builds, dumps, and main-server logs.
+- [client-bundle.md](operation/client-bundle.md) — the supported modernized play client and its build.
 - [apply-sql-update.md](operation/apply-sql-update.md) — pending and custom SQL.
 - [rollback.md](operation/rollback.md) — database, binary, and config rollback.
 - [content-audit.md](operation/content-audit.md) — read-only world content audit and waivers.

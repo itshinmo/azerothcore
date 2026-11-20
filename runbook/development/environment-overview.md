@@ -35,7 +35,7 @@ environment's client at another environment's ports.
 | World port | 8085 | 8086 |
 | GM API port | 8090 | not installed |
 | Databases | `acore_auth`, `acore_characters`, `acore_world` | `acore_pb_auth`, `acore_pb_characters`, `acore_pb_world` |
-| Client copy | `~/Games/WoTLK` (currently a remote realm; point it at 127.0.0.1 to play local) | `~/Games/wotlk-test` (already points at 3725) |
+| Client copy | `~/Games/wotlk-clean` (the modernized bundle client, launched via WoWSilicon; see [client-bundle.md](../operation/client-bundle.md)) | `~/Games/wotlk-test` (already points at 3725) |
 | Start with | `make start` | manual `screen` commands, see [playerbot-rig.md](../operation/playerbot-rig.md) |
 
 Warnings:

@@ -1,6 +1,6 @@
 # RFC-001 — Client modernization: Reforged + Ascension customization + modern UI
 
-- Status: accepted (implementation gated on the owner's downloads and explicit go)
+- Status: accepted (bundle verified 2026-11-20; launcher work gated to launch)
 - Date: 2026-11-20
 - Author: agent session (modernization/realm-cleanup-and-features)
 - Decisions: made by the owner on 2026-11-20 (see Decision record below)
@@ -84,29 +84,27 @@ Resolved by the owner on 2026-11-20:
 
 ## Decision record
 
-Owner decisions, 2026-11-20:
+Owner decisions, 2026-11-20 (planning): skip Reforged Patch-A, include mod-forever-ui, Phase A spell
+animations this cycle, WoWSilicon exe as the base.
 
-1. Adopt Project Reforged with the Ascension pack **replacing Patch-A** (skip patch-A; no DBC
-   merging).
-2. Include **mod-forever-ui** (modern UI + named creation/barber choices) in the bundle.
-3. Spell animations: Phase A (DBC-only `SpellVisualKit.StartAnimID/AnimID` cast-anim work) happens
-   this cycle; exact Legion M2 anim porting is deferred to a later owner decision.
-4. Distribution: owner plays with the bundle now; at launch the shipped client + launcher is
-   mandatory (Reforged-based client required for players).
-5. The owner downloads the bundle files (listed below); the agent never downloads them.
+Verification outcome, 2026-11-20 (owner-verified in game): the bundle runs on the **WoWSilicon exe**
+with all 12 custom MPQs (Ascension patch-A + Reforged B–U), the mod's 8 server DBCs, and the
+ForeverUI in-game addon — 120 FPS, all screens working. The St0ny exe path was measured at 14 FPS
+(x87 emulation on Apple Silicon) and reverted; St0ny's patcher and ForeverUIPatcher are mutually
+incompatible in either order (verified). ForeverUI's loose GlueXML conflicted with the Ascension
+glue and was removed; the Ascension MPQ owns the glue screens. Named creation/barber choices are
+dropped (numbered choices). Full record:
+[runbook/operation/client-bundle.md](../../runbook/operation/client-bundle.md).
 
-Download bundle (owner-side, verified list):
+Download bundle (owner-side, delivered 2026-11-20; final state per the verified outcome):
 
-| File | URL | Size | Purpose |
-|------|-----|------|---------|
-| Ascension Character Customization v6 (main file) | https://www.nexusmods.com/worldofwarcraft/mods/907 | ~3 GB | WoD HD models + 500+ creation options (replaces Patch-A) |
-| Project Reforged patch set (all modules except A) | https://projectreforged.github.io/wotlk/downloads/ | multi-GB | VFX, environment, gear, interface, sounds |
-| St0ny's AIO EXE Patcher + Reforged preset | linked from the Reforged downloads page | small | Mandatory exe patches |
-| DXVK 3.1.1 x86 (`d3d9.dll` from the release) | https://github.com/doitsujin/dxvk/releases/tag/v3.1.1 | small | Renderer fix |
-| mod-forever-ui (release/installer from the repo README) | https://github.com/Adrestie/mod-forever-ui | small | Modern UI + named choices |
-| LuxVelum (optional) | linked from the Reforged downloads page | small | Atmospheric fog |
-
-Exe patches target the Windows `Wow.exe` build 12340 under Wine; WoWSilicon reads the MPQ data
-patches but not exe patches, so full-bundle testing happens on a Wine client.
+| File | URL | Size | Delivered | State |
+|------|-----|------|-----------|-------|
+| Ascension Character Customization v6 (main file) | https://www.nexusmods.com/worldofwarcraft/mods/907 | ~3 GB | ✅ | in use — patch-A.MPQ + 8 server DBCs |
+| Project Reforged patch set minus patch-A (B,C,D,E,G,I,M,N,P,S,U) | https://projectreforged.github.io/wotlk/downloads/ | multi-GB | ✅ | in use — all 11 MPQs in the client |
+| St0ny's AIO EXE Patcher + Reforged preset | linked from the Reforged downloads page | small | ✅ | rejected — 14 FPS on the Apple Silicon host; patcher removed |
+| DXVK 3.1.1 x86 (`d3d9.dll` from the release) | https://github.com/doitsujin/dxvk/releases/tag/v3.1.1 | small | ✅ | rejected — WoWSilicon's own d3d9 is active; removed |
+| mod-forever-ui (release/installer from the repo README) | https://github.com/Adrestie/mod-forever-ui | small | ✅ | partially in use — in-game addon + art; glue and exe patch dropped (conflicts) |
+| LuxVelum (optional) | linked from the Reforged downloads page | small | ✅ | rejected — needs the St0ny loader; removed |
 
 <!-- When accepted, fold the durable content into specs/ or decisions/ and move the RFC to archived/. -->

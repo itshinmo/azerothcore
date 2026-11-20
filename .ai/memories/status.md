@@ -87,8 +87,16 @@ retail-intended mechanics get documented, not changed.
   bundle = Reforged + Ascension Character Customization + mod-forever-ui; collections =
   transmog-plus + account-bound + forever-journal; QoL/social slate with small-balance bonus XP,
   Ancestral Wisdom at +10%, and an extended cross-faction scope including shared guilds and mail).
-  RFC-001 implementation waits for the owner's client downloads and explicit go; RFC-002/003 wait
-  for the owner's go, with collections first in build order.
+  RFC-002/003 wait for the owner's go, with collections first in build order. (Later 2026-11-20:
+  the RFC-001 downloads landed and its first step — bundle verification — completed; see the
+  verified-bundle entry below.)
+- **Client bundle verified 2026-11-20** (owner in-game, 120 FPS): the supported client is the
+  WoWSilicon exe + its d3d9 + Ascension patch-A (client MPQ + 8 server DBCs) + Reforged patches
+  B–U + the ForeverUI in-game addon on `~/Games/wotlk-clean`. The St0ny exe measured 14 FPS (x87
+  emulation) and was reverted; St0ny's patcher and ForeverUIPatcher are incompatible in either
+  order; ForeverUI's loose GlueXML conflicted with the Ascension glue and was removed; named
+  creation/barber choices dropped. Record:
+  [runbook/operation/client-bundle.md](../../runbook/operation/client-bundle.md).
 - Branch: `modernization/realm-cleanup-and-features` (worktree) carries the removal plus the
   modernization research/RFCs; `local-server-setup` is untouched until merge.
 
