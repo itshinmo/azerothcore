@@ -58,7 +58,11 @@ configure-verify:
 	  -DCMAKE_INSTALL_PREFIX="$(PREFIX)"
 
 build:
-	@if [ ! -f build/CMakeCache.txt ]; then $(MAKE) configure; fi
+	@if [ ! -f build/CMakeCache.txt ]; then $(MAKE) configure; \
+	elif [ -n "$$(find modules src/cmake CMakeLists.txt -newer build/CMakeCache.txt 2>/dev/null | head -n1)" ]; then \
+	  echo "== modules/ or cmake macros changed since the last configure; re-running cmake (the module list is baked at configure time)"; \
+	  $(MAKE) configure; \
+	fi
 	cmake --build build -j$(JOBS)
 	cmake --install build
 

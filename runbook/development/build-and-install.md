@@ -96,6 +96,13 @@ The `make` configuration passes these automatically when the paths exist:
 - **Stale build:** remove `build/CMakeCache.txt` and reconfigure; do not delete local configs.
 - **PCH errors:** reconfigure with `-DNOPCH=1`.
 - **Linker errors after a module change:** reconfigure so the module list is regenerated.
+- **Modules missing from a fresh build:** the module list (`AC_MODULES_LIST`) and the module config
+  list (`CONFIG_FILE_LIST`) are compile definitions baked at configure time; `cmake --build` does
+  not notice vendored, added or removed `modules/*` directories on its own. `make build` re-runs
+  configure automatically when `modules/`, `src/cmake/` or the top-level `CMakeLists.txt` is newer
+  than `build/CMakeCache.txt` (2026-11-22: a rebuild without reconfigure shipped a worldserver with
+  only `mod-gm-api` and `mod-gm-audit`, which broke the journal and collections in game). Verify
+  after a module change: `strings env/dist/bin/worldserver | grep -c <module name>` must be > 0.
 - **`Config::LoadFile: Failed open file ...` right after starting a moved binary:** the binaries
   embed `CMAKE_INSTALL_PREFIX`, and on non-Windows the config path is only that baked-in directory
   — no fallback. So an `env/dist/bin` copied from another checkout or worktree looks for that
