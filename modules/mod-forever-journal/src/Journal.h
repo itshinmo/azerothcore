@@ -364,6 +364,10 @@ namespace Journal
         // The era state a spot on a map opens at: Outland and Northrend by zone (the blood elf
         // and draenei zones are classic's), instances by their journal tabs. 0 without era locks.
         uint8 ZoneEra(uint32 map, uint32 zone);
+
+        // Account-wide toys (ADR-023 social stack): grants every toy the account has collected
+        // to a (newly created) character — the pets pattern.
+        void GrantAccountToys(Player* player);
     }
 
     // ---- JournalQuests.cpp: every quest, as the quest log sorts them ----------------------------

@@ -2,7 +2,10 @@ local Transmog = _G.Transmog
 local tonumber, hooksecurefunc = tonumber, hooksecurefunc
 
 local PREFIX = Transmog.prefix
+-- Cyan "collected" line (owner pick), magenta "not collected" — every transmog-able item's
+-- tooltip carries one or the other.
 local STATUS_LINE = "|cfff471f5Appearance not collected|r"
+local STATUS_LINE_COLLECTED = "|cff00ccffAppearance collected|r"
 local STATUS_COLLECTED = 1
 local STATUS_UNCOLLECTED = 2
 local STATUS_INELIGIBLE = 3
@@ -36,7 +39,8 @@ local function addStatusLine(tooltip, itemId)
         return
     end
 
-    tooltip:AddLine(STATUS_LINE)
+    local status = statusByItem[itemId]
+    tooltip:AddLine(status == STATUS_COLLECTED and STATUS_LINE_COLLECTED or STATUS_LINE)
     tooltip.TransmogCollectionLineAdded = true
     tooltip:Show()
 end
@@ -65,7 +69,7 @@ local function updateTooltip(tooltip)
     tooltip.TransmogCollectionItemId = itemId
     tooltip.TransmogCollectionLineAdded = false
     local status = statusByItem[itemId]
-    if status == STATUS_UNCOLLECTED then
+    if status == STATUS_UNCOLLECTED or status == STATUS_COLLECTED then
         addStatusLine(tooltip, itemId)
     elseif status == nil then
         requestStatus(itemId)
@@ -90,7 +94,7 @@ local function handleCollectionStatus(message)
         statusByItem[itemId] = STATUS_INELIGIBLE
     end
 
-    if state ~= 0 then
+    if state > 1 then
         return
     end
 
@@ -129,7 +133,8 @@ local function hookTooltip(tooltip)
     end)
     tooltip:HookScript("OnShow", function(self)
         local itemId = self.TransmogCollectionItemId
-        if itemId and statusByItem[itemId] == STATUS_UNCOLLECTED then
+        local status = itemId and statusByItem[itemId]
+        if status == STATUS_UNCOLLECTED or status == STATUS_COLLECTED then
             addStatusLine(self, itemId)
         end
     end)

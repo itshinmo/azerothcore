@@ -65,7 +65,6 @@ function Transmog:LoadOnce()
 	self:aSend("GetAvailableTransmogs:grouped")
 	self:aSend("GetOutfits")
 	self:aSend("GetIllusions")
-	self:aSend("GetBackpacks")
 	self:aSend("GetForms")
 end
 
@@ -151,7 +150,6 @@ function Transmog:Reset(once)
         self:aSend("GetTransmogStatus")
         self:aSend("GetAvailableTransmogs:grouped")
         self:aSend("GetIllusions")
-        self:aSend("GetBackpacks")
         self:aSend("GetForms")
     end
 

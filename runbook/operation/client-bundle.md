@@ -13,7 +13,8 @@ and [ADR-020](../../decisions/ADR-020-collections-transmog-stack.md).
 | d3d9.dll | WoWSilicon's own (installed by its Game Patch) | active — WoWSilicon re-offers the patch whenever its hash check fails; click Patch |
 | patch-A.MPQ | "Ascension Character Customization" v6 (Nexus mod 907) | active — WoD HD models + 500+ creation options |
 | 8 server DBCs | same mod | active — copied into server `DataDir/dbc/`; worldserver restart applies them |
-| patch-B/C/D/E/G/I/M/N/P/S/U.MPQ | Project Reforged v1.5.8 (skip patch-A) | active — VFX, environment, gear, interface, sounds |
+| patch-B/C/D/E/G/I/M/N/P/U.MPQ | Project Reforged v1.5.8 (skip patch-A) | active — VFX, environment, gear, interface, sounds |
+| patch-S.MPQ | Project Reforged v1.5.8 | **removed 2026-11-21 (owner)** — caused client performance issues in Orgrimmar; all other Reforged parts stay |
 | Transmog addon | `modules/mod-transmog-plus/addon/Transmog` | active — in-game transmog UI + collections |
 | Journal addon | `modules/mod-forever-journal/addon/Journal` | active — the Collections journal (Mounts, Pets, Toys, Appearances) |
 | GM Helper | `tools/gm-addon/` | active — testing addon |
@@ -51,8 +52,9 @@ The verified path, in the order actually performed (recorded so any client copy 
 2. Open it once in the **WoWSilicon launcher**: apply its **CrossOver Patch**, then its
    **Game Patch** (installs WoWSilicon's `d3d9.dll`, `libDllLdr.dll`, `winerosetta.dll` chain).
    WoWSilicon re-offers the Game Patch whenever its hash check fails — click Patch.
-3. Copy the 12 custom MPQs into `Data/`: Ascension `patch-A.MPQ` + Reforged
-   `patch-B/C/D/E/G/I/M/N/P/S/U.MPQ` (never Reforged patch-A — the Ascension pack replaces it).
+3. Copy the 11 custom MPQs into `Data/`: Ascension `patch-A.MPQ` + Reforged
+   `patch-B/C/D/E/G/I/M/N/P/U.MPQ` (never Reforged patch-A — the Ascension pack replaces it;
+   patch-S removed 2026-11-21, see the table above).
 4. Copy the Ascension pack's 8 DBCs into the **server** `DataDir/dbc/`
    (BarberShopStyle, CharSections, CreatureDisplayInfoExtra, EmotesTextSound, CharHairGeosets,
    CharHairTextures, CharacterFacialHairStyles, HelmetGeosetVisData) and restart the worldserver.

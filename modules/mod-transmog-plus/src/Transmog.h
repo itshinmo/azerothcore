@@ -136,49 +136,10 @@ public:
 
     // Weapon enchant visuals collected from enchanting and shown through transmog.
     bool IllusionsEnable;
+    // Individual progression: phases cleared by rewarding FormsPhaseQuestBase + n (used by the
+    // form looks; was shared with the removed backpacks feature).
 
-    // Backpacks (TransmogBackpacks.cpp): a model on the back from a hidden aura, per character.
-    bool BackpacksEnable;
-    bool BackpacksHideCloak;
-    uint32 BackpackPhaseQuestBase;
-    bool BackpackMailEnable;
-    uint32 BackpackMailItem;
-    uint32 BackpackMailSender;
-    std::string BackpackMailSubject;
-    std::string BackpackMailBody;
-
-    struct BackpackEntry
-    {
-        uint32 id = 0;
-        std::string name;
-        uint32 spellId = 0;
-        uint8 unlockPhase = 0; // individual progression phase that unlocks it; 0 = not by phase
-        uint32 unlockItem = 0; // item that unlocks it on use; 0 = none
-        std::string model;     // client model path, for the addon's preview
-    };
-    // Loaded at startup, read-only afterwards.
-    std::vector<BackpackEntry> backpacks;
-    std::unordered_set<uint32> backpackSpells;
-
-    void LoadBackpacks();
-    BackpackEntry const* GetBackpack(uint32 id) const;
-    BackpackEntry const* GetBackpackByItem(uint32 itemEntry) const;
-    void LoadPlayerBackpacks(ObjectGuid guid);
-    void UnloadPlayerBackpacks(ObjectGuid guid);
-    bool IsBackpackUnlocked(ObjectGuid guid, uint32 id) const;
-    uint32 GetChosenBackpack(ObjectGuid guid) const;
-    // Returns true when the backpack is new to the character.
-    bool UnlockBackpack(Player* player, uint32 id, bool announce);
     uint8 GetProgressionPhase(Player const* player) const;
-    void SyncPhaseUnlocks(Player* player, bool announce);
-    // 0 takes the backpack off.
-    TransmogApplyResult ApplyBackpack(Player* player, uint32 id);
-    bool CanShowBackpack(Player const* player) const;
-    void ShowBackpack(Player* player);
-    bool IsBackpackShown(Player const* player) const;
-    void MarkBackpackDirty(ObjectGuid guid);
-    void UpdateBackpack(Player* player, uint32 diff);
-    void SendBackpackIntroMail(Player* player);
 
     // Druid form looks, shaman totem looks and warlock demon looks (TransmogForms.cpp): one choice
     // per form, totem element or demon, unlocked by individual progression phase, and some also by
@@ -188,6 +149,7 @@ public:
     // mod-retail-shaman-totems, mod-retail-warlock-pets) that fill mod_transmog_plus_forms:
     // without a class's pack there is nothing to pick and no tab.
     bool FormsEnable;
+    uint32 FormsPhaseQuestBase;
     bool TotemsEnable;
     bool DemonsEnable;
     // A druid with the same look picked for Travel and Aquatic Form changes between the two for

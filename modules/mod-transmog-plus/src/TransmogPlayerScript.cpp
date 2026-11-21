@@ -58,13 +58,25 @@ public:
         CharacterDatabase.Execute("DELETE FROM mod_transmog_plus_illusion_slots WHERE Owner = {}", guid.GetCounter());
     }
 
-// Re-evaluate the stored appearance against the newly equipped item.
+// Re-evaluate the stored appearance against the newly equipped item. Equipping also binds the
+// item (owner decision 2026-11-21): an equipped look can never be traded for its appearance
+// afterwards, matching BoE behaviour for everything.
     void OnPlayerEquip(Player* player, Item* item, uint8, uint8, bool) override
     {
         if (!item || !TransmogCollect_CanCollect(player))
             return;
 
-        sTransmog->CollectAppearance(player, item->GetTemplate(), true);
+        // Binding is scoped to the transmog-able classes (armor/weapon), like collection: a
+        // plain bag or ammo pouch stays tradeable after unequip.
+        ItemTemplate const* proto = item->GetTemplate();
+        if (!item->IsSoulBound()
+            && (proto->Class == ITEM_CLASS_ARMOR || proto->Class == ITEM_CLASS_WEAPON))
+        {
+            item->SetBinding(true);
+            item->SetState(ITEM_CHANGED, player);
+        }
+
+        sTransmog->CollectAppearance(player, proto, true);
         sTransmog->CollectIllusionsFromItem(player, item, true);
     }
 

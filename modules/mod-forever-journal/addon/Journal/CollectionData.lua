@@ -48,7 +48,7 @@ local function buildCatalog(rows)
 	local list, byId = {}, {}
 	for _, r in ipairs(rows) do
 		local e = { id = r[1], creature = r[2], item = r[3], quality = r[4] or 1, flags = r[5] or 0, classMask = r[6] or 0,
-			sources = r[7] or 0, reqState = r[8] or 0 }
+			sources = r[7] or 0, reqState = r[8] or 0, riding = r[9] or 0 }
 		table.insert(list, e)
 		byId[e.id] = e
 	end
@@ -104,6 +104,7 @@ end
 -- what this character has
 
 local owned = { mounts = {}, pets = {}, toys = {} }
+local toySpells = {}
 local ownedToysAt = nil
 -- Dates what is owned (below, with the Newest / Oldest sort).
 local stampOwned
@@ -148,13 +149,19 @@ function J.CompanionNow(kind, e)
 	return nil
 end
 
--- A toy in the bags (or worn) can be used; one only in the bank is collected but can't.
+-- A toy in the bags (or worn) is used as the item; otherwise, when the server granted its use
+-- spell (account-wide toybox, ADR-023 social stack), the spell is the toy — cast from any
+-- character, with the spell's own cooldown.
 function J.ToyInBags(e)
 	local t = owned.toys[e.id]
 	return t ~= nil and t ~= false and t ~= 0
 end
 
--- Asks the server which toys are in the bags or bank, at most every few seconds.
+function J.ToySpell(e)
+	return toySpells[e.id] or 0
+end
+
+-- Asks the server which toys are collected and how, at most every few seconds.
 function J.RefreshToys(done)
 	if not J.Has(J.HELLO_COLLECTIONS) then if done then done() end return end
 	if ownedToysAt and GetTime() - ownedToysAt < 3 then if done then done() end return end
@@ -162,8 +169,14 @@ function J.RefreshToys(done)
 	J.Request("O", nil, function (result)
 		if result then
 			local have = {}
-			-- "<item>,<in bags>"; a server without the second field only counted the bags and bank.
-			for _, r in ipairs(result.rows) do have[r[1]] = r[2] == nil and 1 or r[2] end
+			-- "<item>,<state>,<spell>": 1 = in this character's bags (usable), 0 = collected on
+			-- the account (the toy's use spell is granted to every character), absent = not
+			-- owned. <spell> is the toy's use spell (0 for item-only toys).
+			toySpells = {}
+			for _, r in ipairs(result.rows) do
+				have[r[1]] = tonumber(r[2]) or 0
+				toySpells[r[1]] = tonumber(r[3]) or 0
+			end
 			owned.toys = have
 			stampOwned("toys")
 			J.Fire("COLLECTION_OWNED", "toys")
@@ -252,6 +265,11 @@ J.On("LOGIN", function ()
 		stampOwned("pets")
 	end)
 end)
+
+-- When the server handshake is done, sync the account toybox without waiting for the tab:
+-- the O request records held toys on the account and grants their spells to every character
+-- on it (ADR-023 social stack), so a new hero has the collection from birth.
+J.On("READY", function () J.RefreshToys() end)
 
 J.On("COMPANIONS", function ()
 	readCompanions()
@@ -512,10 +530,13 @@ events:RegisterEvent("PLAYERBANKSLOTS_CHANGED")
 events:SetScript("OnEvent", function (self, event)
 	if event == "BAG_UPDATE" or event == "PLAYERBANKSLOTS_CHANGED" then
 		J.Debounce("collection-bags", 1.0, function () J.Fire("BAGS") end)
-	elseif event == "COMPANION_UPDATE" and not (J.frame and J.frame:IsShown()) then
-		-- Fires constantly in cities (anyone's pet or mount); the tabs read the companions
-		-- again when they're opened, so there's nothing to do while the journal is closed.
-		return
+	elseif event == "COMPANION_UPDATE" then
+		-- Fires constantly in cities (anyone's pet or mount). While the journal is closed there
+		-- is nothing to do — unless the Mounts tab is open: learning riding mid-session must
+		-- unlock the account's mounts without a relog (ADR-023 social stack).
+		if J.frame and J.frame:IsShown() and J.view and J.view.section == "mounts" then
+			J.Debounce("collection-companions", 0.3, function () J.Fire("COMPANIONS") end)
+		end
 	else
 		J.Debounce("collection-companions", 0.3, function () J.Fire("COMPANIONS") end)
 	end

@@ -98,6 +98,13 @@ namespace
         if (!item)
             return;
 
+        // Hybrid collection (ADR-021 revision 2026-11-21): the login scan collects soulbound
+        // items only. Equipped items are always bound (BoE binds on equip), so they pass; an
+        // unbound BoE in the bags or bank unlocks on equip or the Ctrl+right-click collect
+        // action, never just by being held.
+        if (!item->IsSoulBound())
+            return;
+
         counts.appearances += sTransmog->CollectAppearance(player, item->GetTemplate(), false, trans) ? 1 : 0;
         counts.illusions += sTransmog->CollectIllusionsFromItem(player, item, false, trans);
     }
@@ -273,7 +280,10 @@ public:
 // the character is in the world; the login scan picks that up instead.
     void OnPlayerStoreNewItem(Player* player, Item* item, uint32 /*count*/) override
     {
-        if (sTransmog->CollectOnPickup && item && player->IsInWorld() && TransmogCollect_CanCollect(player))
+        // Hybrid collection (ADR-021 revision 2026-11-21): only SOULBOUND items collect on
+        // pickup. Unbound (BoE) items collect on equip or on the Ctrl+right-click collect
+        // action (which soulbinds them), so a traded BoE is never collected by its giver.
+        if (sTransmog->CollectOnPickup && item && item->IsSoulBound() && player->IsInWorld() && TransmogCollect_CanCollect(player))
         {
             sTransmog->CollectAppearance(player, item->GetTemplate(), true);
             sTransmog->CollectIllusionsFromItem(player, item, true);
@@ -281,9 +291,11 @@ public:
     }
 
 // Existing items changing hands: trade, mail (including the auction house), guild bank.
+// The same rule: only soulbound items collect — a traded BoE unlocks for the receiver on
+// equip, never for the giver on handover.
     void OnPlayerAfterMoveItemToInventory(Player* player, Item* item, bool /*update*/) override
     {
-        if (sTransmog->CollectOnPickup && item && player->IsInWorld() && TransmogCollect_CanCollect(player))
+        if (sTransmog->CollectOnPickup && item && item->IsSoulBound() && player->IsInWorld() && TransmogCollect_CanCollect(player))
         {
             sTransmog->CollectAppearance(player, item->GetTemplate(), true);
             sTransmog->CollectIllusionsFromItem(player, item, true);

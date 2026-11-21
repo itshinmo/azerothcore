@@ -1,5 +1,6 @@
 #include "Transmog.h"
 #include "TransmogAddonProtocol.h"
+#include "Item.h"
 #include "ScriptMgr.h"
 #include "Chat.h"
 #include "Player.h"
@@ -266,13 +267,72 @@ namespace TransmogAddon
         SendStatus(player);
     }
 
+    // Ctrl+right-click collect (ADR-021 revision 2026-11-21): the addon asks the server to add
+    // a bag item's appearance and soulbind the item (Ascension's mechanic). The server verifies
+    // the item is really in the given bag slot (the addon sends the server's absolute slot:
+    // backpack 23..38, equipped bags 1..N), is a transmog-able armor/weapon, and is not yet
+    // collected; then it collects and binds. Payload: "CollectItem:<bag>:<slot>".
+    void HandleCollectItem(Player* player, std::string const& args)
+    {
+        auto reject = [&](std::string const& reason)
+        {
+            ChatHandler(player->GetSession()).PSendSysMessage("|cffff6060[Transmog]|r {}", reason);
+        };
+
+        std::vector<std::string_view> parts = Acore::Tokenize(args, ':', false);
+        if (parts.size() != 2)
+            return;
+
+        uint32 bag = 0, slot = 0;
+        if (!ParseUint32(parts[0], bag) || !ParseUint32(parts[1], slot))
+            return;
+
+        if (bag != INVENTORY_SLOT_BAG_0 && (bag < INVENTORY_SLOT_BAG_START || bag >= INVENTORY_SLOT_BAG_END))
+            return; // the addon only sends backpack and equipped bags
+        Item* item = player->GetItemByPos(uint8(bag), uint8(slot));
+        if (!item)
+            return;
+
+        ItemTemplate const* proto = item->GetTemplate();
+        if (proto->Class != ITEM_CLASS_ARMOR && proto->Class != ITEM_CLASS_WEAPON)
+        {
+            reject("This item's appearance cannot be collected.");
+            return;
+        }
+        if (TransmogRules_CanNeverTransmog(proto))
+        {
+            reject("This item's appearance cannot be collected.");
+            return;
+        }
+
+        uint32 accountId = player->GetSession()->GetAccountId();
+        sTransmog->LoadCollectionForAccount(accountId);
+        if (sTransmog->IsAppearanceKnown(accountId, proto))
+        {
+            // Known look: nothing to learn, and the item keeps its trade value — binding is
+            // the commitment to a NEW look (equipping binds regardless).
+            reject("Its appearance is already in your collection.");
+            return;
+        }
+
+        sTransmog->CollectAppearance(player, proto, true);
+
+        // Soulbind on collect (Ascension's rule): the look is learned, the item can no longer
+        // be traded or sold — collecting is the commitment.
+        if (!item->IsSoulBound())
+        {
+            item->SetBinding(true);
+            item->SetState(ITEM_CHANGED, player);
+        }
+        SendToClient(player, "CollectionStatus:" + std::to_string(proto->ItemId) + ":1");
+    }
+
     // Answer collection-status requests from the account collection cache.
     void HandleGetCollectionStatus(Player* player, std::string const& args)
     {
         uint32 itemId;
         if (!ParseUint32(args, itemId) || itemId == 0)
             return;
-
         ItemTemplate const* itemTemplate = sObjectMgr->GetItemTemplate(itemId);
         if (!itemTemplate ||
             (itemTemplate->Class != ITEM_CLASS_ARMOR && itemTemplate->Class != ITEM_CLASS_WEAPON) ||
@@ -498,54 +558,6 @@ namespace TransmogAddon
     {
         SendToClient(player, "IllusionStatus:" + std::to_string(sTransmog->GetSlotIllusion(player->GetGUID(), EQUIPMENT_SLOT_MAINHAND)) + ":"
             + std::to_string(sTransmog->GetSlotIllusion(player->GetGUID(), EQUIPMENT_SLOT_OFFHAND)));
-    }
-
-    void SendBackpackUnlocked(Player* player, uint32 backpackId)
-    {
-        SendToClient(player, "BackpackUnlocked:" + std::to_string(backpackId));
-    }
-
-    void SendBackpackStatus(Player* player)
-    {
-        SendToClient(player, "BackpackStatus:" + std::to_string(sTransmog->GetChosenBackpack(player->GetGUID())));
-    }
-
-    // Every backpack, unlocked or not, in display order:
-    // "Backpacks:start", "Backpack:<id>:<unlocked>:<phase>:<byItem>:<model>:<name>"..., "Backpacks:end",
-    // then the current choice. Backpacks being off sends nothing, so the addon hides the tab.
-    void HandleGetBackpacks(Player* player, std::string const&)
-    {
-        if (!sTransmog->BackpacksEnable)
-            return;
-
-        ObjectGuid guid = player->GetGUID();
-        SendToClient(player, "Backpacks:start");
-        for (Transmog::BackpackEntry const& entry : sTransmog->backpacks)
-        {
-            std::string line = "Backpack:" + std::to_string(entry.id) + ":"
-                + (sTransmog->IsBackpackUnlocked(guid, entry.id) ? "1" : "0") + ":"
-                + std::to_string(entry.unlockPhase) + ":" + (entry.unlockItem ? "1" : "0") + ":"
-                + entry.model + ":" + entry.name;
-            SendToClient(player, line.substr(0, MAX_PAYLOAD));
-        }
-        SendToClient(player, "Backpacks:end");
-        SendBackpackStatus(player);
-    }
-
-    // "ApplyBackpack:<id>", 0 to take it off. Free, like hiding a slot.
-    void HandleApplyBackpack(Player* player, std::string const& args)
-    {
-        uint32 id;
-        if (!sTransmog->BackpacksEnable || !ParseUint32(args, id))
-        {
-            SendToClient(player, "ApplyBackpackResult:0:0");
-            return;
-        }
-
-        TransmogApplyResult result = sTransmog->ApplyBackpack(player, id);
-        bool success = result == TransmogApplyResult::Success || result == TransmogApplyResult::AlreadyApplied;
-        SendToClient(player, "ApplyBackpackResult:" + std::string(success ? "1" : "0") + ":" + std::to_string(id));
-        SendBackpackStatus(player);
     }
 
     void SendFormsUnlocked(Player* player, uint8 phase)
@@ -798,6 +810,8 @@ namespace TransmogAddon
         // Keep tooltip collection requests on the same authenticated addon channel.
         else if (command == "GetCollectionStatus")
             HandleGetCollectionStatus(player, args);
+        else if (command == "CollectItem")
+            HandleCollectItem(player, args);
         else if (command == "GetAvailableTransmogs")
             HandleGetAvailableTransmogs(player, args);
         else if (command == "Apply")
@@ -824,10 +838,6 @@ namespace TransmogAddon
             HandleGetIllusions(player, args);
         else if (command == "ApplyIllusion")
             HandleApplyIllusion(player, args);
-        else if (command == "GetBackpacks")
-            HandleGetBackpacks(player, args);
-        else if (command == "ApplyBackpack")
-            HandleApplyBackpack(player, args);
         else if (command == "GetForms")
             HandleGetForms(player, args);
         else if (command == "ApplyForm")

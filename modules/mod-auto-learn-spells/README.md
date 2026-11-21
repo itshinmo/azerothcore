@@ -13,8 +13,14 @@ Teaches class trainer spells automatically when their level requirement is met
   unchanged.
 - Class spells only: mount, pet and tradeskill trainers are not touched, and
   talents stay talent-point purchases. LEARN_SPELL wrapper entries taught by class
-  trainers (class mounts, druid flight forms) stay normal trainer visits: they are
-  cast, not learned, and their side effects (Riding skill steps) belong to the trainer.
+  trainers (class mounts, druid flight forms) are taught the way the trainer itself
+  teaches them — by casting the wrapper, which keeps their own gating (Riding skill
+  for class mounts and flight forms) and their bundled side effects.
+- Shamans additionally receive their four totem items (Earth/Fire/Water/Air Totem,
+  5175-5178) on login when missing: the totem spells carry a `TotemCategory`
+  requirement checked against the bags, and retail grants these items via the
+  level 4/10/20/30 class quests. Only shamans have such item-gated abilities in the
+  trainer data (checked across all classes).
 
 Config: none. To disable the behavior, exclude the module via
 `-DDISABLED_AC_MODULES=mod-auto-learn-spells` (see `modules/how_to_make_a_module.md`).

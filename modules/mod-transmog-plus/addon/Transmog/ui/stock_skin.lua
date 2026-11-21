@@ -286,7 +286,7 @@ frame:HookScript("OnShow", setRace)
 
 -- The tabs, on the pane's top edge.
 local tabs = { TransmogFrameItemsButton, TransmogFrameSetsButton, TransmogFrameIllusionsButton,
-    TransmogFrameBackpacksButton, TransmogFrameFormsButton }
+    TransmogFrameFormsButton }
 for _, tab in ipairs(tabs) do
     tab.stockInactive = tabPieces(tab, "Interface\\HelpFrame\\HelpFrameTab-Inactive", 0)
     tab.stockActive = tabPieces(tab, "Interface\\HelpFrame\\HelpFrameTab-Active", -3)

@@ -63,6 +63,84 @@ battlemaster ladder mirrored (disable-table + no-play-time checks included).
 `mod-personal-arena-teams`: rated premades auto-create the leader's personal team and re-sync
 members on every queue attempt. Owner full-session test list prepared, delivery on request.
 
+**Client crash at character creation (2026-11-21, transient — watch item):** while creating a
+female human warrior the client hit ERROR #132 (access violation in a REP MOVS over a BLP2
+texture header, i.e. a texture-load failure on the creation screen's preview model). Server-side
+clean (no errors, no server involvement — appearance is client-only until Create). The combo
+(female human warrior, face 8 / hair 20 / hair color 14 / facial 4 — stored on character `Te`,
+guid 9) **did not reproduce** on retry. Likely a one-off texture glitch in the client's Ascension
+creation-pack data (the pack swapped `CharSections.dbc` for its expanded options). If it recurs:
+suspect a missing/broken BLP for that combo in the pack, workaround = different appearance combo,
+real fix = client-patch pipeline (repair the pack's CharSections/texture set). Client Cache purge +
+WoSSilicon patch re-apply are the standard first steps.
+
+**Client bundle change (2026-11-21, owner):** `patch-S.mpq` (Reforged v1.5.8) was deleted from
+the client — it caused client-side performance issues in Orgrimmar; performance is fine without
+it. The bundle spec in `runbook/operation/client-bundle.md` was updated (11 custom MPQs now).
+What patch-S contained is unknown (encrypted MPQ — `mpyq` cannot list it); if a future update
+needs the Reforged S content, re-test Orgrimmar performance on a fresh client.
+
+**Auto-learn verified by the owner (2026-11-21) for all classes, death knights excluded** (owner
+choice: DKs need their starting-quest progression, and the catch-up pass would front-load the
+DK trainer spells there — behavior note, not fixed). Shaman totems additionally verified working
+via the granted totem items. **Tests 1-7 verified by the owner (2026-11-21):** auto-learn (all classes, DK excluded), dual
+spec at 30 free (incl. the 1000g gossip price fix), XP bonuses, Ancestral Wisdom, dungeon XP
+split, AoE loot, cross-faction social (say/emotes, groups with groupmate suppression, guilds,
+shared AH, mail — also mail QoL verified: no postage, instant), transmog outfits (earlier).
+**Tasks 8-11 (BGs, 3v3 solo queue, personal arena teams, and the full queue-pop side of
+queue-from-anywhere) move to a dedicated group-content session** — with two clients the owner
+cannot join battlegrounds (client limitation; noted 2026-11-21). WSG's MinPlayersPerTeam was
+temporarily set to 1 for the test attempt and reverted to 5. Queue-from-anywhere's queue/leave
+side remains solo-testable.
+
+**Transmog collection + collections panel rework (2026-11-21, owner decisions; committed and
+merged into local-server-setup):**
+- Collection unlock now hybrid: soulbound items collect on pickup; unbound items unlock on
+  **equip** or on the new **Ctrl+right-click** action, which collects **and soulbinds** the item
+  (Ascension's mechanic). **Equipping also soulbinds** (owner: an equipped look can never be
+  traded for its appearance). The Ctrl+click hook is `ContainerFrameItemButton_OnClick` +
+  `UseContainerItem` with a 2s per-slot throttle: per-button login hooks never fire (3.3.5
+  creates bag buttons lazily) and `UseContainerItem` alone did nothing on this client either.
+  Visible chat feedback on every collect and every reject. Login scans go bound-only. History
+  not purged.
+- **Every transmog-able tooltip carries the collection line**: collected = cyan
+  (`|cff00ccffAppearance collected|r`, owner picked cyan over green), uncollected = magenta with
+  the Ctrl+click hint; ineligible items get no line.
+- **Thrown weapon subclass** added to the addon's subclass table (was a TWFERROR on thrown);
+  lances and fishing poles mapped too.
+- **Dual-wield preview** fix: the preview model applies slots in a fixed order, main hand before
+  off-hand (the 3.3.5 model keeps one 1H weapon per hand-pair; random pairs() order made one
+  weapon overwrite the other).
+- **Armor-type freedom**: `Transmog.AllowMixedArmorTypes = 1` + `Transmog.IgnoreReqClass = 1`
+  (ADR-012 revision 2026-11-21); weapon subclasses stay gated (dagger stays dagger).
+- **Backpacks fully removed** from mod-transmog-plus (server file, config block, addon tab +
+  protocol gone; unlock item 27621 deleted and the world table dropped by the world SQL file,
+  the three characters-side tables dropped by the new
+  `data/sql/db-characters/updates/mod_transmog_plus_2026_11_21_backpacks_characters.sql` —
+  applied live, tables confirmed gone).
+  The client models were already absent after patch-S came off.
+- **Toys = the pets pattern (account-wide + permanent, spell-granted)**: the journal records a
+  held toy on the account (`mod_forever_journal_account_toys`, characters DB) the first time any
+  character obtains it, then **grants the toy's use spell** (`spelltrigger_1 = 0`) to every
+  character on the account — `character_spell`, live learnSpell + chat announce for new ones,
+  `GrantAccountToys` on character creation. Once collected, always collected (deleting the item
+  changes nothing). The journal's Use button casts the granted spell (item path kept for toys in
+  bags), so cooldowns come from the spell DBC — the "toys have no cooldown" bug is gone. Toy
+  rows are now `<item>,<state>,<spell>`.
+- **Mounts**: mid-session refresh fixed (COMPANION_UPDATE now refreshes an open Mounts tab);
+  the catalog carries each mount's required riding rank (from the teaching item's
+  RequiredSkillRank) and the journal greys collected mounts the character cannot ride yet with
+  "Requires riding skill (X)" — they never hide, they summon only when the skill suffices.
+- **AoE loot removed** (ADR-022 status → removed): the upstream quest-item collector breaks on
+  solo kills (issue #44) and the owner dropped the feature. Module directory deleted (lives in
+  git history), RFC-003 Group C amended.
+- **Instance-card circles removed** (the round portrait icon on journal dungeon/raid cards).
+- **White boss models**: open — the journal previews through the client's creature data; broken
+  models are the Ascension pack's model replacements missing textures (possibly tied to the
+  patch-S deletion). Investigate with the client-patch pipeline; not fixed yet.
+- The research-implementations skill exists at `.ai/skills/research-implementations/SKILL.md`
+  (browse prior implementations before building; report findings, then plan).
+
 **Dungeon XP split** ([ADR-012](../../decisions/ADR-012-progression-rates.md) revision 2026-11-20
 (2), owner decision from the rate discussion): `mod-dungeon-xp` — dungeon/raid mob XP × 0.33
 (owner asked deeper than the proposed 0.5), dungeon quest XP ×2 on top of the global rate (4x

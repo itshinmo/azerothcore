@@ -65,9 +65,14 @@ end
 
 -- Rebuilds the character preview model from scratch, skipping the Hidden
 -- sentinel. DressUpModel has no per-slot TryOff, so we must Undress/re-TryOn.
+-- The 3.3.5 model frame keeps one 1H weapon per hand-pair: whichever one-hand
+-- TryOn lands LAST wins the right hand, so the slots are applied in a fixed
+-- order with the off-hand before the main hand — otherwise random pairs() order
+-- made a rogue's dual-wield preview show one weapon or the other (ADR-021).
+local PREVIEW_ORDER = { 1, 3, 4, 5, 6, 7, 8, 9, 10, 19, 18, 16, 17 }
 function Transmog:RefreshPreviewModel()
     TransmogFramePlayerModel:Undress()
-    for _, InventorySlotId in pairs(self.inventorySlots) do
+    for _, InventorySlotId in ipairs(PREVIEW_ORDER) do
         local effective = self.transmogStatusToServer[InventorySlotId]
         if not effective or effective == 0 then
             effective = self.equippedItems[InventorySlotId]
@@ -88,11 +93,6 @@ function Transmog_Try(itemId, slotName, newReset)
 
     if Transmog.tab == 'illusions' and not newReset then
         Transmog:TryIllusion(itemId)
-        return true
-    end
-
-    if Transmog.tab == 'backpacks' and not newReset then
-        Transmog:TryBackpack(itemId)
         return true
     end
 
@@ -269,13 +269,6 @@ function selectTransmogSlot(InventorySlotId, slotName)
         TransmogFrameItemsButtonText:SetText(HIGHLIGHT_FONT_COLOR_CODE .. 'Items')
     end
 
-    if Transmog.tab == 'backpacks' and InventorySlotId ~= -1 then
-        Transmog.tab = 'items'
-        Transmog:LeaveBackpacksView()
-        Transmog:SetTabLook(TransmogFrameItemsButton, true)
-        TransmogFrameItemsButtonText:SetText(HIGHLIGHT_FONT_COLOR_CODE .. 'Items')
-    end
-
     if Transmog.tab == 'sets' and InventorySlotId ~= -1 then
         Transmog.tab = 'items'
         Transmog:SetTabLook(TransmogFrameItemsButton, true)
@@ -370,13 +363,6 @@ function Transmog_ChangePage(dir)
         end
         Transmog.currentPage = nextPage
         Transmog:RenderIllusions()
-    elseif Transmog.tab == 'backpacks' then
-        local nextPage = math.max(1, math.min(Transmog.currentPage + dir, math.max(1, Transmog.totalPages or 1)))
-        if nextPage ~= Transmog.currentPage then
-            PlaySound("igAbiliityPageTurn")
-        end
-        Transmog.currentPage = nextPage
-        Transmog:RenderBackpacks()
     elseif Transmog.tab == 'forms' then
         local nextPage = math.max(1, math.min(Transmog.currentPage + dir, math.max(1, Transmog.totalPages or 1)))
         if nextPage ~= Transmog.currentPage then
@@ -439,9 +425,6 @@ function Transmog_switchTab(to)
     Transmog.tab = to
     if to ~= 'illusions' then
         Transmog:LeaveIllusionsView()
-    end
-    if to ~= 'backpacks' then
-        Transmog:LeaveBackpacksView()
     end
     if to ~= 'forms' then
         Transmog:LeaveFormsView()
@@ -511,29 +494,6 @@ function Transmog_switchTab(to)
 
         TransmogFrameCollected:Show()
         Transmog:ShowIllusionsView()
-    elseif to == 'backpacks' then
-        if not Transmog.serverSupportsBackpacks then
-            DEFAULT_CHAT_FRAME:AddMessage("|cffff4444[Transmog]|r Backpacks aren't available on this realm yet.")
-            Transmog_switchTab('items')
-            return
-        end
-
-        Transmog:SetTabLook(TransmogFrameItemsButton, false)
-        TransmogFrameItemsButtonText:SetText(NORMAL_FONT_COLOR_CODE .. 'Items')
-
-        if TransmogFrameSetsButton then
-            Transmog:SetTabLook(TransmogFrameSetsButton, false)
-            TransmogFrameSetsButtonText:SetText(NORMAL_FONT_COLOR_CODE .. 'Sets')
-        end
-        Transmog:SetBackpacksTabActive(true)
-        TransmogFrameFilters:Hide()
-
-        if TransmogSetsFrame then
-            TransmogSetsFrame:Hide()
-        end
-
-        TransmogFrameCollected:Show()
-        Transmog:ShowBackpacksView()
     elseif to == 'forms' then
         if not Transmog.serverSupportsForms then
             DEFAULT_CHAT_FRAME:AddMessage("|cffff4444[Transmog]|r Form, totem and demon looks are for druids, shamans and warlocks, on realms that have them.")

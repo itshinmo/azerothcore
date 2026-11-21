@@ -450,6 +450,16 @@ void Transmog::ApplyDemonLooks(Player* player)
                 ApplyDemonLook(demon);
 }
 
+// Individual progression: phases cleared by rewarding FormsPhaseQuestBase + n (1..MAX_PHASE).
+uint8 Transmog::GetProgressionPhase(Player const* player) const
+{
+    uint8 phase = 0;
+    for (uint8 n = 1; n <= MAX_PHASE; ++n)
+        if (player->GetQuestRewardStatus(sTransmog->FormsPhaseQuestBase + n))
+            phase = n;
+    return phase;
+}
+
 // After a phase is cleared: how many looks it opened up, in chat and to the addon.
 void Transmog::AnnounceFormUnlocks(Player* player, uint8 phase)
 {
@@ -537,8 +547,8 @@ public:
             return;
 
         uint32 id = quest->GetQuestId();
-        uint32 base = sTransmog->BackpackPhaseQuestBase;
-        if (id > base && id <= base + MAX_PHASE)
+        uint32 base = sTransmog->FormsPhaseQuestBase;
+        if (base && id > base && id <= base + MAX_PHASE)
             sTransmog->AnnounceFormUnlocks(player, uint8(id - base));
     }
 

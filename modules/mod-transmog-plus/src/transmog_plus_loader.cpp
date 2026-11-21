@@ -5,7 +5,6 @@ void AddSC_TransmogWorldScript();
 void AddSC_TransmogGlobalScript();
 void AddSC_TransmogAddonProtocol();
 void AddSC_TransmogCollectScript();
-void AddSC_TransmogBackpacks();
 void AddSC_TransmogForms();
 
 void Addmod_transmog_plusScripts()
@@ -17,6 +16,5 @@ void Addmod_transmog_plusScripts()
     AddSC_TransmogGlobalScript();
     AddSC_TransmogAddonProtocol();
     AddSC_TransmogCollectScript();
-    AddSC_TransmogBackpacks();
     AddSC_TransmogForms();
 }

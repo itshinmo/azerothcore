@@ -218,6 +218,9 @@ function IsMounted() return false end
 -- Orb of Deception (1973) is a trinket, not worn.
 function IsEquippableItem(id) return id == 1973 end
 function IsEquippedItem() return false end
+-- The Piccolo's use spell (18400) is granted account-wide.
+function IsSpellKnown(id) return id == 18400 end
+function GetSkillValue(id) return id == 762 and 0 or 0 end
 function Dismount() end
 function GetAchievementInfo(id) return id, "Leeroy!", 10, false, nil, nil, nil, "Defeat 50 whelps.", 0, "Interface\\Icons\\A" end
 function GetAddOnInfo(name) if name == "DungeonJournal" then return "DungeonJournal", "Dungeon Journal", "", 1 end end
@@ -569,8 +572,9 @@ local function serve(msg)
 		reply("PD:" .. req .. ":1.Long ago%2C the night elves.$B$BHello $N.;2.It fell in;2. 10000.")
 		reply("PE:" .. req)
 	elseif cmd == "O" then
-		-- Orb of Deception in the bags, Piccolo of the Flaming Fire only in the bank.
-		list("O", req, "2", { "1973,1", "13379,0" })
+		-- Orb of Deception in the bags; Piccolo of the Flaming Fire only in the bank — but its
+		-- use spell is granted account-wide, so it is used as a spell from anywhere.
+		list("O", req, "2", { "1973,1,16739", "13379,0,18400" })
 	else
 		print("  !! unknown command " .. cmd)
 	end
@@ -650,8 +654,8 @@ step("open the journal: classic dungeons", function ()
 	assert(counts.D == 1, "instance list not asked once")
 	assert(textShown("^Deadmines$") and textShown("^Scarlet Monastery$"), "classic dungeon tiles missing")
 	assert(not textShown("^Naxxramas$"), "a raid shows among the dungeons")
-	assert(find(function (f) return f.__kind == "Texture" and f.__portrait == "Interface\\LFGFrame\\LFGIcon-DEADMINES"
-		and f:IsVisible() end), "Deadmines tile has no Dungeon Finder icon")
+	assert(not find(function (f) return f.__kind == "Texture" and f.__portrait == "Interface\\LFGFrame\\LFGIcon-DEADMINES"
+		and f:IsVisible() end), "Deadmines tile still shows the round portrait icon")
 	assert(find(function (f) return f.__kind == "Texture" and f.__texture == "Interface\\LFGFrame\\UI-LFG-BACKGROUND-DEADMINES"
 		and f:IsVisible() end), "Deadmines tile has no Dungeon Finder art")
 	if DragonUI then
@@ -1239,8 +1243,9 @@ step("pets and toys tabs", function ()
 	local piccolo = find(function (f) return f.__kind == "Button" and type(rawget(f, "entry")) == "table" and f.entry.id == 13379 and f:IsVisible() end)
 	piccolo.__scripts.OnClick(piccolo)
 	tick(0.2)
-	assert(not buttonShown("Use") and not buttonShown("Equip"), "a Use button for a toy in the bank")
-	assert(textShown("in your bank"), "a toy in the bank isn't said to be there")
+	-- The banked toy's use spell is granted account-wide: used as a spell from anywhere.
+	assert(buttonShown("Use"), "no Use button for a banked toy with its spell granted")
+	assert(textShown("|cff66ff66Collected|r"), "an account-collected toy isn't said to be collected")
 end)
 
 step("quests tab: headings, where you are, chains, era, search, filters", function ()

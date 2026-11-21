@@ -4261,9 +4261,10 @@ MaxAllowedMMRDrop = 500
 #
 #    MailDeliveryDelay
 #        Description: Time (in seconds) mail delivery is delayed when sending items.
-#        Default:     3600 - (1 hour)
+#        Default:     3600 - (1 hour) (upstream; 0 in this fork — instant mail, owner
+#                     decision 2026-11-21)
 
-MailDeliveryDelay = 3600
+MailDeliveryDelay = 0
 
 #
 #    Mail.PushInboxOnDelivery

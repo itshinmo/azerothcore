@@ -559,8 +559,17 @@ public:
     JournalPlayerScript() : PlayerScript("JournalPlayerScript",
         {
             PLAYERHOOK_CAN_PLAYER_USE_PRIVATE_CHAT,
+            PLAYERHOOK_ON_CREATE,
             PLAYERHOOK_ON_LOGOUT
         }) { }
+
+    // Account-wide toys (ADR-023 social stack): a new character starts with every toy the
+    // account has collected — the pets pattern.
+    void OnPlayerCreate(Player* player) override
+    {
+        if (GetConfig().enabled && GetConfig().collections)
+            Collections::GrantAccountToys(player);
+    }
 
     // The addon whispers itself; swallow those messages so they never show up as chat.
     bool OnPlayerCanUseChat(Player* player, uint32 /*type*/, uint32 lang, std::string& msg, Player* receiver) override

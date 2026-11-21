@@ -522,7 +522,11 @@ local function buildTab(kind, panel)
 			b.entry = e
 			if e then
 				b.icon:SetTexture(J.EntryIcon(kind, e))
-				b.icon:SetDesaturated(not e.mine)
+				-- Riding-skill gate (ADR-023 social stack): a collected mount the character cannot
+				-- ride yet stays listed, greyed, with what it needs — it never hides till relog.
+				local riding = kind == "mounts" and e.mine and e.riding and e.riding > 0
+					and (GetSkillValue(762) or 0) < e.riding
+				b.icon:SetDesaturated(not e.mine or riding)
 				if CO then b.icon:SetAlpha(e.mine and 1 or 0.35) end
 				b.name:SetText(J.EntryName(kind, e) or ("item " .. e.id))
 				if e.mine then
@@ -532,7 +536,8 @@ local function buildTab(kind, panel)
 					b.name:SetTextColor(0.6, 0.6, 0.6)
 				end
 				local locked = J.EntryLocked(e)
-				b.sub:SetText(locked and lockText(e.reqState) or summary(e))
+				b.sub:SetText(riding and ("|cffff6060Requires riding skill (" .. e.riding .. ")|r")
+					or locked and lockText(e.reqState) or summary(e))
 				setShown(b.lock, locked)
 				setShown(b.selectedBg, state.selected == e)
 				if b.star then setShown(b.star, isFavorite(e)) end
@@ -737,11 +742,24 @@ local function buildTab(kind, panel)
 	local function syncUse()
 		if not use or InCombatLockdown() then return end
 		local e = state.selected
-		if e and e.mine and J.ToyInBags(e) and panel:IsVisible() and right:IsVisible() then
-			use:SetAttribute("item", "item:" .. e.id)
-			-- A trinket (Orb of Deception) is put on first: using it from the bags equips it.
-			local equip = IsEquippableItem and IsEquippableItem(e.id) and not (IsEquippedItem and IsEquippedItem(e.id))
-			use:SetText(equip and "Equip" or "Use")
+		local spell = e and e.mine and kind == "toys" and J.ToySpell(e) or 0
+		if e and e.mine and panel:IsVisible() and right:IsVisible()
+			and (J.ToyInBags(e) or (spell > 0 and IsSpellKnown(spell))) then
+			-- The item when it is in the bags (a trinket is put on first: using it equips it);
+			-- otherwise the toy's spell, which the server granted to this character with the
+			-- spell's own cooldown — the account-wide toybox (ADR-023 social stack).
+			if J.ToyInBags(e) then
+				use:SetAttribute("type", "item")
+				use:SetAttribute("item", "item:" .. e.id)
+				use:SetAttribute("spell", nil)
+				local equip = IsEquippableItem and IsEquippableItem(e.id) and not (IsEquippedItem and IsEquippedItem(e.id))
+				use:SetText(equip and "Equip" or "Use")
+			else
+				use:SetAttribute("type", "spell")
+				use:SetAttribute("spell", spell)
+				use:SetAttribute("item", nil)
+				use:SetText("Use")
+			end
 			use:ClearAllPoints()
 			use:SetPoint("BOTTOMRIGHT", model, "BOTTOMRIGHT", -6, 6)
 			use:Show()
@@ -940,10 +958,14 @@ local function buildTab(kind, panel)
 			end
 			if #names > 0 then table.insert(bits, table.concat(names, ", ") .. " only") end
 		end
-		if e.mine and kind == "toys" and not J.ToyInBags(e) then
-			table.insert(bits, "|cff66ff66Collected|r (in your bank)")
-		else
-			table.insert(bits, e.mine and "|cff66ff66Collected|r" or "|cff9d9d9dNot collected|r")
+		table.insert(bits, e.mine and "|cff66ff66Collected|r" or "|cff9d9d9dNot collected|r")
+		-- Riding-skill gate: a collected mount the character cannot ride yet says so (retail
+		-- collections behaviour, ADR-023 social stack).
+		if e.mine and kind == "mounts" and e.riding and e.riding > 0 then
+			local skill = GetSkillValue(762) or 0
+			if skill < e.riding then
+				table.insert(bits, "|cffff6060Cannot use: requires riding skill (" .. e.riding .. ")|r")
+			end
 		end
 		if kind == "pets" and J.autoSummon == e.id then table.insert(bits, "|cff66ccffAuto-summoned|r") end
 		if J.EntryLocked(e) then table.insert(bits, lockText(e.reqState)) end

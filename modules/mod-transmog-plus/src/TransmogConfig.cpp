@@ -72,21 +72,9 @@ void Transmog::LoadConfig()
     OpenAnywhere = sConfigMgr->GetOption<bool>("Transmog.OpenAnywhere", true);
 
     IllusionsEnable = sConfigMgr->GetOption<bool>("Transmog.Illusions.Enable", true);
-
-    BackpacksEnable = sConfigMgr->GetOption<bool>("Transmog.Backpacks.Enable", true);
     FormsEnable = sConfigMgr->GetOption<bool>("Transmog.Forms.Enable", true);
     TotemsEnable = sConfigMgr->GetOption<bool>("Transmog.Totems.Enable", true);
     DemonsEnable = sConfigMgr->GetOption<bool>("Transmog.Demons.Enable", true);
     FormsWaterSwap = sConfigMgr->GetOption<bool>("Transmog.Forms.WaterSwap", true);
-    BackpacksHideCloak = sConfigMgr->GetOption<bool>("Transmog.Backpacks.HideCloak", true);
-    BackpackPhaseQuestBase = sConfigMgr->GetOption<uint32>("Transmog.Backpacks.PhaseQuestBase", 66000);
-    BackpackMailEnable = sConfigMgr->GetOption<bool>("Transmog.Backpacks.Mail.Enable", true);
-    BackpackMailItem = sConfigMgr->GetOption<uint32>("Transmog.Backpacks.Mail.Item", 27621);
-    BackpackMailSender = sConfigMgr->GetOption<uint32>("Transmog.Backpacks.Mail.Sender", 9500000);
-    BackpackMailSubject = sConfigMgr->GetOption<std::string>("Transmog.Backpacks.Mail.Subject", "Something for your back");
-    BackpackMailBody = ExpandNewlines(sConfigMgr->GetOption<std::string>("Transmog.Backpacks.Mail.Body",
-        "Adventurers have started carrying their gear on their backs!\n\n"
-        "Use the enclosed Halfhill Farmer's Backpack to add it to your collection. It goes on right away.\n\n"
-        "Every raid tier you clear unlocks another backpack. Pick between them, or take yours off, "
-        "in the Backpacks tab of the Transmogrify window (/transmog). A backpack hides your cloak while you wear it."));
+    FormsPhaseQuestBase = sConfigMgr->GetOption<uint32>("Transmog.Forms.PhaseQuestBase", 66000);
 }

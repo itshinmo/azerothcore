@@ -16,9 +16,6 @@ namespace TransmogAddon
     // Notify the addon that an illusion (weapon enchant visual) became collected.
     void SendIllusionCollected(Player* player, uint32 enchantId);
 
-    // Backpacks: a newly unlocked one, and the character's current choice.
-    void SendBackpackUnlocked(Player* player, uint32 backpackId);
-    void SendBackpackStatus(Player* player);
     // Druid form looks: a phase that opened new looks, and the character's choice per form.
     void SendFormsUnlocked(Player* player, uint8 phase);
     void SendFormStatus(Player* player);

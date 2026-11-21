@@ -16,7 +16,6 @@ local MAX_TRIES = 30 -- 12 seconds
 -- /transmog tilecam changes it for the session, to find better numbers.
 Transmog.tileCamera = {
     forms = { 1, 0, 0, 0 },
-    backpacks = { 1, 0, 0, 0 },
 }
 
 local function loaded(model)

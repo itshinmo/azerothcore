@@ -160,7 +160,10 @@ void WorldSession::HandleSendMail(WorldPacket& recvData)
         return;
     }
 
-    uint32 cost = items_count ? 30 * items_count : 30; // price hardcoded in client
+    // Fork change (ADR-012 revision 2026-11-21): no postage — mail send cost is 0, retail's
+    // 30c + 30-per-item fee is removed (owner decision). The client may still display the
+    // retail postage in its send-mail UI, but nothing is charged here.
+    uint32 cost = 0;
 
     uint32 reqmoney = cost + money;
 

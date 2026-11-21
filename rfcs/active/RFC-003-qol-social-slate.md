@@ -29,7 +29,7 @@ and pay-to-win. Everything adopted must be free (no subscription gating, no sold
 - Account-wide mounts + pets (via mod-account-bound, RFC-002).
 
 **Group C — client-facing (RFC-001 covers visuals/creation):**
-- AoE looting (`azerothcore/mod-aoe-loot`, drop-in).
+- ~~AoE looting (`azerothcore/mod-aoe-loot`, drop-in).~~ Removed (ADR-022, 2026-11-21).
 
 **Group D — social/PvP (owner scope, 2026-11-20):**
 - Cross-faction core social layer: groups/raids, chat, trade, AH, battlegrounds, arenas, **plus
@@ -55,7 +55,7 @@ power. Ascension classless/wildcards recorded as owner-decision material, not pr
 (`mod-classless-wildcard` exists as a base if ever wanted as an event mode).
 
 Sequencing (post Phase 1 gate, per ADR-019's reading): RFC-002 collections first (owner instruction)
-→ Group A batch → AoE loot → Group D core → E/events → deferred items.
+→ Group A batch → ~~AoE loot~~ (removed, ADR-022) → Group D core → E/events → deferred items.
 
 ## Alternatives
 

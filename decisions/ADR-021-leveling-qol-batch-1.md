@@ -14,13 +14,30 @@
    so there is no hand-maintained spell list. Mount, pet and tradeskill trainers are untouched;
    talents stay talent-point purchases; the trainer NPC UI stays as-is (players may still use it).
    Every login doubles as a cheap catch-up pass for pre-existing characters (known spells are
-   skipped by the filter). LEARN_SPELL wrapper entries (class mounts, druid flight forms) stay
-   normal trainer visits: they are cast, not learned, and their side effects (Riding skill steps)
-   belong to the trainer.
+   skipped by the filter). LEARN_SPELL wrapper entries (class mounts, druid flight forms) are
+   taught the way the trainer itself teaches them — by casting the wrapper — which keeps their
+   own gating (Riding skill for class mounts and flight forms) and their bundled side effects.
    No config: disabling goes through `DISABLED_AC_MODULES`.
+   Shamans additionally receive their four totem items (5175-5178) on login when missing —
+   their totem spells are gated on `TotemCategory` in Spell.dbc (core checks the bags) and
+   retail grants these items via the level 4/10/20/30 class quests; only shamans have such
+   item-gated abilities in the trainer data (audit across all classes, 2026-11-21).
    Deliberately not vendored from `azerothcore/mod-learn-spells`: that module is a heuristic
    spell-family scan with a hand-maintained ignore list whose own tracker reports bugged/invalid
    learns (issues #50, #56, open 2026-11-20); our filter reuses core-owned data instead.
+
+   **Revision 2026-11-21 — transmog collection rules (owner decisions):** appearances now
+   collect on soulbound items only at pickup; unbound (BoE) items unlock on **equip** or on the
+   new **Ctrl+right-click** action (addon → `CollectItem` server handler), which collects **and
+   soulbinds** the item (Ascension's mechanic) — so a traded BoE never counts for its giver,
+   and collecting commits the item. Equipping also soulbinds the item (an equipped look can
+   never be traded for its appearance afterwards). Login scans go bound-only. History is not
+   purged. The `Transmog.Collect.OnPickup` config keeps the same key with the new bound-only
+   semantics.
+   **Backpacks removed** from the module and the addon entirely (server file, config, tables —
+   the world-side table and unlock item 27621 in `data/sql/world/`, the three characters-side
+   tables in `data/sql/db-characters/` — plus the addon tab; the client models were already
+   absent after patch-S came off).
 2. **Dual spec at level 30, free** (owner decision 2026-11-20): `MinDualSpecLevel = 30` in
    `worldserver.conf.dist` (fork default) and the live `env/dist/etc/worldserver.conf`. Verified
    before deciding: this core's dual-spec learn (trainer gossip casting spells 63680/63624) and

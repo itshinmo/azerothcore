@@ -52,16 +52,6 @@ local function makeTile()
 	t.shade:SetPoint("BOTTOMLEFT", t.bg, "BOTTOMLEFT")
 	t.shade:SetPoint("BOTTOMRIGHT", t.bg, "BOTTOMRIGHT")
 	t.shade:SetHeight(46)
-	if J.dragon then
-		t.shade:SetTexture(0, 0, 0, 0.7)
-	else
-		-- Without DragonUI only a light fade under the name, so the art shows as it is.
-		t.shade:SetTexture(0, 0, 0, 1)
-		t.shade:SetGradientAlpha("VERTICAL", 0, 0, 0, 0.5, 0, 0, 0, 0)
-	end
-	t.icon = t:CreateTexture(nil, "ARTWORK")
-	t.icon:SetSize(40, 40)
-	t.icon:SetPoint("TOPLEFT", t, "TOPLEFT", 10, -10)
 	t.name = t:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
 	t.name:SetPoint("BOTTOMLEFT", t, "BOTTOMLEFT", 10, 24)
 	t.name:SetPoint("RIGHT", t, "RIGHT", -8, 0)
@@ -122,7 +112,8 @@ local tiles = J.CreatePool(makeTile)
 local GENERIC_BG = "Interface\\LFGFrame\\UI-LFG-BACKGROUND-QUESTPAPER"
 
 local function setTileArt(t, inst)
-	-- The Dungeon Finder's background art, cropped to the tile; its icon in the corner.
+	-- The Dungeon Finder's background art, cropped to the tile. No corner icon: the art fills
+	-- the card (ADR-021 revision 2026-11-21, owner request).
 	local ok = inst.texture and t.bg:SetTexture("Interface\\LFGFrame\\UI-LFG-BACKGROUND-" .. inst.texture)
 	if ok then
 		t.bg:SetTexCoord(0.03, 0.66, 0.05, 0.62)
@@ -131,13 +122,6 @@ local function setTileArt(t, inst)
 		t.bg:SetTexture(GENERIC_BG)
 		t.bg:SetTexCoord(0, 0.6, 0, 0.6)
 		t.bg:SetVertexColor(0.5, 0.45, 0.4)
-	end
-	local iconOk = inst.texture and t.icon:SetTexture("Interface\\LFGFrame\\LFGIcon-" .. inst.texture)
-	if iconOk then
-		J.SetPortrait(t.icon, "Interface\\LFGFrame\\LFGIcon-" .. inst.texture)
-		t.icon:Show()
-	else
-		t.icon:Hide()
 	end
 end
 

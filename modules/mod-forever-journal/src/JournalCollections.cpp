@@ -79,6 +79,7 @@
 #include "ItemTemplate.h"
 #include "Log.h"
 #include "MapMgr.h"
+#include "Chat.h"
 #include "ObjectMgr.h"
 #include "Player.h"
 #include "QueryResult.h"
@@ -1962,8 +1963,24 @@ namespace Journal::Collections
         std::vector<std::string> rows;
         rows.reserve(sData.entries[kind].size());
         for (Entry const& e : sData.entries[kind])
-            rows.push_back(Acore::StringFormat("{},{},{},{},{},{},{},{}", e.id, e.creature, e.items.empty() ? 0 : e.items.front(),
-                e.quality, e.flags, e.classMask, e.sources, e.reqState));
+        {
+            // Mounts carry their required riding rank (0 = none): the addon greys the ones the
+            // character cannot ride yet (ADR-023 social stack, owner decision 2026-11-21). The
+            // rank comes from the teaching item's required skill (mount items set RequiredSkill
+            // to riding and RequiredSkillRank to the mount's riding rank).
+            uint8 riding = 0;
+            if (kind == KIND_MOUNT)
+                for (uint32 itemId : e.items)
+                {
+                    ItemTemplate const* proto = sObjectMgr->GetItemTemplate(itemId);
+                    if (!proto || proto->RequiredSkill != SKILL_RIDING)
+                        continue;
+                    if (proto->RequiredSkillRank > 0 && proto->RequiredSkillRank <= 255)
+                        riding = std::max(riding, uint8(proto->RequiredSkillRank));
+                }
+            rows.push_back(Acore::StringFormat("{},{},{},{},{},{},{},{},{}", e.id, e.creature, e.items.empty() ? 0 : e.items.front(),
+                e.quality, e.flags, e.classMask, e.sources, e.reqState, riding));
+        }
         std::string const letter(1, KIND_LETTERS[kind]);
         Send(player, "CR:" + req + ":" + letter + ":" + std::to_string(rows.size()));
         SendRows(player, "CD:" + req, rows);
@@ -1990,13 +2007,106 @@ namespace Journal::Collections
         Send(player, "WE:" + req);
     }
 
+    // The use spell of a toy's item: spellid_1 when its trigger is ON_USE, else 0.
+    uint32 ToyUseSpell(uint32 itemId)
+    {
+        ItemTemplate const* proto = sObjectMgr->GetItemTemplate(itemId);
+        return proto && proto->Spells[0].SpellId && proto->Spells[0].SpellTrigger == ITEM_SPELLTRIGGER_ON_USE
+            ? proto->Spells[0].SpellId : 0;
+    }
+
+    // Account-wide toybox (ADR-023 social stack, owner decision 2026-11-21): a toy stays
+    // collected once ANY character on the account has obtained it — retail toybox rules. Every
+    // O request records currently held toys on the account and grants each toy's use spell to
+    // every character on it (the pets pattern); casting that spell is the toy, with the spell's
+    // own DBC cooldown, from any character with nothing in bags. newlyCollected reports the toys
+    // this call recorded for the first time, so they can be announced.
+    void RecordAndGrantAccountToys(Player* player, std::unordered_set<uint32>& recorded, std::unordered_set<uint32>& newlyCollected)
+    {
+        uint32 accountId = player->GetSession()->GetAccountId();
+        std::string toyIds;
+        for (Entry const& e : sData.entries[KIND_TOY])
+        {
+            if (!toyIds.empty())
+                toyIds += ',';
+            toyIds += std::to_string(e.id);
+        }
+        if (toyIds.empty())
+            return; // no toys in the catalog: no held-scan, no grants, no rows
+
+        // What the account has already collected, so a new pickup can be announced.
+        if (QueryResult known = CharacterDatabase.Query(
+                "SELECT item_id FROM mod_forever_journal_account_toys WHERE account_id = {}", accountId))
+        {
+            do
+            {
+                recorded.insert(known->Fetch()[0].Get<uint32>());
+            } while (known->NextRow());
+        }
+
+        // Everything any account character currently holds (bags, bank, worn) joins the collection.
+        if (QueryResult held = CharacterDatabase.Query(
+                "SELECT DISTINCT ci.item FROM character_inventory ci JOIN characters c ON c.guid = ci.guid "
+                "WHERE c.account = {} AND ci.item IN ({})", accountId, toyIds))
+        {
+            do
+            {
+                uint32 itemId = held->Fetch()[0].Get<uint32>();
+                if (recorded.insert(itemId).second)
+                {
+                    newlyCollected.insert(itemId);
+                    CharacterDatabase.Execute(
+                        "INSERT IGNORE INTO mod_forever_journal_account_toys (account_id, item_id) VALUES ({}, {})",
+                        accountId, itemId);
+                }
+            } while (held->NextRow());
+        }
+
+        if (recorded.empty())
+            return;
+
+        // Grant each collected toy's use spell to every character on the account. Runs on every
+        // O request, not only for new toys: it is also the migration path that grants spells to
+        // characters recorded before (offline ones included), which the creation hook cannot
+        // cover. INSERT IGNORE keeps the repeat free. The logged character learns a
+        // still-missing spell live just below (the client sees it at once).
+        std::string collectedIds;
+        for (uint32 itemId : recorded)
+        {
+            if (!collectedIds.empty())
+                collectedIds += ',';
+            collectedIds += std::to_string(itemId);
+        }
+        CharacterDatabase.Execute(
+            "INSERT IGNORE INTO character_spell (guid, spell, specMask) "
+            "SELECT c.guid, it.spellid_1, 255 FROM item_template it JOIN characters c ON c.account = {} "
+            "WHERE it.entry IN ({}) AND it.spelltrigger_1 = 0 AND it.spellid_1 > 0",
+            accountId, collectedIds);
+
+        ChatHandler chat(player->GetSession());
+        for (Entry const& e : sData.entries[KIND_TOY])
+        {
+            if (!recorded.contains(e.id))
+                continue;
+            if (uint32 useSpell = ToyUseSpell(e.id); useSpell && !player->HasSpell(useSpell))
+                player->learnSpell(useSpell, false);
+            if (newlyCollected.contains(e.id))
+                if (ItemTemplate const* proto = sObjectMgr->GetItemTemplate(e.id))
+                    chat.PSendSysMessage("|cffffd200{}|r has been added to your toy collection.", proto->Name1);
+        }
+    }
+
     void HandleOwnedToys(Player* player, std::string const& req)
     {
-        // In the bags (or worn) it can be used; in the bank it is only collected.
+        std::unordered_set<uint32> recorded, newlyCollected;
+        RecordAndGrantAccountToys(player, recorded, newlyCollected);
+
+        // Rows "<item>,<state>,<spell>": 1 = in this character's bags (use the item), 0 = the
+        // spell is what the character uses, <spell> = the toy's use spell (0 = item-only toys).
         std::vector<std::string> rows;
         for (Entry const& e : sData.entries[KIND_TOY])
-            if (player->HasItemCount(e.id, 1, true))
-                rows.push_back(Acore::StringFormat("{},{}", e.id, player->HasItemCount(e.id, 1, false) ? 1 : 0));
+            if (recorded.contains(e.id))
+                rows.push_back(Acore::StringFormat("{},{},{}", e.id, player->HasItemCount(e.id, 1, false) ? 1 : 0, ToyUseSpell(e.id)));
         Send(player, "OR:" + req + ":" + std::to_string(rows.size()));
         SendRows(player, "OD:" + req, rows);
         Send(player, "OE:" + req);
@@ -2131,4 +2241,19 @@ namespace Journal::Collections
                 Send(player, Acore::StringFormat("T:{}:{}:{}:{}", req, coins, bags, auctionText));
             }));
     }
+
+    // ---- Account-wide toys (ADR-023 social stack) -----------------------------------------------
+    // Called on character creation: grants every toy the account has collected to the new
+    // character, so a fresh hero has the account's toybox from the start (the pets pattern).
+    void GrantAccountToys(Player* player)
+    {
+        CharacterDatabase.Execute(
+            "INSERT IGNORE INTO character_spell (guid, spell, specMask) "
+            "SELECT c.guid, it.spellid_1, 255 FROM mod_forever_journal_account_toys t "
+            "JOIN characters c ON c.account = t.account_id "
+            "JOIN item_template it ON it.entry = t.item_id AND it.spelltrigger_1 = 0 "
+            "WHERE t.account_id = {} AND it.spellid_1 > 0 AND c.guid = {}",
+            player->GetSession()->GetAccountId(), player->GetGUID().GetCounter());
+    }
 }
+

@@ -1,8 +1,19 @@
 # ADR-022 — AoE looting
 
-- Status: accepted
+- Status: removed (2026-11-21)
 - Date: 2026-11-20
 - Implements: [RFC-003](../rfcs/active/RFC-003-qol-social-slate.md) Group C (owner go, 2026-11-20)
+
+## Removal (2026-11-21, owner decision)
+
+**Removed.** Owner testing found quest items on nearby unopened corpses could not be looted: the
+upstream quest-item collector requires the corpse's allowed-looters set to contain the player,
+which solo kills never populate (upstream issue #44, still open). The module's core behavior
+cannot be fixed from the module side without forking the loot pipeline, and the feature's value
+does not justify maintaining a fork. `modules/mod-aoe-loot` is deleted (it stays in git history
+at the commit that vendored it); `mod_aoe_loot.conf.dist` goes with it. [RFC-003](../rfcs/active/RFC-003-qol-social-slate.md)
+Group C drops the item. If it is ever wanted back, vendor a fixed fork or ship
+`AOELoot.Enable = 0`-safe upstream code with the quest-item path rewritten.
 
 ## Decision
 

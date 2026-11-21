@@ -117,6 +117,28 @@ default they stay leveling accelerators, never the fastest path. Target feel: sl
    rule stand unchanged. Riding training and the first mount are out of scope by owner decision
    (RFC-003 amendment; the "free mount at 20" item was removed before implementation).
 
+## Revision 2026-11-21 — transmog armor-type freedom (owner decision)
+
+`Transmog.AllowMixedArmorTypes = 1` and `Transmog.IgnoreReqClass = 1` (both live config and the
+template): clothing types are interchangeable for transmog — a rogue can use cloth, mail or plate
+looks — while **weapon types stay gated** (a dagger cannot become a sword or staff). This mirrors
+the official `azerothcore/mod-transmog` toggles of the same names and modern retail's patch-12.2.5
+armor change; Ascension is classless, so it has no armor rule to copy. The addon's outfit filter
+needs no change (it lists whatever the server filters per equipped slot).
+
+## Revision 2026-11-21 (2) — mail QoL (owner decision, testing feedback)
+
+Two economy-of-friction changes for the cross-faction social layer:
+
+1. **No postage**: the mail send fee (retail 30 copper + 30 per attached item, hardcoded) is
+   removed — `MailHandler` sends at cost 0. The client's send-mail UI may still display the
+   retail postage figure, but nothing is charged server-side.
+2. **Instant mail**: `MailDeliveryDelay = 0` (upstream 3600 = 1 hour, cross-account item mails
+   only). All mail now arrives immediately, both factions included (the cross-faction mail RBAC
+   grant came with ADR-023).
+
+COD mails, quest reward mails and the attached-money flow are unchanged.
+
 ## Revision 2026-11-20 (2) — dungeon XP split
 
 Same owner decision session as the revision above (RFC-003 Group A wrap-up): with the rate

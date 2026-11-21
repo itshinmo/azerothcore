@@ -15,6 +15,7 @@ features\collection_tooltips.lua
 features\set_bonus_tooltips.lua
 features\real_slot_icons.lua
 features\addon_protocol.lua
+features\collect_click.lua
 features\extended_protocol.lua
 features\apply_transmog.lua
 features\outfits.lua
@@ -28,7 +29,6 @@ ui\tile_models.lua
 ui\slots_model.lua
 ui\sets_view.lua
 ui\illusions.lua
-ui\backpacks.lua
 ui\forms.lua
 ui\costs.lua
 ui\tooltips.lua
