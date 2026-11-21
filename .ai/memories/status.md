@@ -1,6 +1,6 @@
 ---
 description: Current project status, last verified commit, known issues, open decisions, and next tasks. Read after overview on any task.
-last-verified: 2026-11-19 (bot rig paused; manual verification is the current content check)
+last-verified: 2026-11-22 (23bf75546; bot rig paused; manual verification is the current content check)
 ---
 
 # Status
@@ -135,11 +135,26 @@ merged into local-server-setup):**
   solo kills (issue #44) and the owner dropped the feature. Module directory deleted (lives in
   git history), RFC-003 Group C amended.
 - **Instance-card circles removed** (the round portrait icon on journal dungeon/raid cards).
-- **White boss models**: open — the journal previews through the client's creature data; broken
-  models are the Ascension pack's model replacements missing textures (possibly tied to the
-  patch-S deletion). Investigate with the client-patch pipeline; not fixed yet.
+- **White boss models**: open — moved to the working memory
+  [`working/journal-white-boss-models.md`](working/journal-white-boss-models.md).
 - The research-implementations skill exists at `.ai/skills/research-implementations/SKILL.md`
   (browse prior implementations before building; report findings, then plan).
+
+**QoL batch close-out (2026-11-22, reviewer round + merge):** cavecrew-reviewer audited the batch
+(1 critical, 3 major, 9 minor — all fixed): the Ctrl+click client gate compared against
+`LE_ITEM_CLASS_*` globals that do not exist in 3.3.5 (fixed with the localized-string comparison
+plus the client→server bag/slot coordinate translation); equip-soulbind scoped to armor/weapon;
+the characters-side backpack remover added and applied live (tables confirmed dropped); ADR-021's
+swapped heading restored and its duplicated paragraph removed; soulbind skipped for already-known
+looks; dead code dropped. Committed as `23bf75546`, fast-forward-merged into `local-server-setup`;
+the feature branch and its worktree were deleted. **The server now runs from `~/wow/azerothcore`**
+(the worktree is gone; a rebuild was needed there — binaries embed their install prefix, see
+[runbook/development/build-and-install.md](../../runbook/development/build-and-install.md)
+troubleshooting). Screen sessions renamed `ac-azerothcore-{worldserver,authserver}`. Journal +
+Transmog addons deployed to the client (md5-verified). Owner verification pending on Ctrl+click
+collect, off-hand preview, toybox spell-grants, tooltip lines, and the riding-gate display. The
+deferred group-content session is tracked in
+[`working/group-content-session.md`](working/group-content-session.md).
 
 **Dungeon XP split** ([ADR-012](../../decisions/ADR-012-progression-rates.md) revision 2026-11-20
 (2), owner decision from the rate discussion): `mod-dungeon-xp` — dungeon/raid mob XP × 0.33

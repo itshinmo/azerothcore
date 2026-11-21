@@ -96,6 +96,12 @@ The `make` configuration passes these automatically when the paths exist:
 - **Stale build:** remove `build/CMakeCache.txt` and reconfigure; do not delete local configs.
 - **PCH errors:** reconfigure with `-DNOPCH=1`.
 - **Linker errors after a module change:** reconfigure so the module list is regenerated.
+- **`Config::LoadFile: Failed open file ...` right after starting a moved binary:** the binaries
+  embed `CMAKE_INSTALL_PREFIX`, and on non-Windows the config path is only that baked-in directory
+  — no fallback. So an `env/dist/bin` copied from another checkout or worktree looks for that
+  checkout's `etc/`, which is not there. Rebuild in the checkout that will run the server (`make
+  build`); never copy `env/dist/bin` between checkouts (data, logs and conf *contents* are
+  portable, binaries are not).
 
 ## Notes
 

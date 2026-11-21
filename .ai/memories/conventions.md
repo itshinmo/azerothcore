@@ -1,6 +1,6 @@
 ---
-description: C++, SQL, Node, ID, logging, secret, and documentation conventions. Read before writing code or data.
-last-verified: 2026-11-12
+description: C++, SQL, Node, ID, logging, secret, documentation, and 3.3.5 client addon conventions. Read before writing code, data, or addon Lua.
+last-verified: 2026-11-22 (23bf75546)
 ---
 
 # Conventions
@@ -47,6 +47,19 @@ them.
 - Tool config: `.env` files (ignored) with `.env.example` committed.
 - Production secrets are never in the repository or agent chat.
 - Use least-privilege database users. Never `root` for tools or agents.
+
+## 3.3.5 client addons
+
+- `GetItemInfo` has no numeric class return and no `LE_ITEM_CLASS_*` globals; the item class
+  arrives as a localized string ("Armor"/"Weapon" plus client-locale variants — see
+  mod-transmog-plus's `ItemClassStrToNum`).
+- The bag API numbers every bag's slots 1..N; the server numbers the backpack 23..38
+  (`INVENTORY_SLOT_ITEM_START`) and equipped bags 19..22 (`INVENTORY_SLOT_BAG_START`). Translate
+  before sending a slot to the server.
+- Container item buttons are created lazily, so a per-button hook attached at login fires on
+  nothing; hook the globals (`ContainerFrameItemButton_OnClick`, `UseContainerItem`) instead.
+- SecureActionButton attributes can switch action type at runtime (`type` item↔spell; assigning
+  nil clears one), subject to combat-lockdown rules.
 
 ## Documentation
 
