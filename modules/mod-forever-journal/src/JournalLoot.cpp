@@ -207,8 +207,10 @@ namespace Journal::Loot
             for (char const* table : { "creature_loot_template", "gameobject_loot_template", "reference_loot_template",
                 "item_loot_template", "skinning_loot_template", "pickpocketing_loot_template" })
             {
+                // The select expression must equal the GROUP BY expression: MySQL 8's
+                // only_full_group_by rejects any other expression over the grouped column (errno 1055).
                 if (QueryResult result = WorldDatabase.Query("SELECT CAST(ABS(Reference) AS UNSIGNED), COUNT(DISTINCT Entry) "
-                    "FROM {} WHERE Reference <> 0 GROUP BY ABS(Reference)", table))
+                    "FROM {} WHERE Reference <> 0 GROUP BY CAST(ABS(Reference) AS UNSIGNED)", table))
                     do
                     {
                         Field* f = result->Fetch();
