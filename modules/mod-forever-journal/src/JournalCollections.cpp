@@ -280,6 +280,8 @@ namespace Journal::Collections
         std::array<std::unordered_set<uint32>, KIND_COUNT> sRecordable;
         // Mount gate data for every recordable mount, visible or not: riding rank and flags.
         std::unordered_map<uint32, std::pair<uint8, uint32>> sRecordableMountGate;
+        // Toy use spell -> toy item, for the item cooldown the spell does not carry.
+        std::unordered_map<uint32, uint32> sToyItemBySpell;
 
         struct TrainerRow
         {
@@ -1790,6 +1792,7 @@ namespace Journal::Collections
         for (auto& set : sRecordable)
             set.clear();
         sRecordableMountGate.clear();
+        sToyItemBySpell.clear();
         Spots spots;
         std::vector<std::pair<uint32, Source>> pending;
         std::unordered_set<uint32> worldDrops;
@@ -1863,6 +1866,11 @@ namespace Journal::Collections
             if (kind == KIND_MOUNT)
                 for (Entry const& e : list)
                     sRecordableMountGate[e.id] = { e.riding, e.flags };
+            if (kind == KIND_TOY)
+                for (Entry const& e : list)
+                    if (ItemTemplate const* proto = sObjectMgr->GetItemTemplate(e.id))
+                        if (proto->Spells[0].SpellId && proto->Spells[0].SpellTrigger == ITEM_SPELLTRIGGER_ON_USE)
+                            sToyItemBySpell[proto->Spells[0].SpellId] = e.id;
             if (!GetConfig().showUnobtainable)
                 list.erase(std::remove_if(list.begin(), list.end(), [](Entry const& e) { return e.list.empty(); }), list.end());
             std::sort(list.begin(), list.end(), [](Entry const& a, Entry const& b) { return a.id < b.id; });
@@ -2234,12 +2242,34 @@ namespace Journal::Collections
             res = SPELL_FAILED_SPELL_UNAVAILABLE;
     }
 
+    // A toy used from the collection casts the granted spell, which has no cooldown of its own: the
+    // item carries it (Toy Train Set 30 min). Apply the item's cooldown to the spell, both server
+    // side and to the client, so the journal cannot cast it over and over.
+    void OnCollectionSpellCast(Player* player, uint32 spellId)
+    {
+        auto itr = sToyItemBySpell.find(spellId);
+        if (itr == sToyItemBySpell.end())
+            return;
+        ItemTemplate const* proto = sObjectMgr->GetItemTemplate(itr->second);
+        if (!proto || proto->Spells[0].SpellCooldown <= 0)
+            return;
+        SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
+        if (!spellInfo)
+            return;
+        // A spell that already has a recovery time keeps it: the core applies it, and it may be
+        // longer than the item's. The item cooldown only fills a spell that has none.
+        if (spellInfo->RecoveryTime > 0 || spellInfo->CategoryRecoveryTime > 0)
+            return;
+        player->SendCooldownEvent(spellInfo, itr->second, nullptr, true);
+    }
+
     // Account-wide toybox (ADR-025, owner decision 2026-11-21): a toy stays
     // collected once ANY character on the account has obtained it — retail toybox rules. Every
     // O request records currently held toys on the account and grants each toy's use spell to
-    // every character on it (the pets pattern); casting that spell is the toy, with the spell's
-    // own DBC cooldown, from any character with nothing in bags. newlyCollected reports the toys
-    // this call recorded for the first time, so they can be announced.
+    // every character on it (the pets pattern); casting that spell is the toy, with the item's
+    // cooldown applied by OnCollectionSpellCast, from any character with nothing in bags.
+    // newlyCollected reports the toys this call recorded for the first time, so they can be
+    // announced.
     void RecordAndGrantAccountToys(Player* player, std::unordered_set<uint32>& recorded, std::unordered_set<uint32>& newlyCollected)
     {
         if (!CollectionsTablesReady())

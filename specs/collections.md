@@ -36,7 +36,10 @@ with `mod-transmog-plus`.
   spell's level tier: below 40 gives 75, 40 to 59 gives 150, 60 and above gives 225. On the stock
   data that is Felsteed 75, Summon Warhorse 75, Dreadsteed 150, Charger 150 and Acherus
   Deathcharger 150. Game masters bypass the gate. Class is never a gate.
-- Toys are used through their `ON_USE` spell, granted the same way, with the spell's own cooldown.
+- Toys are used through their `ON_USE` spell, granted the same way. The spell itself may carry no
+  cooldown; the item does. Casting the granted spell applies the item's `SpellCooldown` to the
+  spell, server side and to the client, so a toy cannot be recast before it is ready (Toy Train
+  Set 30 min).
 
 ## Errors
 

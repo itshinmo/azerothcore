@@ -65,11 +65,30 @@ collected, and Ctrl+right-click did nothing.
   source is merged; an earlier pass left Felsteed unflagged and summonable at level 1.
 - **Chat Notice Guard addon** (`tools/client-addons/ChatNoticeGuard/`): wraps
   `ChatFrame_MessageEventHandler` and supplies the `CHAT_<token>_NOTICE` string the Ascension client
-  omits, then prints the missing key once. Stops the `ChatFrame.lua:2802: format(nil)` throw on the
-  LookingForGroup channel; the printed key names the real wording to hardcode.
+  omits, then prints the missing key once. The key was `CHAT_NOT_IN_LFG_NOTICE`; it is now defined
+  with its stock wording, and the generic fallback stays for any other key.
+- **Toy cooldowns:** a toy cast from the collection uses the granted spell, which carries no
+  cooldown; the item does. `OnSpellCast` now applies the item's `SpellCooldown` to the spell via
+  `SendCooldownEvent`, server side and to the client, so multi-casting is refused (Toy Train Set
+  30 min).
+- **Transmog preview reverted to client-side** ([ADR-026](../../decisions/ADR-026-transmog-npc-only-and-preview.md),
+  [specs/transmog.md](../../specs/transmog.md)): the server-assisted attempt wrote the pending look
+  into `PLAYER_VISIBLE_ITEM_*`, the same fields the world model reads, so the look changed in game
+  without Apply. It is removed: no preview touches player fields or server state. The preview is a
+  UI-only `DressUpModel` copy of the player with staged looks tried on top and **no `Undress`**, so
+  it starts with both real weapons. Owner-confirmed: the world character is untouched, but the
+  off-hand preview is still wrong. The 3.3.5 client lacks a slot-targeted `TryOn` (added in Legion
+  7.0.3); tracked in
+  [`working/transmog-dual-wield-preview.md`](working/transmog-dual-wield-preview.md) for the
+  client-patch pipeline.
+- **Transmogrifier-only access:** `Transmog.OpenAnywhere = 0`; the Journal Appearances tab is hidden
+  until the gossip opens it (Journal API 2, `Journal.SetTabVisible`); apply/remove/illusion/form are
+  refused away from the Warpweaver (entry `910012`, 10 yd) server-side. Ctrl+right-click collection
+  stays allowed anywhere.
 - **Client chat error** (`ChatFrame.lua:2802: bad argument #1 to 'format'` with
   `4. LookingForGroup`): the client lacks the notice string for that channel. The Chat Notice Guard
-  covers it; the key it prints becomes the permanent wording.
+  defines `CHAT_NOT_IN_LFG_NOTICE` under the not-in-LFG channel notice. A generic placeholder stays
+  for any other key and prints the key once.
 - **Blocked: character-creation armor toggle.** Addons do not run in the glue screens. The
   creation UI is `Interface\GlueXML\CharacterCreate.lua` inside a client MPQ, and the preview is a
   `ModelFFX` driven by `UpdateCustomizationScene()`; no Lua undress path is exposed. Needs a glue
@@ -183,7 +202,8 @@ merged into local-server-setup):**
   character on the account — `character_spell`, live learnSpell + chat announce for new ones,
   `GrantAccountToys` on character creation. Once collected, always collected (deleting the item
   changes nothing). The journal's Use button casts the granted spell (item path kept for toys in
-  bags), so cooldowns come from the spell DBC — the "toys have no cooldown" bug is gone. Toy
+  bags). The item carries the cooldown, not the spell, so a collection cast applies the item's
+  `SpellCooldown` to the spell — the "toys have no cooldown" bug is gone. Toy
   rows are now `<item>,<state>,<spell>`.
 - **Mounts**: mid-session refresh fixed (COMPANION_UPDATE now refreshes an open Mounts tab);
   the catalog carries each mount's required riding rank (from the teaching item's
@@ -589,6 +609,14 @@ Remaining:
    Checklist and results:
    [runbook/audits/2026-11-19-manual-instance-runs.md](../../runbook/audits/2026-11-19-manual-instance-runs.md).
    Onyxia's Lair (the level-80 rework) is verified on a player report like the rest.
+
+### Client-patch pipeline (next)
+
+- Build `tools/client-patch/`: inspect the client MPQs, build a late-loading patch MPQ, verify hashes
+  and load order; document in `runbook/` with an ADR.
+- Targets, in order: the white dungeon/raid preview models, the character-creation armor toggle
+  (glue patch), and the dual-wield transmog preview
+  ([`working/transmog-dual-wield-preview.md`](working/transmog-dual-wield-preview.md)).
 
 ### Phase 2 — custom content
 

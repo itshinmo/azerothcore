@@ -73,8 +73,9 @@ Transmog:SetScript("OnEvent", function()
 				end
 
 				if TransmogFrame_Find(message, "Open", 1, true) then
-					-- Server requests the transmog UI to open.
+					-- Server requests the transmog UI to open (gossip at a transmogrifier).
 					Transmog.serverRequestsOverlay = true
+					if Transmog.SetJournalTabVisible then Transmog:SetJournalTabVisible(true) end
 					return
 				end
 

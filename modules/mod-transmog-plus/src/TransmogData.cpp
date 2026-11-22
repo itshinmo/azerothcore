@@ -213,6 +213,12 @@ void Transmog::ApplySlot(Player* player, uint8 slot, Item* item)
     }
 }
 
+// Appearance changes need the Warpweaver (ADR-020); a modified client cannot bypass this.
+bool Transmog::IsAtTransmogrifier(Player* player) const
+{
+    return player && player->FindNearestCreature(TRANSMOG_NPC_ENTRY, 10.0f, true) != nullptr;
+}
+
 // Reapply one slot after equipment, appearance, or visibility state changes.
 void Transmog::RefreshSlot(Player* player, uint8 slot)
 {

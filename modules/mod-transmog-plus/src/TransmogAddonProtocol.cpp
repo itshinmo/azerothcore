@@ -825,6 +825,22 @@ namespace TransmogAddon
         if (!TakeToken(sBudgets[player->GetGUID().GetCounter()], CostOf(command)))
             return;
 
+        // Changing an appearance needs the Warpweaver. Answer the addon with the same failure line
+        // its handler sends, so the Apply button is re-enabled instead of waiting forever.
+        if ((command == "Apply" || command == "Remove" || command == "RemoveAll" || command == "ApplyIllusion"
+            || command == "ApplyForm") && !sTransmog->IsAtTransmogrifier(player))
+        {
+            ChatHandler(player->GetSession()).SendSysMessage(
+                Tstr(player->GetSession(), LANG_TRANSMOG_OPEN_ANYWHERE_DISABLED));
+            if (command == "ApplyIllusion")
+                SendToClient(player, "ApplyIllusionResult:0:0:0");
+            else if (command == "ApplyForm")
+                SendToClient(player, "ApplyFormResult:0::0");
+            else
+                SendApplyResult(player, false, 0, 0);
+            return;
+        }
+
         if (command == "GetTransmogStatus")
             HandleGetTransmogStatus(player, args);
         // Keep tooltip collection requests on the same authenticated addon channel.

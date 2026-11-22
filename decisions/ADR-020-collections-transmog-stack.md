@@ -1,7 +1,9 @@
 # ADR-020 — Collections and transmog stack
 
 - Status: accepted; revised 2026-11-22 by [ADR-025](ADR-025-account-wide-collections.md) (mounts, pets
-  and toys are account-owned; AccountBound mounts/pets off)
+  and toys are account-owned; AccountBound mounts/pets off) and
+  [ADR-026](ADR-026-transmog-npc-only-and-preview.md) (transmogrifier-only access; preview stays
+  client-side)
 - Date: 2026-11-20
 - Implements: [RFC-002](../rfcs/active/RFC-002-collections-transmog.md) (owner decisions of 2026-11-20)
 

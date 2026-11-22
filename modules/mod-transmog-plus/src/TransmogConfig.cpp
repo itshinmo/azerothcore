@@ -69,7 +69,7 @@ void Transmog::LoadConfig()
     CollectQuestRewards = sConfigMgr->GetOption<bool>("Transmog.Collect.QuestRewards", true);
     CollectAltBots = sConfigMgr->GetOption<bool>("Transmog.Collect.AltBots", true);
 
-    OpenAnywhere = sConfigMgr->GetOption<bool>("Transmog.OpenAnywhere", true);
+    OpenAnywhere = sConfigMgr->GetOption<bool>("Transmog.OpenAnywhere", false);
 
     IllusionsEnable = sConfigMgr->GetOption<bool>("Transmog.Illusions.Enable", true);
     FormsEnable = sConfigMgr->GetOption<bool>("Transmog.Forms.Enable", true);

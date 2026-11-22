@@ -134,6 +134,10 @@ public:
     // Let /transmog open the transmog window away from a transmogrifier NPC.
     bool OpenAnywhere;
 
+    // The Warpweaver NPC (ADR-020). Appearance changes are refused away from it.
+    static constexpr uint32 TRANSMOG_NPC_ENTRY = 910012;
+    bool IsAtTransmogrifier(Player* player) const;
+
     // Weapon enchant visuals collected from enchanting and shown through transmog.
     bool IllusionsEnable;
     // Individual progression: phases cleared by rewarding FormsPhaseQuestBase + n (used by the

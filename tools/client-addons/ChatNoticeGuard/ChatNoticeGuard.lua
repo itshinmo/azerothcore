@@ -1,8 +1,19 @@
 -- The Ascension client emits channel-notice tokens whose CHAT_<token>_NOTICE global is missing
--- from its GlobalStrings. ChatFrame_MessageEventHandler then calls format(nil, ...) and throws
--- "bad argument #1 to 'format' (string expected, got nil)"; seen on the LookingForGroup channel.
--- This wrapper supplies a safe string before the client formats it, and names the missing key once
--- so the real wording can be set here.
+-- from its effective GlobalStrings; the player saw CHAT_NOT_IN_LFG_NOTICE. ChatFrame then calls
+-- format(nil, ...) and throws "bad argument #1 to 'format' (string expected, got nil)", seen on the
+-- LookingForGroup channel. The known keys are defined here with their stock wording (no format
+-- specifier, so a call with or without arguments is safe); any other missing key gets a safe
+-- placeholder and is named once so it can be added here.
+
+local NOTICES = {
+	-- The stock enUS string exists in locale-enUS.MPQ's GlobalStrings.lua but not in the effective
+	-- Ascension patch layer, which is why the client formatted nil on this channel.
+	CHAT_NOT_IN_LFG_NOTICE = "You must be queued in looking for group before joining this channel.",
+}
+
+for key, text in pairs(NOTICES) do
+	if not _G[key] then _G[key] = text end
+end
 
 local PREFIX = "|cffff4444ChatNoticeGuard:|r "
 local reported = {}

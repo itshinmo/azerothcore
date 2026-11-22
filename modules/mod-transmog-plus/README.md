@@ -92,12 +92,13 @@ it collects appearances the retail way (see below) and ships a migration from mo
   uploaded the first time it opens the window.
 - Transmog Sets browser in the addon.
 - `/transmog`, or a key bound under Key Bindings > Transmog, opens the transmog window
-  anywhere, no NPC needed (switch off with `Transmog.OpenAnywhere = 0`). `/transmog anchor`
-  moves the new-appearance alert.
+  at a transmogrifier. The server also refuses appearance changes away from the NPC.
+  `Transmog.OpenAnywhere = 1` allows `/transmog` to open the window anywhere, but the NPC check
+  on apply remains. `/transmog anchor` moves the new-appearance alert.
 - With the [Journal](https://github.com/buildthehomelab/wow-mod-forever-journal) addon installed,
   the transmog window is also the Journal's **Appearances** tab, beside its dungeons, mounts and
-  pets. It opens there the way `/transmog` does, so it needs `Transmog.OpenAnywhere = 1`; with it
-  off the tab says to visit a Transmogrifier.
+  pets. The tab appears only while a transmogrifier's gossip opened the window and hides when the
+  window closes.
 - With [DragonUI](https://github.com/buildthehomelab/wow-addon-DragonUI) installed, the transmog
   window takes DragonUI's retail look (bronze frame, marble panes, red buttons) instead of
   its own art.
@@ -183,7 +184,7 @@ All prices, quality restrictions, type rules, and requirement ignores are config
 - **The module builds but the NPC and commands do nothing**: the folder isn't named
   `mod-transmog-plus`, so AzerothCore never calls the loader.
 - **No transmog window, only a gossip menu**: the `Transmog` addon isn't installed in the
-  client's `Interface/AddOns/`. `/transmog` also needs the addon and `Transmog.OpenAnywhere = 1`.
+  client's `Interface/AddOns/`. `/transmog` also needs the addon and a transmogrifier nearby.
 - **The NPC isn't there**: spawn it with `.npc add 910012`. The old mod-transmog NPC (190010)
   no longer does anything.
 - **Two transmog modules**: remove mod-transmog before adding this one and migrate its data,

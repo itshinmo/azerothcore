@@ -672,7 +672,15 @@ public:
 
     void OnSpellCast(Spell* /*spell*/, Unit* caster, SpellInfo const* spellInfo, bool /*skipCheck*/) override
     {
-        if (!caster || !spellInfo || caster->GetTypeId() != TYPEID_UNIT || !GetConfig().enabled || !GetConfig().learnAbilities)
+        if (!caster || !spellInfo || !GetConfig().enabled)
+            return;
+        if (caster->GetTypeId() == TYPEID_PLAYER)
+        {
+            if (GetConfig().collections)
+                Collections::OnCollectionSpellCast(caster->ToPlayer(), spellInfo->Id);
+            return;
+        }
+        if (caster->GetTypeId() != TYPEID_UNIT || !GetConfig().learnAbilities)
             return;
         Index::OnCreatureCast(caster, spellInfo);
     }

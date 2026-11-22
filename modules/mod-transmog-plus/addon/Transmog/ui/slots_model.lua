@@ -63,15 +63,14 @@ function Transmog:frameFromInvType(invType, clientSlot)
     return nil
 end
 
--- Rebuilds the character preview model from scratch, skipping the Hidden
--- sentinel. DressUpModel has no per-slot TryOff, so we must Undress/re-TryOn.
--- The 3.3.5 model frame keeps one 1H weapon per hand-pair: whichever one-hand
--- TryOn lands LAST wins the right hand, so the slots are applied in a fixed
--- order with the off-hand before the main hand — otherwise random pairs() order
--- made a rogue's dual-wield preview show one weapon or the other (ADR-021).
+-- The character preview is a client-side DressUpModel copy. The model starts as the real player
+-- (SetUnit), so both weapons are already in their own hands; the staged looks are tried on top,
+-- WITHOUT Undress. Undress removed both weapons, and 3.3.5 TryOn has no hand slot: every one-hand
+-- item then landed in the main hand. Applied order: armor first, then main hand, then off hand.
 local PREVIEW_ORDER = { 1, 3, 4, 5, 6, 7, 8, 9, 10, 19, 18, 16, 17 }
+
 function Transmog:RefreshPreviewModel()
-    TransmogFramePlayerModel:Undress()
+    TransmogFramePlayerModel:SetUnit("player")
     for _, InventorySlotId in ipairs(PREVIEW_ORDER) do
         local effective = self.transmogStatusToServer[InventorySlotId]
         if not effective or effective == 0 then

@@ -539,7 +539,10 @@ end
 ```
 
 `panel` fills the window's content area (about 870 by 530). `Journal.API` is the version of this
-interface (1). `Journal.IsTabShown(key)` tells whether the journal is open on a tab.
+interface (2). `Journal.SetTabVisible(key, visible)` shows or hides a registered tab whose owner
+allows it only in some states; the transmog Appearances tab uses it to appear only while a
+transmogrifier opened it. Hiding the shown tab moves the window to Dungeons or Raids.
+`Journal.IsTabShown(key)` tells whether the journal is open on a tab.
 
 ## Commands
 

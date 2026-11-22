@@ -125,6 +125,16 @@ Journal.RegisterTab({
     end,
 })
 
+-- Only valid at a transmogrifier: hidden until the server's "Open" from the gossip, hidden again
+-- when the window closes. Older Journals without SetTabVisible simply show the tab.
+if Journal.SetTabVisible then Journal.SetTabVisible("appearances", false) end
+
+function Transmog:SetJournalTabVisible(visible)
+	if Journal and Journal.SetTabVisible then
+		Journal.SetTabVisible("appearances", visible)
+	end
+end
+
 -- Without its own frame the window no longer covers the panel, so the waiting text goes once it opens.
 TransmogFrame:HookScript("OnShow", function ()
     if docked and status then status:SetText("") end
@@ -135,4 +145,5 @@ TransmogFrame:HookScript("OnHide", function ()
     if docked and status then
         status:SetText("The transmog window is closed.\n\n|cff9d9d9dClick the Appearances tab again to open it.|r")
     end
+    Transmog:SetJournalTabVisible(false)
 end)

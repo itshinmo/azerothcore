@@ -372,6 +372,8 @@ namespace Journal
         void BackfillAccountCollections(Player* player);
         void OnSpellLearned(Player* player, uint32 spellId);
         void OnItemStored(Player* player, uint32 itemId);
+        // A collection toy cast: apply the item's cooldown to the granted spell.
+        void OnCollectionSpellCast(Player* player, uint32 spellId);
         // A mount the character owns but cannot use (riding or faction): refuse the summon.
         void CheckCollectionCast(Player* player, uint32 spellId, SpellCastResult& res);
     }

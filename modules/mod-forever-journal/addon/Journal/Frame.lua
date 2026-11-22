@@ -429,7 +429,7 @@ end
 -- panel fills the window's content area. Journal.API tells registrants which version of this
 -- interface they talk to.
 
-Journal.API = 1
+Journal.API = 2
 
 local sections, ordered = {}, {}
 local tabCount = 0
@@ -441,20 +441,24 @@ local function layoutTabs()
 	end)
 	local prev
 	for _, s in ipairs(ordered) do
-		s.tab:ClearAllPoints()
-		if prev then
-			s.tab:SetPoint("TOPLEFT", prev.tab, "TOPRIGHT", dragon and 1 or -15, 0)
-		else
-			s.tab:SetPoint("TOPLEFT", frame, "BOTTOMLEFT", 11, dragon and 2 or 4)
+		if not s.hidden then
+			s.tab:ClearAllPoints()
+			if prev then
+				s.tab:SetPoint("TOPLEFT", prev.tab, "TOPRIGHT", dragon and 1 or -15, 0)
+			else
+				s.tab:SetPoint("TOPLEFT", frame, "BOTTOMLEFT", 11, dragon and 2 or 4)
+			end
+			prev = s
 		end
-		prev = s
 	end
 end
 
 local function updateTabs()
 	for _, s in ipairs(ordered) do
-		local selected = s.key == J.view.section
-		if selected then PanelTemplates_SelectTab(s.tab) else PanelTemplates_DeselectTab(s.tab) end
+		if not s.hidden then
+			local selected = s.key == J.view.section
+			if selected then PanelTemplates_SelectTab(s.tab) else PanelTemplates_DeselectTab(s.tab) end
+		end
 	end
 end
 
@@ -464,7 +468,7 @@ local function addSection(spec)
 	if sections[spec.key] then return sections[spec.key].panel end
 	local s = {
 		key = spec.key, name = spec.name, order = tonumber(spec.order) or 100, icon = spec.icon, build = spec.build,
-		onShow = spec.onShow, onHide = spec.onHide, panel = spec.panel,
+		onShow = spec.onShow, onHide = spec.onHide, panel = spec.panel, hidden = spec.hidden and true or false,
 	}
 	if not s.panel then
 		s.panel = CreateFrame("Frame", nil, content)
@@ -492,6 +496,7 @@ local function addSection(spec)
 		J.OpenSection(s.key, true)
 	end)
 	s.tab = tab
+	s.tab:SetShown(not s.hidden)
 	sections[s.key] = s
 	table.insert(ordered, s)
 	layoutTabs()
@@ -504,8 +509,9 @@ local shownSection
 
 local function showSection()
 	local s = sections[J.view.section]
+	if s and s.hidden then s = nil end
 	if not s then
-		-- A tab whose addon is gone.
+		-- A tab whose addon is gone, or one hidden until its owner allows it.
 		J.view.section = J.view.raids and "raids" or "dungeons"
 		s = sections[J.view.section]
 	end
@@ -540,7 +546,7 @@ J.RefreshPage = refresh
 -- Raids back to their home page.
 function J.OpenSection(key, fromTab)
 	local s = sections[key]
-	if not s then return false end
+	if not s or s.hidden then return false end
 	-- Clicking the tab that's already shown runs its onShow again (the Appearances tab reopens
 	-- the transmog window that way).
 	if fromTab and frame:IsShown() and shownSection == s and s.onShow then pcall(s.onShow, s.panel) end
@@ -559,6 +565,26 @@ end
 
 function Journal.RegisterTab(spec)
 	return addSection(spec)
+end
+
+-- Shows or hides a registered tab. For tabs that are valid only in some states (the transmog
+-- Appearances tab needs a transmogrifier). Hiding the shown tab moves to Dungeons or Raids.
+function Journal.SetTabVisible(key, visible)
+	local s = sections[key]
+	if not s then return false end
+	visible = visible and true or false
+	if (not s.hidden) == visible then return true end
+	s.hidden = not visible
+	s.tab:SetShown(visible)
+	if not visible and J.view.section == key then
+		-- Switch without opening the frame: this can run from the Journal's own OnHide (the
+		-- transmog window closes with it), and OpenSection would show a hidden Journal again.
+		J.view.section = J.view.raids and "raids" or "dungeons"
+		J.Show({ section = J.view.section })
+	end
+	layoutTabs()
+	updateTabs()
+	return true
 end
 
 function Journal.OpenTab(key)

@@ -45,6 +45,7 @@ end
 function methods:Show() local was = self.__shown; self.__shown = true; if not was and self.__scripts.OnShow then self.__scripts.OnShow(self) end end
 function methods:Hide() local was = self.__shown; self.__shown = false; if was and self.__scripts.OnHide then self.__scripts.OnHide(self) end end
 function methods:IsShown() return self.__shown end
+function methods:SetShown(shown) if shown then self:Show() else self:Hide() end end
 function methods:IsVisible()
 	local f = self
 	while f do
@@ -1497,6 +1498,17 @@ step("another addon's tab", function ()
 	tick(0.5)
 	assert(not textShown("Field Guide here"), "registered panel still shown")
 	assert(J.view.page == "home", "Dungeons tab didn't go home")
+
+	-- Dynamic visibility: the transmog Appearances tab is hidden until its owner allows it.
+	Journal.OpenTab("beasts")
+	tick(0.5)
+	assert(Journal.SetTabVisible("beasts", false), "SetTabVisible(false) failed")
+	assert(J.view.section ~= "beasts", "hiding the shown tab didn't switch away")
+	assert(not Journal.OpenTab("beasts"), "a hidden tab opened")
+	assert(Journal.SetTabVisible("beasts", true), "SetTabVisible(true) failed")
+	assert(Journal.OpenTab("beasts"), "a restored tab didn't open")
+	J.OpenSection("dungeons", true)
+	tick(0.5)
 end)
 
 step("DragonUI's Pets & Mounts button opens the journal", function ()

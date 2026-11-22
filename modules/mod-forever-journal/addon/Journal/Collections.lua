@@ -760,8 +760,8 @@ local function buildTab(kind, panel)
 		if e and e.mine and panel:IsVisible() and right:IsVisible()
 			and (J.ToyInBags(e) or (spell > 0 and IsSpellKnown(spell))) then
 			-- The item when it is in the bags (a trinket is put on first: using it equips it);
-			-- otherwise the toy's spell, which the server granted to this character with the
-			-- spell's own cooldown — the account-wide toybox (ADR-025).
+			-- otherwise the toy's spell, which the server granted to this character and which
+			-- carries the item's cooldown — the account-wide toybox (ADR-025).
 			if J.ToyInBags(e) then
 				use:SetAttribute("type", "item")
 				use:SetAttribute("item", "item:" .. e.id)
