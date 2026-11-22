@@ -66,6 +66,19 @@ local function lockText(state)
 	return "|cffff5555Progression stage " .. state .. "|r"
 end
 
+-- The character's riding rank. 3.3.5 exposes skills through GetSkillLineInfo; GetSkillValue does
+-- not exist on this client (it raised "attempt to call global 'GetSkillValue'"). The bundle is
+-- enUS, so the line is "Riding". A locale that renames the skill line returns 0 here, which makes
+-- every collected mount look under-ranked (red, "Cannot use"); the server gate still decides the
+-- actual summon, so it is a display fault only.
+local function ridingRank()
+	for i = 1, GetNumSkillLines() do
+		local name, isHeader, _, rank = GetSkillLineInfo(i)
+		if not isHeader and name == "Riding" then return rank or 0 end
+	end
+	return 0
+end
+
 -- "12 [icon] 2 [icon]" for an extended cost's "id*count/id*count".
 local function itemCosts(text)
 	if not text or text == "-" or text == "" then return nil end
@@ -516,16 +529,17 @@ local function buildTab(kind, panel)
 
 	local function renderList()
 		local offset = FauxScrollFrame_GetOffset(scroll)
+		local ridingSkill = kind == "mounts" and ridingRank() or 0
 		for i = 1, rowCount do
 			local b = rows[i]
 			local e = state.entries[offset + i]
 			b.entry = e
 			if e then
 				b.icon:SetTexture(J.EntryIcon(kind, e))
-				-- Riding-skill gate (ADR-023 social stack): a collected mount the character cannot
+				-- Riding-skill gate (ADR-025): a collected mount the character cannot
 				-- ride yet stays listed, greyed, with what it needs — it never hides till relog.
 				local riding = kind == "mounts" and e.mine and e.riding and e.riding > 0
-					and (GetSkillValue(762) or 0) < e.riding
+					and ridingSkill < e.riding
 				b.icon:SetDesaturated(not e.mine or riding)
 				if CO then b.icon:SetAlpha(e.mine and 1 or 0.35) end
 				b.name:SetText(J.EntryName(kind, e) or ("item " .. e.id))
@@ -747,7 +761,7 @@ local function buildTab(kind, panel)
 			and (J.ToyInBags(e) or (spell > 0 and IsSpellKnown(spell))) then
 			-- The item when it is in the bags (a trinket is put on first: using it equips it);
 			-- otherwise the toy's spell, which the server granted to this character with the
-			-- spell's own cooldown — the account-wide toybox (ADR-023 social stack).
+			-- spell's own cooldown — the account-wide toybox (ADR-025).
 			if J.ToyInBags(e) then
 				use:SetAttribute("type", "item")
 				use:SetAttribute("item", "item:" .. e.id)
@@ -960,9 +974,9 @@ local function buildTab(kind, panel)
 		end
 		table.insert(bits, e.mine and "|cff66ff66Collected|r" or "|cff9d9d9dNot collected|r")
 		-- Riding-skill gate: a collected mount the character cannot ride yet says so (retail
-		-- collections behaviour, ADR-023 social stack).
+		-- collections behaviour, ADR-025).
 		if e.mine and kind == "mounts" and e.riding and e.riding > 0 then
-			local skill = GetSkillValue(762) or 0
+			local skill = ridingRank()
 			if skill < e.riding then
 				table.insert(bits, "|cffff6060Cannot use: requires riding skill (" .. e.riding .. ")|r")
 			end

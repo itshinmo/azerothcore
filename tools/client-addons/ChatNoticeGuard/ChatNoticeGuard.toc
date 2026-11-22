@@ -1,0 +1,6 @@
+## Interface: 30300
+## Title: Chat Notice Guard
+## Notes: Supplies channel-notice strings the Ascension client omits, so ChatFrame cannot throw on format(nil).
+## Author: AzerothCore private server
+## Version: 1.0.0
+ChatNoticeGuard.lua

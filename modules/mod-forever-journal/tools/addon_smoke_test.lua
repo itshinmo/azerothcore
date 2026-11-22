@@ -220,7 +220,8 @@ function IsEquippableItem(id) return id == 1973 end
 function IsEquippedItem() return false end
 -- The Piccolo's use spell (18400) is granted account-wide.
 function IsSpellKnown(id) return id == 18400 end
-function GetSkillValue(id) return id == 762 and 0 or 0 end
+function GetNumSkillLines() return 1 end
+function GetSkillLineInfo(i) return "Riding", false, true, 150, 0, 0, 300, false, 0, 0, 1, 300 end
 function Dismount() end
 function GetAchievementInfo(id) return id, "Leeroy!", 10, false, nil, nil, nil, "Defeat 50 whelps.", 0, "Interface\\Icons\\A" end
 function GetAddOnInfo(name) if name == "DungeonJournal" then return "DungeonJournal", "Dungeon Journal", "", 1 end end

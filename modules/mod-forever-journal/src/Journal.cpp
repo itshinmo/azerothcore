@@ -58,6 +58,7 @@
 #include "Player.h"
 #include "QuestDef.h"
 #include "ScriptMgr.h"
+#include "Spell.h"
 #include "SpellInfo.h"
 #include "Timer.h"
 #include "World.h"
@@ -560,15 +561,40 @@ public:
         {
             PLAYERHOOK_CAN_PLAYER_USE_PRIVATE_CHAT,
             PLAYERHOOK_ON_CREATE,
+            PLAYERHOOK_ON_LOGIN,
+            PLAYERHOOK_ON_LEARN_SPELL,
+            PLAYERHOOK_ON_STORE_NEW_ITEM,
             PLAYERHOOK_ON_LOGOUT
         }) { }
 
-    // Account-wide toys (ADR-023 social stack): a new character starts with every toy the
-    // account has collected — the pets pattern.
+    // Account-wide collections (owner decision 2026-11-22): a new character starts with every toy,
+    // mount and pet the account has collected.
     void OnPlayerCreate(Player* player) override
     {
         if (GetConfig().enabled && GetConfig().collections)
-            Collections::GrantAccountToys(player);
+            Collections::GrantAccountCollections(player);
+    }
+
+    // Same for an existing character, plus the backfill for mounts and pets learned before the
+    // account collection existed.
+    void OnPlayerLogin(Player* player) override
+    {
+        if (!GetConfig().enabled || !GetConfig().collections)
+            return;
+        Collections::BackfillAccountCollections(player);
+        Collections::GrantAccountCollections(player);
+    }
+
+    void OnPlayerLearnSpell(Player* player, uint32 spellId) override
+    {
+        if (GetConfig().enabled && GetConfig().collections)
+            Collections::OnSpellLearned(player, spellId);
+    }
+
+    void OnPlayerStoreNewItem(Player* player, Item* item, uint32 /*count*/) override
+    {
+        if (GetConfig().enabled && GetConfig().collections && item)
+            Collections::OnItemStored(player, item->GetEntry());
     }
 
     // The addon whispers itself; swallow those messages so they never show up as chat.
@@ -630,7 +656,19 @@ public:
 class JournalSpellScript : public AllSpellScript
 {
 public:
-    JournalSpellScript() : AllSpellScript("JournalSpellScript", { ALLSPELLHOOK_ON_CAST }) { }
+    JournalSpellScript() : AllSpellScript("JournalSpellScript",
+        { ALLSPELLHOOK_ON_CAST, ALLSPELLHOOK_ON_SPELL_CHECK_CAST }) { }
+
+    // Collection mounts are on every character; riding and faction are enforced here.
+    void OnSpellCheckCast(Spell* spell, bool /*strict*/, SpellCastResult& res) override
+    {
+        if (res != SPELL_CAST_OK || !spell || !spell->m_spellInfo || !GetConfig().enabled || !GetConfig().collections)
+            return;
+        Unit* caster = spell->GetCaster() ? spell->GetCaster()->ToUnit() : nullptr;
+        if (!caster || caster->GetTypeId() != TYPEID_PLAYER)
+            return;
+        Collections::CheckCollectionCast(caster->ToPlayer(), spell->m_spellInfo->Id, res);
+    }
 
     void OnSpellCast(Spell* /*spell*/, Unit* caster, SpellInfo const* spellInfo, bool /*skipCheck*/) override
     {

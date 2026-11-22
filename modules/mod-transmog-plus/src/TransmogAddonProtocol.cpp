@@ -269,9 +269,9 @@ namespace TransmogAddon
 
     // Ctrl+right-click collect (ADR-021 revision 2026-11-21): the addon asks the server to add
     // a bag item's appearance and soulbind the item (Ascension's mechanic). The server verifies
-    // the item is really in the given bag slot (the addon sends the server's absolute slot:
-    // backpack 23..38, equipped bags 1..N), is a transmog-able armor/weapon, and is not yet
-    // collected; then it collects and binds. Payload: "CollectItem:<bag>:<slot>".
+    // the item is really in the given bag slot (the addon sends the server's numbering: backpack
+    // 23..38 absolute, inside an equipped bag 0..N-1), is a transmog-able armor/weapon, and is
+    // not yet collected; then it collects and binds. Payload: "CollectItem:<bag>:<slot>".
     void HandleCollectItem(Player* player, std::string const& args)
     {
         auto reject = [&](std::string const& reason)
@@ -287,11 +287,31 @@ namespace TransmogAddon
         if (!ParseUint32(parts[0], bag) || !ParseUint32(parts[1], slot))
             return;
 
-        if (bag != INVENTORY_SLOT_BAG_0 && (bag < INVENTORY_SLOT_BAG_START || bag >= INVENTORY_SLOT_BAG_END))
-            return; // the addon only sends backpack and equipped bags
-        Item* item = player->GetItemByPos(uint8(bag), uint8(slot));
-        if (!item)
+        // The addon sends 0 for the backpack; the core's id for it is INVENTORY_SLOT_BAG_0 (255).
+        if (bag != 0 && (bag < INVENTORY_SLOT_BAG_START || bag >= INVENTORY_SLOT_BAG_END))
+        {
+            reject("That bag cannot be collected from.");
             return;
+        }
+        if (slot > 255)
+        {
+            reject("That bag slot cannot be collected from.");
+            return;
+        }
+        // Backpack slots are absolute: 23..38. Slots 39 and up are the bank; a bag request must
+        // never reach them, and equipping/using them would move or bind a bank item.
+        if (bag == 0 && (slot < INVENTORY_SLOT_ITEM_START || slot >= INVENTORY_SLOT_ITEM_END))
+        {
+            reject("That bag slot cannot be collected from.");
+            return;
+        }
+        uint8 bagPos = bag == 0 ? INVENTORY_SLOT_BAG_0 : uint8(bag);
+        Item* item = player->GetItemByPos(bagPos, uint8(slot));
+        if (!item)
+        {
+            reject("No item in that bag slot.");
+            return;
+        }
 
         ItemTemplate const* proto = item->GetTemplate();
         if (proto->Class != ITEM_CLASS_ARMOR && proto->Class != ITEM_CLASS_WEAPON)

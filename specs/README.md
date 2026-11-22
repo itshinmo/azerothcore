@@ -20,6 +20,7 @@ change updates its spec in the same change.
 - [`database.md`](database.md) — three databases, SQL tree, updater, schema conventions, safety.
 - [`content-pipeline.md`](content-pipeline.md) — how content is authored, stored, and verified.
 - [`world-data.md`](world-data.md) — public catalog export, spawn sets, map coordinates, live spawn overlay.
+- [`collections.md`](collections.md) — account-wide mounts, pets and toys: ownership, delivery, cast gate.
 - [`gm-tools.md`](gm-tools.md) — GM handbook, RBAC, audit, GM API, future website, in-game addon.
 - [`gm-api.openapi.yaml`](gm-api.openapi.yaml) — wire contract for the GM API endpoints
   (machine-readable; skips the prose spec template on purpose).

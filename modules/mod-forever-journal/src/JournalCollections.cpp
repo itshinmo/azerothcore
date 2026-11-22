@@ -92,6 +92,7 @@
 #include "WorldSession.h"
 #include <algorithm>
 #include <array>
+#include <atomic>
 #include <cmath>
 #include <map>
 #include <optional>
@@ -243,6 +244,7 @@ namespace Journal::Collections
             uint32 classMask = 0;
             uint32 sources = 0;
             uint8 reqState = 0;
+            uint8 riding = 0;      // a mount's required riding rank, from its teaching item
             std::vector<Source> list;
             std::map<char, uint32> more; // kind -> sources left out
         };
@@ -272,6 +274,12 @@ namespace Journal::Collections
         };
 
         Data sData;
+
+        // Ids the collection records, captured before source-less entries are erased from the
+        // visible catalog: a promo or scripted mount must still be recorded when it is learned.
+        std::array<std::unordered_set<uint32>, KIND_COUNT> sRecordable;
+        // Mount gate data for every recordable mount, visible or not: riding rank and flags.
+        std::unordered_map<uint32, std::pair<uint8, uint32>> sRecordableMountGate;
 
         struct TrainerRow
         {
@@ -621,12 +629,16 @@ namespace Journal::Collections
                     bool anyRace = e.items.empty();
                     bool anyClass = e.items.empty();
                     uint8 quality = 0;
+                    uint8 riding = 0;
                     for (uint32 itemId : e.items)
                     {
                         ItemTemplate const* proto = sObjectMgr->GetItemTemplate(itemId);
                         if (!proto)
                             continue;
                         quality = std::max<uint8>(quality, uint8(proto->Quality));
+                        if (kind == KIND_MOUNT && proto->RequiredSkill == SKILL_RIDING
+                            && proto->RequiredSkillRank > 0 && proto->RequiredSkillRank <= 255)
+                            riding = std::max<uint8>(riding, uint8(proto->RequiredSkillRank));
                         uint32 r = proto->AllowableRace & (RACEMASK_ALLIANCE | RACEMASK_HORDE);
                         if (proto->HasFlag2(ITEM_FLAG2_FACTION_ALLIANCE))
                             r &= RACEMASK_ALLIANCE;
@@ -657,6 +669,8 @@ namespace Journal::Collections
                             }
                         }
                     e.quality = std::max<uint8>(1, quality);
+                    bool classOnly = !anyClass && classes != 0;
+                    e.riding = riding;
                     if (!anyRace)
                     {
                         if (!(races & RACEMASK_HORDE))
@@ -664,7 +678,7 @@ namespace Journal::Collections
                         else if (!(races & RACEMASK_ALLIANCE))
                             e.flags |= ENTRY_HORDE;
                     }
-                    if (!anyClass && classes)
+                    if (kind != KIND_MOUNT && classOnly)
                     {
                         e.flags |= ENTRY_CLASS;
                         e.classMask = classes;
@@ -1773,6 +1787,9 @@ namespace Journal::Collections
     void Build()
     {
         uint32 start = getMSTime();
+        for (auto& set : sRecordable)
+            set.clear();
+        sRecordableMountGate.clear();
         Spots spots;
         std::vector<std::pair<uint32, Source>> pending;
         std::unordered_set<uint32> worldDrops;
@@ -1822,7 +1839,30 @@ namespace Journal::Collections
         {
             auto& list = sData.entries[kind];
             for (Entry& e : list)
+            {
                 Finish(e);
+                if (kind == KIND_MOUNT)
+                {
+                    // Class mounts are riding-gated, not class-gated (owner decision 2026-11-22).
+                    // The class mask can come from a trainer source, so this runs after every
+                    // source is merged. Their spells carry no required skill and they have no
+                    // teaching item, so the rank comes from the spell's own level tier.
+                    if ((e.flags & ENTRY_CLASS) && e.classMask && e.riding == 0)
+                    {
+                        uint32 level = 0;
+                        if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(e.spell))
+                            level = spellInfo->BaseLevel ? spellInfo->BaseLevel : spellInfo->SpellLevel;
+                        e.riding = level >= 60 ? 225 : level >= 40 ? 150 : 75;
+                    }
+                    e.flags &= ~uint32(ENTRY_CLASS);
+                    e.classMask = 0;
+                }
+            }
+            for (Entry const& e : list)
+                sRecordable[kind].insert(e.id);
+            if (kind == KIND_MOUNT)
+                for (Entry const& e : list)
+                    sRecordableMountGate[e.id] = { e.riding, e.flags };
             if (!GetConfig().showUnobtainable)
                 list.erase(std::remove_if(list.begin(), list.end(), [](Entry const& e) { return e.list.empty(); }), list.end());
             std::sort(list.begin(), list.end(), [](Entry const& a, Entry const& b) { return a.id < b.id; });
@@ -1964,22 +2004,10 @@ namespace Journal::Collections
         rows.reserve(sData.entries[kind].size());
         for (Entry const& e : sData.entries[kind])
         {
-            // Mounts carry their required riding rank (0 = none): the addon greys the ones the
-            // character cannot ride yet (ADR-023 social stack, owner decision 2026-11-21). The
-            // rank comes from the teaching item's required skill (mount items set RequiredSkill
-            // to riding and RequiredSkillRank to the mount's riding rank).
-            uint8 riding = 0;
-            if (kind == KIND_MOUNT)
-                for (uint32 itemId : e.items)
-                {
-                    ItemTemplate const* proto = sObjectMgr->GetItemTemplate(itemId);
-                    if (!proto || proto->RequiredSkill != SKILL_RIDING)
-                        continue;
-                    if (proto->RequiredSkillRank > 0 && proto->RequiredSkillRank <= 255)
-                        riding = std::max(riding, uint8(proto->RequiredSkillRank));
-                }
+            // Mounts carry the riding rank their teaching item asks for (0 = none): the addon
+            // greys the ones the character cannot ride yet, and CheckCollectionCast enforces it.
             rows.push_back(Acore::StringFormat("{},{},{},{},{},{},{},{},{}", e.id, e.creature, e.items.empty() ? 0 : e.items.front(),
-                e.quality, e.flags, e.classMask, e.sources, e.reqState, riding));
+                e.quality, e.flags, e.classMask, e.sources, e.reqState, e.riding));
         }
         std::string const letter(1, KIND_LETTERS[kind]);
         Send(player, "CR:" + req + ":" + letter + ":" + std::to_string(rows.size()));
@@ -2015,7 +2043,198 @@ namespace Journal::Collections
             ? proto->Spells[0].SpellId : 0;
     }
 
-    // Account-wide toybox (ADR-023 social stack, owner decision 2026-11-21): a toy stays
+    // Grants each collected toy's use spell to every character on the account. The item-to-spell
+    // mapping comes from the item store, not SQL: item_template lives in the world database, and a
+    // characters-database query that joins it aborts the server (table does not exist there).
+    void GrantToySpellsToAccount(uint32 accountId, std::unordered_set<uint32> const& itemIds)
+    {
+        std::vector<uint32> guids;
+        if (QueryResult chars = CharacterDatabase.Query("SELECT guid FROM characters WHERE account = {}", accountId))
+        {
+            do
+            {
+                guids.push_back(chars->Fetch()[0].Get<uint32>());
+            } while (chars->NextRow());
+        }
+        if (guids.empty())
+            return;
+
+        std::string values;
+        for (uint32 itemId : itemIds)
+        {
+            uint32 spell = ToyUseSpell(itemId);
+            if (!spell)
+                continue;
+            for (uint32 guid : guids)
+            {
+                if (!values.empty())
+                    values += ',';
+                values += Acore::StringFormat("({}, {}, 255)", guid, spell);
+            }
+        }
+        if (!values.empty())
+            CharacterDatabase.Execute("INSERT IGNORE INTO character_spell (guid, spell, specMask) VALUES {}", values);
+    }
+
+    // Account-wide collections (owner decision 2026-11-22): a mount, pet or toy obtained by any
+    // character stays collected for the account, and every character on it learns the spell. The
+    // durable record is per account, so deleting the character that obtained it changes nothing.
+    bool IsCollectionSpell(uint8 kind, uint32 spellId)
+    {
+        return kind < KIND_TOY && sRecordable[kind].contains(spellId);
+    }
+
+    bool IsToyItem(uint32 itemId)
+    {
+        return sRecordable[KIND_TOY].contains(itemId);
+    }
+
+    // The collection tables come from the module SQL. A query against a missing table is MySQL
+    // 1146, which aborts the worldserver, so every collection write checks once that all three
+    // exist and disables itself with a log line when they do not.
+    bool CollectionsTablesReady()
+    {
+        static std::atomic<int8> state{ -1 }; // -1 unknown, 0 missing, 1 ready
+        int8 current = state.load(std::memory_order_relaxed);
+        if (current >= 0)
+            return current == 1;
+        QueryResult result = CharacterDatabase.Query(
+            "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() "
+            "AND table_name IN ('mod_forever_journal_account_mounts', 'mod_forever_journal_account_pets', "
+            "'mod_forever_journal_account_toys')");
+        if (!result)
+            return false; // transient query failure: retry next call, do not cache "missing"
+        int8 ready = result->Fetch()[0].Get<uint32>() == 3 ? 1 : 0;
+        state.store(ready, std::memory_order_relaxed);
+        if (ready == 0)
+            LOG_WARN("server.loading", ">> mod-forever-journal: account collection tables missing; "
+                "collections stay character-bound until the module SQL is applied");
+        return ready == 1;
+    }
+
+    // True while GrantAccountCollections teaches spells: the learn hook must not record again.
+    thread_local bool sGrantingCollections = false;
+
+    struct GrantingScope
+    {
+        GrantingScope() { sGrantingCollections = true; }
+        ~GrantingScope() { sGrantingCollections = false; }
+    };
+
+    // A spell the account owns, on every character of the account (characters database only).
+    void GrantSpellToAccount(uint32 accountId, uint32 spellId)
+    {
+        CharacterDatabase.Execute(
+            "INSERT IGNORE INTO character_spell (guid, spell, specMask) "
+            "SELECT guid, {}, 255 FROM characters WHERE account = {}", spellId, accountId);
+    }
+
+    // Records a mount or pet on the account the first time any character learns it.
+    void RecordAccountSpell(uint8 kind, uint32 accountId, uint32 spellId)
+    {
+        char const* table = kind == KIND_MOUNT ? "mod_forever_journal_account_mounts"
+            : "mod_forever_journal_account_pets";
+        if (CharacterDatabase.Query("SELECT 1 FROM {} WHERE account_id = {} AND spell_id = {} LIMIT 1",
+                table, accountId, spellId))
+            return;
+        CharacterDatabase.Execute("INSERT IGNORE INTO {} (account_id, spell_id) VALUES ({}, {})",
+            table, accountId, spellId);
+        GrantSpellToAccount(accountId, spellId);
+    }
+
+    // A mount or pet learned in any way (vendor, loot, quest, trainer, script).
+    void OnSpellLearned(Player* player, uint32 spellId)
+    {
+        if (sGrantingCollections || !CollectionsTablesReady())
+            return;
+        uint32 accountId = player->GetSession()->GetAccountId();
+        if (IsCollectionSpell(KIND_MOUNT, spellId))
+            RecordAccountSpell(KIND_MOUNT, accountId, spellId);
+        else if (IsCollectionSpell(KIND_PET, spellId))
+            RecordAccountSpell(KIND_PET, accountId, spellId);
+    }
+
+    // A toy picked up, bought or rewarded: recorded at once, not at the next addon request.
+    void OnItemStored(Player* player, uint32 itemId)
+    {
+        if (!IsToyItem(itemId))
+            return;
+
+        if (!CollectionsTablesReady())
+            return;
+
+        uint32 accountId = player->GetSession()->GetAccountId();
+        if (!CharacterDatabase.Query(
+                "SELECT 1 FROM mod_forever_journal_account_toys WHERE account_id = {} AND item_id = {} LIMIT 1",
+                accountId, itemId))
+        {
+            CharacterDatabase.Execute(
+                "INSERT IGNORE INTO mod_forever_journal_account_toys (account_id, item_id) VALUES ({}, {})",
+                accountId, itemId);
+            GrantToySpellsToAccount(accountId, { itemId });
+        }
+
+        uint32 useSpell = ToyUseSpell(itemId);
+        if (!useSpell || player->HasSpell(useSpell))
+            return;
+        player->learnSpell(useSpell, false);
+        if (ItemTemplate const* proto = sObjectMgr->GetItemTemplate(itemId))
+        {
+            ChatHandler chat(player->GetSession());
+            chat.PSendSysMessage("|cffffd200{}|r has been added to your toy collection.", proto->Name1);
+        }
+    }
+
+    // Characters that already knew mounts or pets before this shipped join the account collection
+    // at login. One statement per kind: a per-row existence check cost hundreds of synchronous
+    // round trips on the world thread at every login.
+    void BackfillAccountCollections(Player* player)
+    {
+        if (!CollectionsTablesReady())
+            return;
+
+        uint32 accountId = player->GetSession()->GetAccountId();
+        uint8 const kinds[] = { KIND_MOUNT, KIND_PET };
+        for (uint8 kind : kinds)
+        {
+            std::string spellIds;
+            for (uint32 spellId : sRecordable[kind])
+            {
+                if (!spellIds.empty())
+                    spellIds += ',';
+                spellIds += std::to_string(spellId);
+            }
+            if (spellIds.empty())
+                continue;
+            char const* table = kind == KIND_MOUNT ? "mod_forever_journal_account_mounts"
+                : "mod_forever_journal_account_pets";
+            CharacterDatabase.Execute(
+                "INSERT IGNORE INTO {} (account_id, spell_id) "
+                "SELECT c.account, cs.spell FROM character_spell cs JOIN characters c ON c.guid = cs.guid "
+                "WHERE c.account = {} AND cs.spell IN ({})", table, accountId, spellIds);
+        }
+    }
+
+    // The collection grants mounts to every character, so requirements the client cannot enforce
+    // are enforced on the cast: the card says what is missing, the summon itself fails.
+    void CheckCollectionCast(Player* player, uint32 spellId, SpellCastResult& res)
+    {
+        if (player->IsGameMaster())
+            return;
+        auto itr = sRecordableMountGate.find(spellId);
+        if (itr == sRecordableMountGate.end())
+            return;
+        uint8 riding = itr->second.first;
+        uint32 flags = itr->second.second;
+        if (riding > 0 && player->GetSkillValue(SKILL_RIDING) < riding)
+            res = SPELL_FAILED_SPELL_UNAVAILABLE;
+        else if ((flags & ENTRY_ALLIANCE) && player->GetTeamId() != TEAM_ALLIANCE)
+            res = SPELL_FAILED_SPELL_UNAVAILABLE;
+        else if ((flags & ENTRY_HORDE) && player->GetTeamId() != TEAM_HORDE)
+            res = SPELL_FAILED_SPELL_UNAVAILABLE;
+    }
+
+    // Account-wide toybox (ADR-025, owner decision 2026-11-21): a toy stays
     // collected once ANY character on the account has obtained it — retail toybox rules. Every
     // O request records currently held toys on the account and grants each toy's use spell to
     // every character on it (the pets pattern); casting that spell is the toy, with the spell's
@@ -2023,13 +2242,16 @@ namespace Journal::Collections
     // this call recorded for the first time, so they can be announced.
     void RecordAndGrantAccountToys(Player* player, std::unordered_set<uint32>& recorded, std::unordered_set<uint32>& newlyCollected)
     {
+        if (!CollectionsTablesReady())
+            return;
+
         uint32 accountId = player->GetSession()->GetAccountId();
         std::string toyIds;
-        for (Entry const& e : sData.entries[KIND_TOY])
+        for (uint32 itemId : sRecordable[KIND_TOY])
         {
             if (!toyIds.empty())
                 toyIds += ',';
-            toyIds += std::to_string(e.id);
+            toyIds += std::to_string(itemId);
         }
         if (toyIds.empty())
             return; // no toys in the catalog: no held-scan, no grants, no rows
@@ -2070,18 +2292,7 @@ namespace Journal::Collections
         // characters recorded before (offline ones included), which the creation hook cannot
         // cover. INSERT IGNORE keeps the repeat free. The logged character learns a
         // still-missing spell live just below (the client sees it at once).
-        std::string collectedIds;
-        for (uint32 itemId : recorded)
-        {
-            if (!collectedIds.empty())
-                collectedIds += ',';
-            collectedIds += std::to_string(itemId);
-        }
-        CharacterDatabase.Execute(
-            "INSERT IGNORE INTO character_spell (guid, spell, specMask) "
-            "SELECT c.guid, it.spellid_1, 255 FROM item_template it JOIN characters c ON c.account = {} "
-            "WHERE it.entry IN ({}) AND it.spelltrigger_1 = 0 AND it.spellid_1 > 0",
-            accountId, collectedIds);
+        GrantToySpellsToAccount(accountId, recorded);
 
         ChatHandler chat(player->GetSession());
         for (Entry const& e : sData.entries[KIND_TOY])
@@ -2242,18 +2453,60 @@ namespace Journal::Collections
             }));
     }
 
-    // ---- Account-wide toys (ADR-023 social stack) -----------------------------------------------
+    // ---- Account-wide toys (ADR-025) -----------------------------------------------
     // Called on character creation: grants every toy the account has collected to the new
     // character, so a fresh hero has the account's toybox from the start (the pets pattern).
     void GrantAccountToys(Player* player)
     {
-        CharacterDatabase.Execute(
-            "INSERT IGNORE INTO character_spell (guid, spell, specMask) "
-            "SELECT c.guid, it.spellid_1, 255 FROM mod_forever_journal_account_toys t "
-            "JOIN characters c ON c.account = t.account_id "
-            "JOIN item_template it ON it.entry = t.item_id AND it.spelltrigger_1 = 0 "
-            "WHERE t.account_id = {} AND it.spellid_1 > 0 AND c.guid = {}",
-            player->GetSession()->GetAccountId(), player->GetGUID().GetCounter());
+        uint32 accountId = player->GetSession()->GetAccountId();
+        std::unordered_set<uint32> items;
+        if (QueryResult held = CharacterDatabase.Query(
+                "SELECT item_id FROM mod_forever_journal_account_toys WHERE account_id = {}", accountId))
+        {
+            do
+            {
+                items.insert(held->Fetch()[0].Get<uint32>());
+            } while (held->NextRow());
+        }
+        if (!items.empty())
+            GrantToySpellsToAccount(accountId, items);
+    }
+
+    // Character creation and login: every character gets the account's whole collection.
+    void GrantAccountCollections(Player* player)
+    {
+        if (!CollectionsTablesReady())
+            return;
+
+        GrantAccountToys(player);
+
+        GrantingScope granting;
+
+        uint32 accountId = player->GetSession()->GetAccountId();
+        char const* const tables[] = { "mod_forever_journal_account_mounts", "mod_forever_journal_account_pets" };
+        for (char const* table : tables)
+        {
+            CharacterDatabase.Execute(
+                "INSERT IGNORE INTO character_spell (guid, spell, specMask) "
+                "SELECT c.guid, t.spell_id, 255 FROM {} t JOIN characters c ON c.account = t.account_id "
+                "WHERE t.account_id = {}", table, accountId);
+
+            // The client loaded its spells before these rows existed: teach the missing ones now,
+            // so this session shows the collection instead of the next one.
+            std::vector<uint32> missing;
+            if (QueryResult rows = CharacterDatabase.Query("SELECT spell_id FROM {} WHERE account_id = {}",
+                    table, accountId))
+            {
+                do
+                {
+                    uint32 spellId = rows->Fetch()[0].Get<uint32>();
+                    if (!player->HasSpell(spellId))
+                        missing.push_back(spellId);
+                } while (rows->NextRow());
+            }
+            for (uint32 spellId : missing)
+                player->learnSpell(spellId, false);
+        }
     }
 }
 

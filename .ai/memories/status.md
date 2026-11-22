@@ -20,6 +20,64 @@ last-verified: 2026-11-22 (23bf75546; bot rig paused; manual verification is the
   remain out of scope until the base game is done.
 - Branch: `local-server-setup` is the integration branch. Confirm with `git status`.
 
+## Session record — 2026-11-22 (collections playtest fixes)
+
+Owner playtest on ADMIN: character creation crashed the worldserver, the Mounts tab was unusable,
+the account's collections vanished with the character that earned them, bought toys were not
+collected, and Ctrl+right-click did nothing.
+
+- **Creation crash fixed, root cause proven.** `GrantAccountToys` ran on `CharacterDatabase` and
+  joined `item_template`, which lives in `acore_world`. MySQL errno 1146 is fatal in AC, so the
+  worldserver aborted inside `OnPlayerCreate`; the log carries
+  `[1146] Table 'acore_characters.item_template' doesn't exist` and `>> ABORTED`. The grant now
+  reads world data through `sObjectMgr` and writes only characters-database rows.
+- **Account-wide collections** ([ADR-025](../../decisions/ADR-025-account-wide-collections.md),
+  [specs/collections.md](../../specs/collections.md)): durable per-account tables for mounts, pets
+  and toys; spells materialized into `character_spell` for every character at creation, at login
+  and on learn; login backfill; record-on-store for toys; nothing removes an entry.
+  `mod-account-bound` mounts and pets are off (it keeps titles and friends).
+  Riding and faction gate the **cast** (`SPELL_FAILED_SPELL_UNAVAILABLE`), not the
+  collection; class mounts are ordinary riding-gated mounts. Tables are created by the module
+  update on restart.
+- **Ctrl+right-click fixed.** Two faults. Equipped-bag slots were sent 1-based and the server reads
+  bag contents 0-based, and, the real blocker, a Ctrl click makes `IsModifiedClick()` true, so the
+  bag button calls `ContainerFrameItemButton_OnModifiedClick` and never the plain `OnClick` our hook
+  sat on. The addon now hooks the modified handler too, sends `slot - 1`, has no client-side item
+  class filter (the server validates and answers), and every addon and server bail-out prints a
+  reason. The server also accepts the addon's `bag 0` as the backpack and maps it to
+  `INVENTORY_SLOT_BAG_0` (255); sending 0 straight to `GetItemByPos` was the "that bag cannot be
+  collected from" reject. Server and addon deployed.
+- **Toys**: a toy is recorded when its item enters the inventory (`OnPlayerStoreNewItem`), not when
+  the addon next asks, so a bought toy no longer waits for a refresh.
+- **Mounts tab fixed.** The client error named it: `attempt to call global 'GetSkillValue' (a nil
+  value)`. 3.3.5 has no `GetSkillValue`; the riding rank comes from
+  `GetNumSkillLines`/`GetSkillLineInfo`, scanned once per render. The nil call killed the row loop,
+  which is why every other row stayed blank with its default-visible padlock and the window took no
+  clicks. Addon smoke covers the skill API now (the `GetSkillValue` stub was removed).
+- **Account-wide verified in the database.** Locker (the new orc warlock) received
+  Pinto (472), Felsteed (5784) and Meow's cat (10673) at creation; the account tables hold the same
+  entries. Felsteed comes from the warlock trainer; it and the paladin class mounts are gated by
+  riding only (class mounts carry no class gate; owner decision 2026-11-22). Their riding rank comes
+  from the spell's own level tier, because their spells carry no required skill and they have no
+  teaching item: Felsteed and Summon Warhorse 75; Dreadsteed, Charger and Acherus Deathcharger 150.
+  The class mask arrives from the
+  trainer source, so the fallback and the class-flag strip run in the post-build pass, after every
+  source is merged; an earlier pass left Felsteed unflagged and summonable at level 1.
+- **Chat Notice Guard addon** (`tools/client-addons/ChatNoticeGuard/`): wraps
+  `ChatFrame_MessageEventHandler` and supplies the `CHAT_<token>_NOTICE` string the Ascension client
+  omits, then prints the missing key once. Stops the `ChatFrame.lua:2802: format(nil)` throw on the
+  LookingForGroup channel; the printed key names the real wording to hardcode.
+- **Client chat error** (`ChatFrame.lua:2802: bad argument #1 to 'format'` with
+  `4. LookingForGroup`): the client lacks the notice string for that channel. The Chat Notice Guard
+  covers it; the key it prints becomes the permanent wording.
+- **Blocked: character-creation armor toggle.** Addons do not run in the glue screens. The
+  creation UI is `Interface\GlueXML\CharacterCreate.lua` inside a client MPQ, and the preview is a
+  `ModelFFX` driven by `UpdateCustomizationScene()`; no Lua undress path is exposed. Needs a glue
+  patch plus an engine-side way to undress the creation scene; deferred to the client-patch work
+  (owner decision 2026-11-22).
+- Client-patch pipeline not started yet. Verification so far: `make verify-cpp` green, docs
+  172 files and 658 commands, addon smoke green, server restarted clean.
+
 ## Session record — 2026-11-20 (collections live + QoL batch 1)
 
 Collections verified in game by the owner; the transmog outfit panel needed two rounds of fixes in

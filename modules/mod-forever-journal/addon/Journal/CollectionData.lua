@@ -150,7 +150,7 @@ function J.CompanionNow(kind, e)
 end
 
 -- A toy in the bags (or worn) is used as the item; otherwise, when the server granted its use
--- spell (account-wide toybox, ADR-023 social stack), the spell is the toy — cast from any
+-- spell (account-wide toybox, ADR-025), the spell is the toy — cast from any
 -- character, with the spell's own cooldown.
 function J.ToyInBags(e)
 	local t = owned.toys[e.id]
@@ -268,7 +268,7 @@ end)
 
 -- When the server handshake is done, sync the account toybox without waiting for the tab:
 -- the O request records held toys on the account and grants their spells to every character
--- on it (ADR-023 social stack), so a new hero has the collection from birth.
+-- on it (ADR-025), so a new hero has the collection from birth.
 J.On("READY", function () J.RefreshToys() end)
 
 J.On("COMPANIONS", function ()
@@ -533,7 +533,7 @@ events:SetScript("OnEvent", function (self, event)
 	elseif event == "COMPANION_UPDATE" then
 		-- Fires constantly in cities (anyone's pet or mount). While the journal is closed there
 		-- is nothing to do — unless the Mounts tab is open: learning riding mid-session must
-		-- unlock the account's mounts without a relog (ADR-023 social stack).
+		-- unlock the account's mounts without a relog (ADR-025).
 		if J.frame and J.frame:IsShown() and J.view and J.view.section == "mounts" then
 			J.Debounce("collection-companions", 0.3, function () J.Fire("COMPANIONS") end)
 		end

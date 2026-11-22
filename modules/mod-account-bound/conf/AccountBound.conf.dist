@@ -27,8 +27,10 @@ AccountBound.Achievements.BlockList = ""
 
 #
 # Mounts
+# Off: mounts are the journal's account collection (ADR-025), which grants every collected mount
+# to every character. The module's riding/class gates would hide mounts from the collection.
 #
-AccountBound.Mounts.Enable = 1
+AccountBound.Mounts.Enable = 0
 AccountBound.Mounts.StartupBackfill = 1
 AccountBound.Mounts.SyncOnCreate = 1
 AccountBound.Mounts.RespectFactionRestrictions = 1
@@ -45,8 +47,9 @@ AccountBound.Mounts.BlockList = ""
 #
 # Companion pets
 # This intentionally shares vanity companions, not hunter stable pets.
+# Off: pets are the journal's account collection (ADR-025), like mounts.
 #
-AccountBound.Pets.Enable = 1
+AccountBound.Pets.Enable = 0
 AccountBound.Pets.StartupBackfill = 1
 AccountBound.Pets.SyncOnCreate = 1
 AccountBound.Pets.SameFactionOnly = 0

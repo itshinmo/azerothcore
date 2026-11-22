@@ -33,10 +33,11 @@ decision supersedes one and both link each other.
 | [ADR-017](ADR-017-bot-rig-paused.md) | accepted | bot rig paused; manual verification by the owner is the current content check |
 | [ADR-018](ADR-018-realm-strategy.md) | accepted | test realm deleted; local realm reset + renamed `live` at launch; `dev` + `ptr` realms created at launch; e2e dormant until then |
 | [ADR-019](ADR-019-instance-scope-closed.md) | accepted | manual instance sweep closed (classic complete + 7 TBC dungeons, TBC zero findings); remaining content assumed functioning, verified via player reports |
-| [ADR-020](ADR-020-collections-transmog-stack.md) | accepted | collections stack: mod-transmog-plus + mod-account-bound + mod-forever-journal vendored; licenses, storage, config, and the Warpweaver NPC (910012, ten capitals) recorded |
+| [ADR-020](ADR-020-collections-transmog-stack.md) | accepted, revised 2026-11-22 by [ADR-025](ADR-025-account-wide-collections.md) | collections stack: mod-transmog-plus + mod-account-bound + mod-forever-journal vendored; licenses, storage, config, and the Warpweaver NPC (910012, ten capitals) recorded |
 | [ADR-021](ADR-021-leveling-qol-batch-1.md) | accepted | leveling QoL batch 1: auto-learn class spells via `mod-auto-learn-spells` (core trainer data, no spell list), dual spec at level 30 free, auto flight paths dropped |
 | [ADR-022](ADR-022-aoe-looting.md) | removed | AoE looting was vendored from `mod-aoe-loot`; removed 2026-11-21 — its quest-item collector breaks on solo kills (upstream #44) |
 | [ADR-023](ADR-023-cross-faction-social-layer.md) | accepted | cross-faction social layer: 7 AllowTwoSide config flips (chat, channels, groups, guilds, arena teams, shared AH, calendar), RBAC already shipped, mod-cfbg vendored (Wintergrasp off), quest/rep access deferred (unvendorable module) |
 | [ADR-024](ADR-024-pvp-queueing-slice.md) | accepted | PvP queueing slice: mod-arena-3v3-solo-queue vendored (.qsolo rated, solo MMR, fork-patched character-cache bounds for slot 4), .queue bg from anywhere (mod-join-anywhere, full battlemaster ladder), personal arena teams for rated premades (mod-personal-arena-teams); currency consolidation deferred |
+| [ADR-025](ADR-025-account-wide-collections.md) | accepted | account-wide collections: durable per-account mount/pet/toy tables, spells materialized into character_spell for every alt, riding/faction gate the summon only; AccountBound mounts/pets off |
 
 Open questions: [OPEN-QUESTIONS.md](OPEN-QUESTIONS.md).

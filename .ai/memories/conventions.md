@@ -28,6 +28,8 @@ them.
 ## SQL
 
 - Every `INSERT` has a matching `DELETE` for idempotency.
+- Never join a world-database table from a `CharacterDatabase` query. MySQL errno 1146 is fatal in
+  AC and aborts the worldserver; read world data through `sObjectMgr` or `WorldDatabase` instead.
 - Spawn `DELETE` and `UPDATE` target one table, filter on `id` and `guid`, never `OR`.
 - No double semicolons, no multiple blank lines, InnoDB, backticks, final newline.
 - `smart_scripts` edits rewrite the full `(entryorguid, source_type)` block.
@@ -49,6 +51,14 @@ them.
 - Use least-privilege database users. Never `root` for tools or agents.
 
 ## 3.3.5 client addons
+
+- 3.3.5 has no `GetSkillValue`; read a skill rank with `GetNumSkillLines()` and `GetSkillLineInfo(i)`
+  (name, header, expanded, rank). A nil global call aborts the whole render function it sits in.
+- A Ctrl click makes `IsModifiedClick()` true, so a bag button calls
+  `ContainerFrameItemButton_OnModifiedClick`, not `ContainerFrameItemButton_OnClick`. Hook the
+  modified handler for Ctrl+right-click actions.
+- Addons do not load on the glue screens. Character creation is `Interface\GlueXML` and its preview
+  is a `ModelFFX` driven by `UpdateCustomizationScene()`; changing it needs a client patch.
 
 - `GetItemInfo` has no numeric class return and no `LE_ITEM_CLASS_*` globals; the item class
   arrives as a localized string ("Armor"/"Weapon" plus client-locale variants — see

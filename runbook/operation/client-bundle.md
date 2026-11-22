@@ -18,6 +18,7 @@ and [ADR-020](../../decisions/ADR-020-collections-transmog-stack.md).
 | Transmog addon | `modules/mod-transmog-plus/addon/Transmog` | active — in-game transmog UI + collections |
 | Journal addon | `modules/mod-forever-journal/addon/Journal` | active — the Collections journal (Mounts, Pets, Toys, Appearances) |
 | GM Helper | `tools/gm-addon/` | active — testing addon |
+| Chat Notice Guard | `tools/client-addons/ChatNoticeGuard/` | active workaround — supplies the `CHAT_<token>_NOTICE` strings the Ascension client omits, otherwise a LookingForGroup notice throws `format(nil)` |
 
 Paths: client `~/Games/wotlk-clean` (WoWSilicon launcher, realmlist `127.0.0.1`); vanilla reference
 exe kept at `~/Downloads/wow-related/Wow-clean.exe` (build-12340, unmodified).
@@ -59,9 +60,10 @@ The verified path, in the order actually performed (recorded so any client copy 
    (BarberShopStyle, CharSections, CreatureDisplayInfoExtra, EmotesTextSound, CharHairGeosets,
    CharHairTextures, CharacterFacialHairStyles, HelmetGeosetVisData) and restart the worldserver.
 5. Install addons into `Interface/AddOns/` from this repository: `Transmog` and `Journal` from the
-   module trees (`modules/mod-transmog-plus/addon/`, `modules/mod-forever-journal/addon/`) and
-   `GMHelper` from `tools/gm-addon/`. Do NOT install ForeverUI or any other mod's loose
-   `Interface/GlueXML` files — they conflict with the Ascension glue.
+   module trees (`modules/mod-transmog-plus/addon/`, `modules/mod-forever-journal/addon/`),
+   `GMHelper` from `tools/gm-addon/`, and `ChatNoticeGuard` from `tools/client-addons/`. Do NOT
+   install ForeverUI or any other mod's loose `Interface/GlueXML` files — they conflict with the
+   Ascension glue.
 6. Point `Data/enUS/realmlist.wtf` at the realm; play.
 
 ## Rebuild kit (generated client artifacts)

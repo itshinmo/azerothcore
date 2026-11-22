@@ -40,6 +40,7 @@ class Player;
 class Quest;
 class Unit;
 class SpellInfo;
+enum SpellCastResult : uint8;
 
 namespace Journal
 {
@@ -365,9 +366,14 @@ namespace Journal
         // and draenei zones are classic's), instances by their journal tabs. 0 without era locks.
         uint8 ZoneEra(uint32 map, uint32 zone);
 
-        // Account-wide toys (ADR-023 social stack): grants every toy the account has collected
-        // to a (newly created) character — the pets pattern.
-        void GrantAccountToys(Player* player);
+        // Account-wide collections: grants every toy, mount and pet the account has collected to a
+        // character (creation and login), and records a new one on the account.
+        void GrantAccountCollections(Player* player);
+        void BackfillAccountCollections(Player* player);
+        void OnSpellLearned(Player* player, uint32 spellId);
+        void OnItemStored(Player* player, uint32 itemId);
+        // A mount the character owns but cannot use (riding or faction): refuse the summon.
+        void CheckCollectionCast(Player* player, uint32 spellId, SpellCastResult& res);
     }
 
     // ---- JournalQuests.cpp: every quest, as the quest log sorts them ----------------------------
