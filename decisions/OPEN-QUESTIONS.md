@@ -125,8 +125,8 @@ letter needs that owner's approval.
 **Blocks:** client patch build and install for the first race/class batch.
 **Owner:** client-patch owner (repo owner).
 **Record:** [ADR-035](ADR-035-race-class-combos.md),
-[RFC-007](../rfcs/active/RFC-007-race-class-combos.md), and the
-[client-patch contract](../specs/client-patch.md). No decision yet.
+[RFC-007](../rfcs/active/RFC-007-race-class-combos.md), and
+`feat/map-poi:specs/client-patch.md` (unmerged). No decision yet.
 
 ## Shop product list revision
 

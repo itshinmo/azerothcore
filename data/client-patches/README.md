@@ -11,7 +11,7 @@ addition. On merge, combine the rows from every branch; do not replace the other
 - [race-class-combos](race-class-combos/README.md) — `race-class-combos/dist/patch-V.MPQ`:
   character-creation DBCs for the proposed extended race/class pairs. `CharBaseInfo.dbc` 62 -> 67
   rows, `CharStartOutfit.dbc` 126 -> 134 rows; 2 DBCs; SHA256
-  `66a5391889739e1cc0cfee1dc1a52da38986f3de1e2732c3e85b2a50c4afa460`.
+  `50e4477b93678272ad35089bfbbd6c8fa7f884c98d1d3171491b29da49d4731c`.
 
 Project archive family on the English client: `patch-X` item data (the only `Item.dbc` carrier),
 `patch-Y` white preview models, `patch-Z` map/UI. `patch-V` is a proposed character-creation DBC

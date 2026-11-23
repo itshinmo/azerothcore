@@ -60,8 +60,8 @@ druid form models, and there is no Ascension undead paladin charger wiring.
 8. **Minimal class-progression fixes.** The recommended batch needs only the Blood Elf Warrior
    weapon-skill rows and the Troll eligibility update for the Orc Voidwalker chain. No new creatures,
    items, spells, or quests are part of the technical direction.
-9. **Reserved DBC override IDs.** `CharStartOutfit.dbc` rows use `950200-950207`;
-   `skillraceclassinfo_dbc` rows use `950300-950303`. No other custom IDs are used.
+9. **Reserved DBC override IDs.** `CharStartOutfit.dbc` rows use `950400-950407`;
+   `skillraceclassinfo_dbc` rows use `950410-950413`. No other custom IDs are used.
 10. **Verification gate.** A batch is accepted only after the client and server row sets match, each
     pair creates and spawns, the starting kit and trainer work, one class-specific ability works, the
     creation preview is checked, and the logs are clean.

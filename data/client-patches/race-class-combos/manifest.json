@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "archive": "patch-V.MPQ",
-  "sha256": "66a5391889739e1cc0cfee1dc1a52da38986f3de1e2732c3e85b2a50c4afa460",
-  "size": 6098,
+  "sha256": "50e4477b93678272ad35089bfbbd6c8fa7f884c98d1d3171491b29da49d4731c",
+  "size": 6099,
   "format": "MPQ v1",
   "compression": "zlib",
-  "built_at": "2026-11-23T10:56:21+00:00",
+  "built_at": "2026-11-23T11:30:19+00:00",
   "dbc_files": 2,
   "dbc": {
     "CharBaseInfo.dbc": {
@@ -29,20 +29,20 @@
       "source_archive": "Data/enUS/patch-enUS-2.MPQ",
       "source_archive_sha256": "ab9af8457f0d7b99a562f26b7d1651bbf68ebc37ddb249d01ac860ccc8746ff4",
       "source_dbc_sha256": "a026407cd4fa60867ac2eda1070e89679e811774b476980902125f6d5af61540",
-      "output_dbc_sha256": "9dae68a440d514674333dcf9e8eb7d36e147beda44c2964f6051cc8707886d6b",
+      "output_dbc_sha256": "03ab1105f505293bb89204c5a5fc88a49527c06c1eab2bddf34b979ca7d3ee52",
       "source_rows": 126,
       "rows": 134,
       "fields": 77,
       "record_size": 296,
       "added": [
-        "950200",
-        "950201",
-        "950202",
-        "950203",
-        "950204",
-        "950205",
-        "950206",
-        "950207"
+        "950400",
+        "950401",
+        "950402",
+        "950403",
+        "950404",
+        "950405",
+        "950406",
+        "950407"
       ]
     }
   },
@@ -85,10 +85,10 @@
     {
       "path": "DBFilesClient\\CharStartOutfit.dbc",
       "size": 39685,
-      "compressed_size": 5213,
+      "compressed_size": 5214,
       "verify_flags": 80,
       "verify_ok": true,
-      "sha256": "9dae68a440d514674333dcf9e8eb7d36e147beda44c2964f6051cc8707886d6b"
+      "sha256": "03ab1105f505293bb89204c5a5fc88a49527c06c1eab2bddf34b979ca7d3ee52"
     }
   ]
 }
