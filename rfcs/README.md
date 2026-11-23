@@ -26,6 +26,11 @@ contested change; a small change goes straight to a spec or runbook.
   buildthehomelab stack.
 - [RFC-003-qol-social-slate.md](active/RFC-003-qol-social-slate.md) — accepted (gated on Phase 1
   gate) — QoL/social slate with small-balance bonus XP and extended cross-faction scope.
+- [RFC-007-race-class-combos.md](active/RFC-007-race-class-combos.md) — discussion — extended
+  race/class combinations: proposed twelve-pair target and recommended five-pair batch (both open
+  owner decisions), client `CharBaseInfo.dbc`/`CharStartOutfit.dbc` patch, server data, skill
+  matrix, test plan. RFC-004 and RFC-006 are allocated on parallel branches and will be merged;
+  renumber at merge if needed.
 
 ### Archived
 

@@ -1,6 +1,17 @@
 # Auto detect text files and perform LF normalization
 * text eol=lf
 
+# Binary client artifacts: never apply text normalization
+*.MPQ binary
+*.mpq binary
+*.dbc binary
+*.DBC binary
+*.blp binary
+*.m2 binary
+*.skin binary
+*.anim binary
+data/client-patches/** -text
+
 # Whitespace rules
 # strict (no trailing, no tabs)
 *.cpp    whitespace=trailing-space,space-before-tab,tab-in-indent,cr-at-eol

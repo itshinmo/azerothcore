@@ -41,5 +41,6 @@ decision supersedes one and both link each other.
 | [ADR-025](ADR-025-account-wide-collections.md) | accepted | account-wide collections: durable per-account mount/pet/toy tables, spells materialized into character_spell for every alt, riding/faction gate the summon only; AccountBound mounts/pets off |
 | [ADR-026](ADR-026-transmog-npc-only-and-preview.md) | accepted | transmogrifier-only appearance changes: server-side NPC gate, Journal tab hidden until the gossip, client-side UI-only preview; true dual-wield preview needs a client patch |
 | [ADR-031](ADR-031-world-treasures.md) | proposed | hand-placed world treasures: one chest, one unique item via native `maxcount=1`, 30-60 minute shared respawn, iconic open-world placement, 100-item target in batches of 20 |
+| [ADR-035](ADR-035-race-class-combos.md) | proposed | extended race/class combos: technical direction only (client `CharBaseInfo.dbc` + server `playercreateinfo` ship together, existing Blizzard assets, whole-file DBC carrier); the proposed twelve-pair target and five-pair batch are open owner decisions in [OPEN-QUESTIONS](OPEN-QUESTIONS.md) |
 
 Open questions: [OPEN-QUESTIONS.md](OPEN-QUESTIONS.md).

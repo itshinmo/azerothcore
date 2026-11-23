@@ -23,6 +23,8 @@ I do it"; behavior lives in `specs/`.
 - [config-changes.md](development/config-changes.md) — server and tool configuration.
 - [worktrees-and-branches.md](development/worktrees-and-branches.md) — branch topology, one task per worktree, upstream sync.
 - [commands.md](development/commands.md) — every build, test, server, database, and verification command.
+- [client-dbc-patch.md](development/client-dbc-patch.md) — build, verify, install, and roll back a
+  whole-file client DBC MPQ patch.
 
 ### Operation
 

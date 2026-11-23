@@ -15,6 +15,8 @@ and [ADR-020](../../decisions/ADR-020-collections-transmog-stack.md).
 | 8 server DBCs | same mod | active — copied into server `DataDir/dbc/`; worldserver restart applies them |
 | patch-B/C/D/E/G/I/M/N/P/U.MPQ | Project Reforged v1.5.8 (skip patch-A) | active — VFX, environment, gear, interface, sounds |
 | patch-S.MPQ | Project Reforged v1.5.8 | **removed 2026-11-21 (owner)** — caused client performance issues in Orgrimmar; all other Reforged parts stay |
+| patch-X.MPQ | project item data (client-patch branch) | active — the only `DBFilesClient\Item.dbc` carrier; SHA256 `9ddd80c9fda95647c393a00fb2c0d2db706185b59c05364ce00d3899e95c1d50` |
+| patch-Y.MPQ | project white-model restore (client-patch branch) | active — stock goblin male model, skins and 32 animations; SHA256 `b236c1c35d2714a0e6423e87a934256fbace13168951d2c5144b0ca30016f524` |
 | Transmog addon | `modules/mod-transmog-plus/addon/Transmog` | active — in-game transmog UI + collections |
 | Journal addon | `modules/mod-forever-journal/addon/Journal` | active — the Collections journal (Mounts, Pets, Toys, Appearances) |
 | GM Helper | `tools/gm-addon/` | active — testing addon |
@@ -25,11 +27,15 @@ exe kept at `~/Downloads/wow-related/Wow-clean.exe` (build-12340, unmodified).
 
 ## Screens and glue ownership
 
-The **Ascension patch-A MPQ owns the glue screens** (login, character select, character creation —
-its modern creation layout carries the 500+ options). No other mod may redefine those screens:
-ForeverUI's loose `Interface/GlueXML` conflicted with them (duplicate widgets, overlapping text,
-Lua errors) and was removed — and later the owner removed **mod-forever-ui entirely** (addon, art,
-saved variables). Two mods both shipping GlueXML for the same screens do not compose.
+The **winning glue archive** owns the glue screens (login, character select, character creation). On
+the verified bundle the measured winner for `Interface\GlueXML\CharacterCreate.lua` is
+`patch-I.mpq` (Reforged interface); `patch-A.MPQ` supplies customization DBCs and models but has no
+`Interface\GlueXML` entries. The creation screen carries the 500+ options. No other mod may redefine
+those screens: ForeverUI's loose `Interface/GlueXML` conflicted with them (duplicate widgets,
+overlapping text, Lua errors) and was removed — and later the owner removed **mod-forever-ui
+entirely** (addon, art, saved variables). Two mods both shipping GlueXML for the same screens do not
+compose. Verify the winner with the client-patch tool (`client_patch.py which`) after any bundle
+change.
 
 ## Proven incompatible or dropped (do not re-add without a new decision)
 
@@ -53,14 +59,18 @@ The verified path, in the order actually performed (recorded so any client copy 
 2. Open it once in the **WoWSilicon launcher**: apply its **CrossOver Patch**, then its
    **Game Patch** (installs WoWSilicon's `d3d9.dll`, `libDllLdr.dll`, `winerosetta.dll` chain).
    WoWSilicon re-offers the Game Patch whenever its hash check fails — click Patch.
-3. Copy the 11 custom MPQs into `Data/`: Ascension `patch-A.MPQ` + Reforged
-   `patch-B/C/D/E/G/I/M/N/P/U.MPQ` (never Reforged patch-A — the Ascension pack replaces it;
-   patch-S removed 2026-11-21, see the table above).
+3. Copy the 14 custom MPQs into `Data/`: Ascension `patch-A.MPQ`, Reforged
+   `patch-B/C/D/E/G/I/M/N/P/U.MPQ`, and the project `patch-X.MPQ` (item data), `patch-Y.MPQ`
+   (goblin models) and `patch-Z.MPQ` (map/UI). Never copy Reforged patch-A — the Ascension pack
+   replaces it. `patch-S` was removed 2026-11-21. The project patch ledger is
+   [data/client-patches/README.md](../../data/client-patches/README.md); keep X, Y and Z when
+   rebuilding or the item data, white-model fix and map layer are lost.
 4. Copy the Ascension pack's 8 DBCs into the **server** `DataDir/dbc/`
    (BarberShopStyle, CharSections, CreatureDisplayInfoExtra, EmotesTextSound, CharHairGeosets,
    CharHairTextures, CharacterFacialHairStyles, HelmetGeosetVisData) and restart the worldserver.
-5. Install addons into `Interface/AddOns/` from this repository: `Transmog` and `Journal` from the
-   module trees (`modules/mod-transmog-plus/addon/`, `modules/mod-forever-journal/addon/`),
+5. Install addons into `Interface/AddOns/` from this repository: `Transmog`, `Journal` and
+   `Objectives` from the module trees (`modules/mod-transmog-plus/addon/`,
+   `modules/mod-forever-journal/addon/`, `modules/mod-objectives/addon/`),
    `GMHelper` from `tools/gm-addon/`, and `ChatNoticeGuard` from `tools/client-addons/`. Do NOT
    install ForeverUI or any other mod's loose `Interface/GlueXML` files — they conflict with the
    Ascension glue.
@@ -72,9 +82,11 @@ Any client artifact this project generates (patch MPQs, modified DBCs, bundled a
 this repository so a deleted client can be rebuilt without re-downloading anything: addons ship
 from the module trees and `tools/gm-addon/` above; server DBC swaps ship from the feature's own
 data (see the feature's module or `data/sql/custom/`). When a feature generates a client MPQ, it
-lands in `data/client-patches/<feature>/` with its own README, and this runbook links it. Nothing
-is generated today — the Warpweaver guard directions are pure server data (`points_of_interest` +
-`SMSG_GOSSIP_POI`, see `data/sql/custom/db_world/collections_guard_directions.sql`).
+lands in `data/client-patches/<feature>/` with its own README, and this runbook links it. The
+current ledger is [data/client-patches/README.md](../../data/client-patches/README.md). The
+race/class `patch-V` is a proposal artifact in
+[data/client-patches/race-class-combos/](../../data/client-patches/race-class-combos/README.md);
+do not install it until the owner approves the target list.
 
 ## Verification checklist (per client rebuild)
 
