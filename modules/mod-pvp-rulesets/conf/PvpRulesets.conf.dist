@@ -1,0 +1,18 @@
+#
+# PvP Rulesets
+# One realm, three per-character modes (RFC-006, ADR-033).
+#
+
+# Enable the module. Shipping default is 0 (RFC-006 proposal until ADR-033 is accepted).
+# The local test realm enables it in env/dist/etc/modules/PvpRulesets.conf, which is not
+# tracked. Disabling the module ignores stored modes and leaves the tables in place.
+PvpRulesets.Enable = 0
+
+# Outdoor experience bonus in percent. War Mode ships at +10%, High Risk at +15%.
+# The bonus is outdoor-only and is not applied in instances, battlegrounds, arenas,
+# battlefields, sanctuaries or no-PvP areas.
+PvpRulesets.WarMode.XpBonusPercent = 10
+PvpRulesets.HighRisk.XpBonusPercent = 15
+
+# Persisted cooldown for every accepted pledge change, in minutes.
+PvpRulesets.ToggleCooldownMinutes = 5
