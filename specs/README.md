@@ -22,6 +22,8 @@ change updates its spec in the same change.
 - [`world-data.md`](world-data.md) — public catalog export, spawn sets, map coordinates, live spawn overlay.
 - [`collections.md`](collections.md) — account-wide mounts, pets and toys: ownership, delivery, cast gate.
 - [`transmog.md`](transmog.md) — transmogrifier-only appearance changes, Journal tab visibility, client-side preview.
+- [`client-patch.md`](client-patch.md) — project client patch pipeline: MPQ v1, load order,
+  whole-file replacement, manifest.
 - [`gm-tools.md`](gm-tools.md) — GM handbook, RBAC, audit, GM API, future website, in-game addon.
 - [`gm-api.openapi.yaml`](gm-api.openapi.yaml) — wire contract for the GM API endpoints
   (machine-readable; skips the prose spec template on purpose).

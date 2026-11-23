@@ -87,6 +87,7 @@ Core:
 - [`verify-change`](skills/verify-change/SKILL.md) — choose and run the verification tier.
 - [`write-unit-test`](skills/write-unit-test/SKILL.md) — Google Test or Node test.
 - [`test-wow-addon`](skills/test-wow-addon/SKILL.md) — offline addon harness + client screenshots.
+- [`client-patch`](skills/client-patch/SKILL.md) — MPQ patch build, Item.dbc, load order, map addon.
 - [`write-e2e-test`](skills/write-e2e-test/SKILL.md) — live-stack Go e2e, only when asked.
 - [`review-change`](skills/review-change/SKILL.md) — review a diff or PR.
 - [`spec-drift-sync`](skills/spec-drift-sync/SKILL.md) — reconcile code and docs.
@@ -101,8 +102,8 @@ GM:
 - [`gm-incident-response`](skills/gm-incident-response/SKILL.md) — contain, diagnose, restore.
 
 Planned, not created yet: `add-custom-quest`, `add-custom-npc-vendor`, `add-custom-item-mount`,
-`add-smartai`, `add-instance`, `client-patch-and-extract`, `add-module`, `shop-entitlement`. Create
-them when the corresponding work starts; keep the index in step.
+`add-smartai`, `add-instance`, `add-module`, `shop-entitlement`. Create them when the corresponding
+work starts; keep the index in step.
 
 ### Templates
 

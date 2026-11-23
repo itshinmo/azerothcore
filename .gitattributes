@@ -1,6 +1,16 @@
 # Auto detect text files and perform LF normalization
 * text eol=lf
 
+# Client patch artifacts are binary. Git's eol normalization corrupts MPQ archives (CRLF pairs)
+# and DBC/model files; mark them before any client-patches commit.
+*.MPQ binary
+*.mpq binary
+*.dbc binary
+*.blp binary
+*.m2 binary
+*.skin binary
+*.anim binary
+
 # Whitespace rules
 # strict (no trailing, no tabs)
 *.cpp    whitespace=trailing-space,space-before-tab,tab-in-indent,cr-at-eol

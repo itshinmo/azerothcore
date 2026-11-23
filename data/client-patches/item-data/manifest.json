@@ -1,0 +1,299 @@
+{
+  "archive": "patch-X.MPQ",
+  "built_at": "2026-11-23T10:19:44+00:00",
+  "compression": "zlib",
+  "dbc": [
+    {
+      "added_ids": [
+        901001,
+        901002,
+        901003,
+        901004,
+        901005,
+        901006,
+        901007,
+        901008,
+        901009,
+        901010,
+        901011,
+        901012,
+        901013,
+        901014,
+        901015,
+        901016,
+        901017,
+        901018,
+        901019,
+        901020
+      ],
+      "display_check": true,
+      "fields": 8,
+      "output_sha256": "ab6b3f61e901babd4e14a2c87aaffeab8e34158ee8ab033a074d9b4360218f13",
+      "path": "DBFilesClient\\Item.dbc",
+      "record_size": 32,
+      "rows_after": 46116,
+      "rows_before": 46096,
+      "source_archive": "Data/enUS/patch-enUS-3.MPQ",
+      "source_sha256": "d455bc30b59bc368b2a972a913864dd092d50695140b9513582100dc56ed777d",
+      "updated_ids": []
+    }
+  ],
+  "dbc_files": 1,
+  "entries": [
+    {
+      "compressed_size": 319820,
+      "path": "DBFilesClient\\Item.dbc",
+      "sha256": "ab6b3f61e901babd4e14a2c87aaffeab8e34158ee8ab033a074d9b4360218f13",
+      "size": 1475733,
+      "verify_flags": 80
+    }
+  ],
+  "format": "MPQ v1",
+  "items": [
+    {
+      "class": 4,
+      "display_info_id": 54808,
+      "id": 901001,
+      "inventory_type": 23,
+      "material": 7,
+      "sheathe_type": 0,
+      "sound_override_subclass": -1,
+      "subclass": 0
+    },
+    {
+      "class": 4,
+      "display_info_id": 36575,
+      "id": 901002,
+      "inventory_type": 23,
+      "material": 7,
+      "sheathe_type": 0,
+      "sound_override_subclass": -1,
+      "subclass": 0
+    },
+    {
+      "class": 4,
+      "display_info_id": 9657,
+      "id": 901003,
+      "inventory_type": 2,
+      "material": 4,
+      "sheathe_type": 0,
+      "sound_override_subclass": -1,
+      "subclass": 0
+    },
+    {
+      "class": 4,
+      "display_info_id": 9845,
+      "id": 901004,
+      "inventory_type": 11,
+      "material": 1,
+      "sheathe_type": 0,
+      "sound_override_subclass": -1,
+      "subclass": 0
+    },
+    {
+      "class": 4,
+      "display_info_id": 28802,
+      "id": 901005,
+      "inventory_type": 6,
+      "material": 8,
+      "sheathe_type": 0,
+      "sound_override_subclass": -1,
+      "subclass": 2
+    },
+    {
+      "class": 4,
+      "display_info_id": 19563,
+      "id": 901006,
+      "inventory_type": 1,
+      "material": 7,
+      "sheathe_type": 0,
+      "sound_override_subclass": -1,
+      "subclass": 1
+    },
+    {
+      "class": 4,
+      "display_info_id": 6562,
+      "id": 901007,
+      "inventory_type": 12,
+      "material": 3,
+      "sheathe_type": 0,
+      "sound_override_subclass": -1,
+      "subclass": 0
+    },
+    {
+      "class": 4,
+      "display_info_id": 23136,
+      "id": 901008,
+      "inventory_type": 16,
+      "material": 7,
+      "sheathe_type": 0,
+      "sound_override_subclass": -1,
+      "subclass": 1
+    },
+    {
+      "class": 4,
+      "display_info_id": 32008,
+      "id": 901009,
+      "inventory_type": 2,
+      "material": 4,
+      "sheathe_type": 0,
+      "sound_override_subclass": -1,
+      "subclass": 0
+    },
+    {
+      "class": 2,
+      "display_info_id": 8585,
+      "id": 901010,
+      "inventory_type": 17,
+      "material": 2,
+      "sheathe_type": 1,
+      "sound_override_subclass": -1,
+      "subclass": 5
+    },
+    {
+      "class": 4,
+      "display_info_id": 18322,
+      "id": 901011,
+      "inventory_type": 1,
+      "material": 8,
+      "sheathe_type": 0,
+      "sound_override_subclass": -1,
+      "subclass": 2
+    },
+    {
+      "class": 2,
+      "display_info_id": 28543,
+      "id": 901012,
+      "inventory_type": 15,
+      "material": 2,
+      "sheathe_type": 0,
+      "sound_override_subclass": -1,
+      "subclass": 2
+    },
+    {
+      "class": 4,
+      "display_info_id": 40781,
+      "id": 901013,
+      "inventory_type": 14,
+      "material": 1,
+      "sheathe_type": 0,
+      "sound_override_subclass": -1,
+      "subclass": 6
+    },
+    {
+      "class": 4,
+      "display_info_id": 44544,
+      "id": 901014,
+      "inventory_type": 23,
+      "material": 7,
+      "sheathe_type": 0,
+      "sound_override_subclass": -1,
+      "subclass": 0
+    },
+    {
+      "class": 4,
+      "display_info_id": 37552,
+      "id": 901015,
+      "inventory_type": 12,
+      "material": 3,
+      "sheathe_type": 0,
+      "sound_override_subclass": -1,
+      "subclass": 0
+    },
+    {
+      "class": 2,
+      "display_info_id": 43449,
+      "id": 901016,
+      "inventory_type": 26,
+      "material": 2,
+      "sheathe_type": 0,
+      "sound_override_subclass": -1,
+      "subclass": 19
+    },
+    {
+      "class": 4,
+      "display_info_id": 50050,
+      "id": 901017,
+      "inventory_type": 16,
+      "material": 7,
+      "sheathe_type": 0,
+      "sound_override_subclass": -1,
+      "subclass": 1
+    },
+    {
+      "class": 2,
+      "display_info_id": 52445,
+      "id": 901018,
+      "inventory_type": 13,
+      "material": 1,
+      "sheathe_type": 3,
+      "sound_override_subclass": -1,
+      "subclass": 15
+    },
+    {
+      "class": 4,
+      "display_info_id": 34188,
+      "id": 901019,
+      "inventory_type": 12,
+      "material": 3,
+      "sheathe_type": 0,
+      "sound_override_subclass": -1,
+      "subclass": 0
+    },
+    {
+      "class": 4,
+      "display_info_id": 35313,
+      "id": 901020,
+      "inventory_type": 11,
+      "material": 1,
+      "sheathe_type": 0,
+      "sound_override_subclass": -1,
+      "subclass": 0
+    }
+  ],
+  "items_sha256": "9bb0ca8c8f1908fb810f33d6a0aff44a2d0a284022e70f420971cf01f57c30a6",
+  "load_order": {
+    "client": "3.3.5a enUS",
+    "expected_winner_for_item_dbc": "Data/patch-X.MPQ",
+    "locale": "enUS",
+    "only_item_dbc_carrier": "patch-X.MPQ",
+    "order": "english",
+    "project_family": [
+      "patch-X.MPQ",
+      "patch-Y.MPQ",
+      "patch-Z.MPQ"
+    ],
+    "rationale": "X, Y and Z each load after Reforged patch-U. Only X carries DBFilesClient\\Item.dbc, so X wins it without replacing another project DBC; Z remains the highest-priority map/UI archive.",
+    "source_archive": "Data/enUS/patch-enUS-3.MPQ",
+    "source_sha256": "d455bc30b59bc368b2a972a913864dd092d50695140b9513582100dc56ed777d"
+  },
+  "schema": 1,
+  "server_dbc": {
+    "path": "dist/Item.dbc",
+    "rows": 46116,
+    "sha256": "ab6b3f61e901babd4e14a2c87aaffeab8e34158ee8ab033a074d9b4360218f13"
+  },
+  "server_dbc_input": {
+    "conflict_ids": [],
+    "rows": 46096,
+    "server_only_ids": [],
+    "sha256": "d455bc30b59bc368b2a972a913864dd092d50695140b9513582100dc56ed777d",
+    "size": 1475093
+  },
+  "sha256": "9ddd80c9fda95647c393a00fb2c0d2db706185b59c05364ce00d3899e95c1d50",
+  "size": 320268,
+  "source_inputs": {
+    "batch_csv": {
+      "path": "data/client-patches/item-data/source/batch_01.csv",
+      "sha256": "cdc5416b4942776d09d78504c6051ddaa65c81452a5634993052c6e31a75fba3"
+    },
+    "batch_sql": {
+      "path": "data/client-patches/item-data/source/world_treasures_batch_01.sql",
+      "sha256": "6c1505b6bac14ec05fd62827a9f3aefd10e0fa3695d65d187e5f2f38191fe117"
+    },
+    "item_dbc_sql": {
+      "path": "data/client-patches/item-data/source/world_treasures_item_dbc.sql",
+      "sha256": "c4baf35aa3b79e16c6cfb89d9fe8de3cd4b685e727ac39ac8ded05ccdf619504"
+    }
+  }
+}
