@@ -34,6 +34,12 @@ contested change; a small change goes straight to a spec or runbook.
   owner decisions), client `CharBaseInfo.dbc`/`CharStartOutfit.dbc` patch, server data, skill
   matrix, test plan. RFC-004 is allocated on `feat/mythic-plus` and will be merged; renumber at
   merge if needed.
+- [RFC-004-mythic-plus.md](active/RFC-004-mythic-plus.md) — discussion — old-content Mythic+:
+  candidate-module audit, contract in RFC, per-era ladders with a 232 dungeon ceiling, scaled item
+  copies, coin economy, weekly vault; a data-only `Item.dbc` patch is confirmed required and the
+  232 ceiling remains an owner decision. Raids deferred. Ladder ceiling, progression scope, group
+  size, difficulty, reset, vendor stock, leaderboard timing, AutoBalance and the generated-SQL
+  exception are recommendations pending owner in `decisions/OPEN-QUESTIONS.md`.
 
 ### Archived
 

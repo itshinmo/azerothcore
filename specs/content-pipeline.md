@@ -32,6 +32,12 @@ required.
 ### Reserved IDs
 
 - Items `900000–909999`
+- Items `1100000–1899999` — proposed for obtainable generated Mythic+ scaled copies, not yet
+  allocated ([ADR-034](../decisions/ADR-034-mythic-plus-old-content.md))
+- Items `1900000–1999999` — proposed for non-obtainable/QA Mythic+ copies, not yet allocated
+- Items `2000000–2999999` — preview items for six-digit sources, reserved on `local-server-setup`
+  (ADR-026 revision, `transmog_preview_items.sql`); this branch base predates that merge
+- Items `3000000–3999999` — preview items for seven-digit sources (ADR-034 §4)
 - Creatures `910000–919999`
 - Quests `920000–929999`
 - GameObjects `930000–939999`
@@ -83,6 +89,9 @@ recorded there before use.
 ### Client data boundary
 
 - The server can change gameplay data without a client patch through `*_dbc` tables.
+- A new **item entry** also needs a client `Item.dbc` row. The server `item_dbc` overlay alone leaves
+  a red question mark in the bag (confirmed with server-only item `1900001`; the earlier `2050641`
+  probe collided with the transmog preview copy at `50641 + 2000000`).
 - New maps, zones, item icons/models, spell visuals, creature displays, and area triggers need a
   client MPQ/DBC patch.
 - After a client patch that changes terrain, map geometry, or collision, run the extractors for

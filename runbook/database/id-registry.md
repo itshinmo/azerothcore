@@ -10,7 +10,10 @@ the same change.
 | Kind | Range | Notes |
 |------|-------|-------|
 | Items | `900000–909999` | includes mounts, cosmetics, tokens |
-| Preview items | `2000000–2999999` | generated, non-obtainable transmog preview copies; never use for content |
+| Items | `1100000–1899999` | Mythic+ obtainable scaled copies (generated); proposed, see ADR-034 |
+| Items | `1900000–1999999` | Mythic+ QA/non-obtainable copies; never in loot, vendor or vault; proposed, see ADR-034 |
+| Preview items | `2000000–2999999` | generated, non-obtainable transmog preview copies, id = `2000000 + source_entry`; never use for content |
+| Preview items | `3000000–3999999` | preview copies of seven-digit source entries (same formula); reserved, unused today |
 | Creatures | `910000–919999` | templates and spawns use different keys |
 | Quests | `920000–929999` | includes chain addon rows |
 | GameObjects | `930000–939999` | templates; spawn GUIDs use their own reserved block |
@@ -47,8 +50,15 @@ the same change.
 | 950300–950324 | Misc (task rows) | `mod_objectives_task` launch tasks | 25 Classic objective definitions | ADR-028 | 2026-11-23 |
 | 950340–950348 | Misc (offer rows) | `mod_objectives_offer` launch offers | reward vendor items | ADR-029 | 2026-11-23 |
 | 910012 | Creature entry | Warpweaver | transmogrifier template + 10 capital spawns (`collections_npc_spawns.sql`, spawn GUID block 5400001–5400010) | collections (ADR-020) | 2026-11-20 |
+| 910013 | Creature entry | Mythic Quartermaster | vendor/vault/pending-reward NPC template; spawn placed at implementation; **proposed, not yet allocated** (ADR-034, RFC-004) | repo owner | 2026-11-23 |
+| 950160 | Auth RBAC permission | Command: mythic info | player permission for `.mythic info`; **proposed, not yet allocated** (ADR-034, RFC-004) | repo owner | 2026-11-23 |
+| 950161 | Auth RBAC permission | Command: mythic start | player permission for `.mythic start`; **proposed, not yet allocated** (ADR-034, RFC-004) | repo owner | 2026-11-23 |
+| 950162 | Auth RBAC permission | Command: mythic abandon | player permission for `.mythic abandon`; **proposed, not yet allocated** (ADR-034, RFC-004) | repo owner | 2026-11-23 |
+| 950163 | Auth RBAC permission | Command: mythic status/reload | admin permission for `.mythic status` and `.mythic reload`; **proposed, not yet allocated** (ADR-034, RFC-004) | repo owner | 2026-11-23 |
 | 950110–950119 | Misc (POI) | city Warpweaver markers | `points_of_interest` rows behind the guard gossip options (`collections_guard_directions.sql`) | collections (ADR-020) | 2026-11-20 |
 | 950120 | Misc (npc_text) | guard answer | shared gossip answer text in `collections_guard_directions.sql` | collections (ADR-020) | 2026-11-20 |
+| 1100000–1899999 | Items | Mythic+ obtainable scaled copies | generated `item_template`, server `item_dbc` and client `Item.dbc` rows for old-content Mythic+; **proposed, not yet allocated** (ADR-034, RFC-004) | repo owner | 2026-11-23 |
+| 1900000–1999999 | Items | Mythic+ non-obtainable/QA copies | QA and GM-only copies; never in loot, vendor or vault; **proposed, not yet allocated** (ADR-034, RFC-004) | repo owner | 2026-11-23 |
 | 2000000–2999999 | Items (generated) | transmog preview copies | off-hand copies of one-hand weapons (`InventoryType 22`) and main-hand copies of thrown weapons (`InventoryType 21`) in `zz_transmog_preview_items.sql`; non-obtainable | mod-transmog-plus (ADR-026) | 2026-11-23 |
 | 901001–901020 | Item entries | world treasures batch 1 | 20 unique hand-placed chest items (`world_treasures_batch_01.sql`); 12 Classic, 4 TBC, 4 WotLK | ADR-031 | 2026-11-23 |
 | 901021–901100 | Item entries | world treasures batches 2–5 | reserved 80-item block | ADR-031 | 2026-11-23 |
@@ -60,7 +70,9 @@ the same change.
 
 World content IDs for the objective slice are listed above; the RBAC rows live in `acore_auth`, not
 `acore_world`. Gameobject spawn GUIDs are a separate key space from the 930000 entry range; each
-feature reserves its own block above the current global maximum.
+feature reserves its own block above the current global maximum. Preview ids are
+`2000000 + source_entry`; a seven-digit source lands in `3000000–3999999`, and the generator must
+refuse any id outside the two preview blocks.
 
 ## References
 

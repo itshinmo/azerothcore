@@ -20,6 +20,27 @@ last-verified: 2026-11-22 (23bf75546; bot rig paused; manual verification is the
   remain out of scope until the base game is done.
 - Branch: `local-server-setup` is the integration branch. Confirm with `git status`.
 
+## Session record — 2026-11-23 (objectives, PvP, client patch family)
+
+- **Adventure Board and Chronicle live.** `mod-objectives` merged and applied: 25 tasks across
+  Alliance/Horde and levels 1-9/15-30/31-80, account-wide chronicle, three currencies, vendors
+  `910020`/`910021` (spawns `5400011`/`5400012`). Addon deployed to the client. Flush drains
+  100-row batches to an empty set; currency writes through. `ObjectivesMathTest` 7/7.
+- **PvP slice 1 live.** `mod-pvp-rulesets`: `.pledge pve|warmode|highrisk|status`, capital and
+  instance guards, persisted 5-minute cooldown, War Mode +10% / High Risk +15% outdoor XP,
+  persistent flag re-assert. State map under a mutex; module-owned prepared-statement pool (the
+  pool must size `m_stmts` in its connection constructor — a missing resize crashed startup once).
+  Dist default is off; the local realm enables it.
+- **Client patch family installed.** `patch-X` Item.dbc (treasures), `patch-Y` stock goblin male
+  model, `patch-Z` map POI layer (sha `1aaf23a4…`, 30,558 bytes). `patch-Y` and `patch-Z` blobs
+  verified byte-identical; `--server-dbc` diff and source-drift checks are in the tools.
+- **Race/class proposal.** `patch-V` (proposal only) carries `CharBaseInfo.dbc` 67 rows and
+  `CharStartOutfit.dbc` 134 rows for five pairs; sha `50e4477b…`. Outfit rows moved to
+  `950400–950407` and skill rows to `950410–950413` after the objectives collision. Owner
+  decisions stay in `OPEN-QUESTIONS`.
+- **Tests:** `make test` 6,022 pass, including objectives and PvP; SQL lint, docs, client-patch
+  tool tests (31) pass.
+
 ## Session record — 2026-11-23 (transmog preview + Dalaran Warpweaver)
 
 - **Dual-wield, thrown and hidden transmog preview fixed without a client patch.** The model is
