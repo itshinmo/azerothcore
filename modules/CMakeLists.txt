@@ -190,8 +190,12 @@ foreach(SOURCE_MODULE ${MODULES_MODULE_LIST})
     list(APPEND DISABLED_SCRIPT_MODULE_PROJECTS ${INSTALL_OFFSET}/${SCRIPT_MODULE_OUTPUT_NAME})
     if(${MODULE_MODULE_VARIABLE} STREQUAL "static")
 
-      # Add the module content to the whole static module
-      CollectSourceFiles(${MODULE_SOURCE_PATH} PRIVATE_SOURCES_MODULES)
+      # Add the module content to the whole static module.
+      # Module tests live outside src/ and are registered through ACORE_MODULE_TEST_SOURCES.
+      # Exclude src/test and src/tests anyway so a module cannot compile gtest into worldserver.
+      CollectSourceFiles(${MODULE_SOURCE_PATH} PRIVATE_SOURCES_MODULES
+        ${MODULE_SOURCE_PATH}/test
+        ${MODULE_SOURCE_PATH}/tests)
       CollectIncludeDirectories(${MODULE_SOURCE_PATH} PUBLIC_INCLUDES)
 
       # Skip deprecated api loaders
@@ -209,7 +213,9 @@ foreach(SOURCE_MODULE ${MODULES_MODULE_LIST})
     # Generate an own dynamic module which is loadable on runtime
     # Add the module content to the whole static module
     unset(MODULE_SOURCE_PRIVATE_SOURCES)
-    CollectSourceFiles(${MODULE_SOURCE_PATH} MODULE_SOURCE_PRIVATE_SOURCES)
+    CollectSourceFiles(${MODULE_SOURCE_PATH} MODULE_SOURCE_PRIVATE_SOURCES
+      ${MODULE_SOURCE_PATH}/test
+      ${MODULE_SOURCE_PATH}/tests)
     CollectIncludeDirectories(${MODULE_SOURCE_PATH} PUBLIC_INCLUDES)
 
     # Configure the scriptloader

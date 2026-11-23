@@ -39,11 +39,17 @@ the same change.
 | 1000003 | Creature entry | Arena 3v3 Solo | solo-queue NPC template (vendored mod-arena-3v3-solo-queue data; spawned nowhere by default) | ADR-024 | 2026-11-20 |
 | 1000004 | npc_text | Arena 3v3 Solo greeting | solo-queue NPC text (vendored module SQL) | ADR-024 | 2026-11-20 |
 | 950150 | Auth RBAC permission | Command: queue bg (project) | queue-from-anywhere player command | ADR-024 | 2026-11-20 |
+| 910020 | Creature entry | Adventure Quartermaster | objective reward vendor template, Stormwind spawn GUID 5400011 (`objectives_engine.sql`) | ADR-029 | 2026-11-23 |
+| 910021 | Creature entry | Chronicle Quartermaster | objective reward vendor template, Orgrimmar spawn GUID 5400012 (`objectives_engine.sql`) | ADR-029 | 2026-11-23 |
+| 950200 | Misc (npc_text) | Objective vendor greeting | reward vendor gossip text | ADR-029 | 2026-11-23 |
+| 950300–950324 | Misc (task rows) | `mod_objectives_task` launch tasks | 25 Classic objective definitions | ADR-028 | 2026-11-23 |
+| 950340–950348 | Misc (offer rows) | `mod_objectives_offer` launch offers | reward vendor items | ADR-029 | 2026-11-23 |
 | 910012 | Creature entry | Warpweaver | transmogrifier template + 10 capital spawns (`collections_npc_spawns.sql`, spawn GUID block 5400001–5400010) | collections (ADR-020) | 2026-11-20 |
 | 950110–950119 | Misc (POI) | city Warpweaver markers | `points_of_interest` rows behind the guard gossip options (`collections_guard_directions.sql`) | collections (ADR-020) | 2026-11-20 |
 | 950120 | Misc (npc_text) | guard answer | shared gossip answer text in `collections_guard_directions.sql` | collections (ADR-020) | 2026-11-20 |
 
-World content IDs are still unallocated. The RBAC rows live in `acore_auth`, not `acore_world`.
+World content IDs for the objective slice are listed above; the RBAC rows live in `acore_auth`, not
+`acore_world`.
 
 ## References
 

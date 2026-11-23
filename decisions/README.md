@@ -40,5 +40,8 @@ decision supersedes one and both link each other.
 | [ADR-024](ADR-024-pvp-queueing-slice.md) | accepted | PvP queueing slice: mod-arena-3v3-solo-queue vendored (.qsolo rated, solo MMR, fork-patched character-cache bounds for slot 4), .queue bg from anywhere (mod-join-anywhere, full battlemaster ladder), personal arena teams for rated premades (mod-personal-arena-teams); currency consolidation deferred |
 | [ADR-025](ADR-025-account-wide-collections.md) | accepted | account-wide collections: durable per-account mount/pet/toy tables, spells materialized into character_spell for every alt, riding/faction gate the summon only; AccountBound mounts/pets off |
 | [ADR-026](ADR-026-transmog-npc-only-and-preview.md) | accepted | transmogrifier-only appearance changes: server-side NPC gate, Journal tab hidden until the gossip, client-side UI-only preview; true dual-wield preview needs a client patch |
+| [ADR-028](ADR-028-objective-engine-board-chronicle.md) | proposed | shared objective engine, Adventure Board and Chronicle: four task types, lazy daily/weekly resets, 7 daily slots, zone focus, gold reroll, character vs account scope, in-memory progress with batched writes |
+| [ADR-029](ADR-029-objective-reward-currencies.md) | proposed | three reward currencies (Adventure Marks account, Mythic Coins and Raider's Commendations character); gossip vendors in Stormwind and Orgrimmar; gear first, materials second, cosmetics third; no pay-for-power |
+| [ADR-030](ADR-030-era-aware-content-model.md) | proposed | era-aware content model: `era` 0/1/2 plus level bands and faction/zone filters; Classic data first, schema ready for all eras |
 
 Open questions: [OPEN-QUESTIONS.md](OPEN-QUESTIONS.md).

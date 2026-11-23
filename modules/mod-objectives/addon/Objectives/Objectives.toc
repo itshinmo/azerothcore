@@ -1,0 +1,6 @@
+## Interface: 30300
+## Title: Objectives
+## Notes: Adventure Board and Chronicle
+## Author: private server
+## Version: 0.1.0
+Objectives.lua
