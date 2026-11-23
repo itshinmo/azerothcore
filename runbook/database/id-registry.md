@@ -40,6 +40,7 @@ the same change.
 | 1000003 | Creature entry | Arena 3v3 Solo | solo-queue NPC template (vendored mod-arena-3v3-solo-queue data; spawned nowhere by default) | ADR-024 | 2026-11-20 |
 | 1000004 | npc_text | Arena 3v3 Solo greeting | solo-queue NPC text (vendored module SQL) | ADR-024 | 2026-11-20 |
 | 950150 | Auth RBAC permission | Command: queue bg (project) | queue-from-anywhere player command | ADR-024 | 2026-11-20 |
+| 950151 | Auth RBAC permission | Command: pledge (project) | PvP rulesets `.pledge` player command (`pvp_rulesets_command.sql`) | ADR-033 | 2026-11-23 |
 | 910012 | Creature entry | Warpweaver | transmogrifier template + 10 capital spawns (`collections_npc_spawns.sql`, spawn GUID block 5400001–5400010) | collections (ADR-020) | 2026-11-20 |
 | 950110–950119 | Misc (POI) | city Warpweaver markers | `points_of_interest` rows behind the guard gossip options (`collections_guard_directions.sql`) | collections (ADR-020) | 2026-11-20 |
 | 950120 | Misc (npc_text) | guard answer | shared gossip answer text in `collections_guard_directions.sql` | collections (ADR-020) | 2026-11-20 |
