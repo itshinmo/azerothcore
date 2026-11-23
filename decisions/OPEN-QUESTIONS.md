@@ -45,6 +45,121 @@ approved, and tested on a copy of the client.
 **Owner:** human.
 **Record:** ADR-002 or a new ADR.
 
+## Mythic+ dungeon ceiling
+
+**Question:** Is item level 232 the right top of the five-player ladder?
+
+232 is Trial of the Crusader 10 normal. It does not obsolete ToC 25 / ICC loot, but it exceeds
+Naxxramas 25 (213) and Ulduar normal (219/226) and equals ToC 10 normal. 284 is reserved for future
+raid ladders. Recommended: 232, the current value in
+[ADR-034](../decisions/ADR-034-mythic-plus-old-content.md).
+
+**Blocks:** the ladder table, the generator's ceiling, and the scaled-item budget table.
+**Owner:** repo owner.
+**Record:** ADR-034 and [RFC-004](../rfcs/active/RFC-004-mythic-plus.md).
+
+## Mythic+ progression scope
+
+**Question:** Are progress, coins and vault credit per character or account-wide?
+
+Recommended: per character. Account-wide is a separate question that would also cover cosmetics and
+teleports.
+
+**Blocks:** the progress, currency and vault tables and every command that reads them.
+**Owner:** repo owner.
+**Record:** ADR-034 and RFC-004.
+
+## Mythic+ raid scope
+
+**Question:** Do raids enter the ladder, and if so at 10, 25 or one size?
+
+Recommended: no raids in v1; a separate ADR after dungeons covers lockouts, 10/25 difficulty,
+multi-encounter completion, raid loot tables and a weekly reset.
+
+**Blocks:** raid modules, raid loot tables and the 284 raid ceiling.
+**Owner:** repo owner.
+**Record:** ADR-034 and RFC-004.
+
+## Mythic+ group size
+
+**Question:** Must a group be exactly five, or is solo/1–5 allowed?
+
+Recommended: allow 1–5 for accessibility, with no group-size scaling; the owner may require five for
+key unlocks.
+
+**Blocks:** the start check, the eligibility rules and the scaling table.
+**Owner:** repo owner.
+**Record:** ADR-034 and RFC-004.
+
+## Mythic+ difficulty ladder
+
+**Question:** Is v1 normal difficulty only, or does a second heroic ladder ship?
+
+Recommended: normal only in v1. A heroic ladder doubles the pool, the timers and the ladder table
+before the first one is tuned.
+
+**Blocks:** the pool rows, the creature scale table and the item ladder.
+**Owner:** repo owner.
+**Record:** ADR-034 and RFC-004.
+
+## Mythic+ weekly reset
+
+**Question:** Does the weekly reset sit at Tuesday 00:00 UTC?
+
+Recommended: yes, a Tuesday-anchored week key (`floor((unix_time - anchor) / 604800)`), not an ISO
+week number, because ISO weeks start on Monday.
+
+**Blocks:** the weekly vault, vendor stock and weekly reward rows.
+**Owner:** repo owner.
+**Record:** ADR-034 and RFC-004.
+
+## Mythic+ vendor stock
+
+**Question:** Is the quartermaster stock six deterministic items per era per week, or a random cache?
+
+Recommended: six deterministic items, seeded by `(week_id, era)`, because it is auditable and
+explainable to players.
+
+**Blocks:** the vendor, the vault and the coin economy.
+**Owner:** repo owner.
+**Record:** ADR-034 and RFC-004.
+
+## Mythic+ leaderboard timing
+
+**Question:** Does the leaderboard ship in v1 or after the economy and the website?
+
+Recommended: after the economy, before the website.
+
+**Blocks:** the leaderboard table, its prune rules and the name-resolution query.
+**Owner:** repo owner.
+**Record:** ADR-034 and RFC-004.
+
+## Mythic+ AutoBalance interaction
+
+**Question:** Does Mythic+ refuse to start while AutoBalance is on, or is AutoBalance disabled on
+Mythic+ maps?
+
+Recommended: Mythic+ refuses to start, so one module owns creature scaling. The other option is
+disabling AutoBalance on every Mythic+ capable map.
+
+**Blocks:** the run start check and the AutoBalance configuration.
+**Owner:** repo owner.
+**Record:** ADR-034 and RFC-004.
+
+## Generated SQL without `DELETE`-before-`INSERT`
+
+**Question:** May immutable generated files skip the house `DELETE`-before-`INSERT` rule?
+
+The Mythic+ generator materializes `item_template` and `item_dbc` rows with `INSERT IGNORE` only.
+Deleting a generated ID could remove an item a player still owns, so the file cannot follow the
+re-applicable custom-SQL rule. Recommended: document an exception in
+`.agents/docs/sql-guidelines.md` and allow the files in `make verify-sql`, limited to immutable
+generated rows.
+
+**Blocks:** the generated SQL files and their lint gate.
+**Owner:** repo owner.
+**Record:** ADR-034, RFC-004 (TODO) and `.agents/docs/sql-guidelines.md`.
+
 ## Shop product list revision
 
 **Question:** Does the allowed product list in [specs/shop.md](../specs/shop.md) change before shop

@@ -26,6 +26,12 @@ contested change; a small change goes straight to a spec or runbook.
   buildthehomelab stack.
 - [RFC-003-qol-social-slate.md](active/RFC-003-qol-social-slate.md) — accepted (gated on Phase 1
   gate) — QoL/social slate with small-balance bonus XP and extended cross-faction scope.
+- [RFC-004-mythic-plus.md](active/RFC-004-mythic-plus.md) — discussion — old-content Mythic+:
+  candidate-module audit, contract in RFC, per-era ladders with a 232 dungeon ceiling, scaled item
+  copies, coin economy, weekly vault; a data-only `Item.dbc` patch is confirmed required and the
+  232 ceiling remains an owner decision. Raids deferred. Ladder ceiling, progression scope, group
+  size, difficulty, reset, vendor stock, leaderboard timing, AutoBalance and the generated-SQL
+  exception are recommendations pending owner in `decisions/OPEN-QUESTIONS.md`.
 
 ### Archived
 
