@@ -45,6 +45,89 @@ approved, and tested on a copy of the client.
 **Owner:** human.
 **Record:** ADR-002 or a new ADR.
 
+## Race/class combinations: canonical target list
+
+**Question:** Which extended race/class pairs are approved for [ADR-035](ADR-035-race-class-combos.md)?
+
+Proposed target (not approved): Undead Paladin, Undead Hunter, Gnome Priest, Troll Warlock, Troll
+Druid, Human Hunter, Tauren Paladin, Night Elf Mage, Dwarf Mage, Blood Elf Warrior, Orc Mage, Dwarf
+Shaman. The twelve-pair list comes from the Ascension wiki page
+<https://project-ascension.fandom.com/wiki/Race_Class_Combos>; the archived Bronzebeard article names
+only Troll Druid in text, and the later official article adds four of the pairs. Gnome Hunter is not
+on the Ascension list; the known Gnome Hunter example is a Turtle WoW pair. Ascension assets are not
+licensed for this server.
+
+**Blocks:** the client `CharBaseInfo.dbc` patch and the server `playercreateinfo` rows.
+**Owner:** repo owner.
+**Record:** [ADR-035](ADR-035-race-class-combos.md) (proposed) and
+[RFC-007](../rfcs/active/RFC-007-race-class-combos.md). No owner decision yet.
+
+## Race/class combinations: first batch scope
+
+**Question:** Approve the recommended first batch, or replace it with another set?
+
+Recommended, not approved: Dwarf Mage, Orc Mage, Gnome Priest, Troll Warlock, Blood Elf Warrior.
+They reuse existing Blizzard models/animations and trainers. Troll Druid has no Troll form models;
+Undead/Tauren Paladin have no class mount wiring or quests; Dwarf Shaman has no totem quest chain;
+Human/Undead Hunter have no Taming the Beast quest row. Those are deferred by the technical gate, not
+by an owner choice.
+
+**Blocks:** the first client patch and server data batch.
+**Owner:** repo owner.
+**Record:** [ADR-035](ADR-035-race-class-combos.md) and
+[RFC-007](../rfcs/active/RFC-007-race-class-combos.md). No owner decision yet.
+
+## Gnome Priest racial spells
+
+**Question:** Should Gnome Priests receive a priest racial set?
+
+3.3.5 gives priests race-specific spells (Fear Ward, Desperate Prayer, Devouring Plague, and others).
+Gnomes have none. Options:
+
+1. Ship without racials (current batch-1 recommendation).
+2. Grant two existing priest racials through `playercreateinfo_spell_custom`, which needs
+   `PlayerStart.CustomSpells = 1`.
+3. Add a small module that teaches a chosen pair at level 1.
+
+**Blocks:** Gnome Priest finishing touches and priest balance review.
+**Owner:** repo owner.
+**Record:** [ADR-035](ADR-035-race-class-combos.md) and
+[RFC-007](../rfcs/active/RFC-007-race-class-combos.md). No decision yet.
+
+## Troll Warlock quest shape
+
+**Question:** How does a Troll Warlock obtain the Voidwalker?
+
+Options:
+
+1. Extend the Orc chain `1501`, `1504`, and the breadcrumb `1506` to Trolls (recommended).
+2. Add a Troll-specific quest chain with its own giver and text.
+3. Grant the spell without a quest (not recommended; skips class progression).
+
+The recommendation keeps the Orc chain and adds Troll to `AllowableRaces` on all three quests. The
+breadcrumb is included so the chain has a lead-in from the starting zone.
+
+**Blocks:** Troll Warlock class progression.
+**Owner:** repo owner.
+**Record:** [ADR-035](ADR-035-race-class-combos.md) and
+[RFC-007](../rfcs/active/RFC-007-race-class-combos.md). No decision yet.
+
+## Race/class combinations: client patch carrier
+
+**Question:** May the race/class batch use a new `patch-V.MPQ` carrier outside the client-patch
+family's `patch-X/Y/Z` slots?
+
+The patch carries whole-file `CharBaseInfo.dbc` (67 rows) and `CharStartOutfit.dbc` (134 rows). It
+loads after Reforged `patch-U` and before `patch-X`, and it must ship together with the server
+`playercreateinfo` rows. The client-patch owner recorded the X/Y/Z split in ADR-027, so a fourth
+letter needs that owner's approval.
+
+**Blocks:** client patch build and install for the first race/class batch.
+**Owner:** client-patch owner (repo owner).
+**Record:** [ADR-035](ADR-035-race-class-combos.md),
+[RFC-007](../rfcs/active/RFC-007-race-class-combos.md), and the
+[client-patch contract](../specs/client-patch.md). No decision yet.
+
 ## Shop product list revision
 
 **Question:** Does the allowed product list in [specs/shop.md](../specs/shop.md) change before shop

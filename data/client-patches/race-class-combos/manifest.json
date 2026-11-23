@@ -1,0 +1,94 @@
+{
+  "schema": 1,
+  "archive": "patch-V.MPQ",
+  "sha256": "66a5391889739e1cc0cfee1dc1a52da38986f3de1e2732c3e85b2a50c4afa460",
+  "size": 6098,
+  "format": "MPQ v1",
+  "compression": "zlib",
+  "built_at": "2026-11-23T10:56:21+00:00",
+  "dbc_files": 2,
+  "dbc": {
+    "CharBaseInfo.dbc": {
+      "source_archive": "Data/enUS/locale-enUS.MPQ",
+      "source_archive_sha256": "45f02a3bf3964b169f397cea58113cdce5fa7bdf58d4b63f68e46255bb3bd3ea",
+      "source_dbc_sha256": "1e81c6f8a218b187187c9f13e65cad39920aab56a57f2955d72385d94fee2e25",
+      "output_dbc_sha256": "23dbf975092271ca511eb6378c30697e6f2fec1ccf195ab9680977f8a43fa505",
+      "source_rows": 62,
+      "rows": 67,
+      "fields": 2,
+      "record_size": 2,
+      "added": [
+        "2,8",
+        "3,8",
+        "7,5",
+        "8,9",
+        "10,1"
+      ]
+    },
+    "CharStartOutfit.dbc": {
+      "source_archive": "Data/enUS/patch-enUS-2.MPQ",
+      "source_archive_sha256": "ab9af8457f0d7b99a562f26b7d1651bbf68ebc37ddb249d01ac860ccc8746ff4",
+      "source_dbc_sha256": "a026407cd4fa60867ac2eda1070e89679e811774b476980902125f6d5af61540",
+      "output_dbc_sha256": "9dae68a440d514674333dcf9e8eb7d36e147beda44c2964f6051cc8707886d6b",
+      "source_rows": 126,
+      "rows": 134,
+      "fields": 77,
+      "record_size": 296,
+      "added": [
+        "950200",
+        "950201",
+        "950202",
+        "950203",
+        "950204",
+        "950205",
+        "950206",
+        "950207"
+      ]
+    }
+  },
+  "load_order": {
+    "client": "3.3.5a (12340), English",
+    "order": "locale non-patch; locale numeric patches; locale alphabetic patches; base non-patch; base numeric patches; base alphabetic patches (one chain, later archives win)",
+    "project_family": [
+      "Data/patch-V.MPQ",
+      "Data/patch-X.MPQ",
+      "Data/patch-Y.MPQ",
+      "Data/patch-Z.MPQ"
+    ],
+    "expected_winner": "Data/patch-V.MPQ",
+    "sources": [
+      {
+        "path": "Data/enUS/locale-enUS.MPQ",
+        "sha256": "45f02a3bf3964b169f397cea58113cdce5fa7bdf58d4b63f68e46255bb3bd3ea",
+        "role": "effective CharBaseInfo source"
+      },
+      {
+        "path": "Data/enUS/patch-enUS-2.MPQ",
+        "sha256": "ab9af8457f0d7b99a562f26b7d1651bbf68ebc37ddb249d01ac860ccc8746ff4",
+        "role": "effective CharStartOutfit source"
+      }
+    ]
+  },
+  "sources": [
+    "Data/enUS/locale-enUS.MPQ: DBFilesClient\\CharBaseInfo.dbc (sha256 1e81c6f8a218b187187c9f13e65cad39920aab56a57f2955d72385d94fee2e25)",
+    "Data/enUS/patch-enUS-2.MPQ: DBFilesClient\\CharStartOutfit.dbc (sha256 a026407cd4fa60867ac2eda1070e89679e811774b476980902125f6d5af61540)"
+  ],
+  "entries": [
+    {
+      "path": "DBFilesClient\\CharBaseInfo.dbc",
+      "size": 155,
+      "compressed_size": 110,
+      "verify_flags": 80,
+      "verify_ok": true,
+      "sha256": "23dbf975092271ca511eb6378c30697e6f2fec1ccf195ab9680977f8a43fa505"
+    },
+    {
+      "path": "DBFilesClient\\CharStartOutfit.dbc",
+      "size": 39685,
+      "compressed_size": 5213,
+      "verify_flags": 80,
+      "verify_ok": true,
+      "sha256": "9dae68a440d514674333dcf9e8eb7d36e147beda44c2964f6051cc8707886d6b"
+    }
+  ]
+}

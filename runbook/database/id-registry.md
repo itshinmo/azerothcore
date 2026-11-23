@@ -54,6 +54,8 @@ the same change.
 | 930001–930020 | Gameobject entries + loot tables | world treasures batch 1 | 20 type-3 chest templates and their one-row loot tables | ADR-031 | 2026-11-23 |
 | 930021–930100 | Gameobject entries + loot tables | world treasures batches 2–5 | reserved 80-chest block | ADR-031 | 2026-11-23 |
 | 5714501–5714520 | Gameobject spawn GUIDs | world treasures batch 1 | spawn block above the global `gameobject` maximum at authoring time | ADR-031 | 2026-11-23 |
+| 950200–950207 | Misc (DBC rows) | combo starting outfits | `CharStartOutfit.dbc` rows for the batch-1 pairs (4 pairs × 2 genders), shipped in the client patch and the server `DataDir`; reserved, not yet used | ADR-035 | 2026-11-23 |
+| 950300–950303 | Misc (DBC rows) | combo weapon skills | `skillraceclassinfo_dbc` rows for Blood Elf Warrior swords/axes/2H axes/daggers; reserved, not yet used | ADR-035 | 2026-11-23 |
 
 World content IDs for the objective slice are listed above; the RBAC rows live in `acore_auth`, not
 `acore_world`. Gameobject spawn GUIDs are a separate key space from the 930000 entry range; each

@@ -94,7 +94,11 @@ with all 12 custom MPQs (Ascension patch-A + Reforged B–U), the mod's 8 server
 ForeverUI in-game addon — 120 FPS, all screens working. The St0ny exe path was measured at 14 FPS
 (x87 emulation on Apple Silicon) and reverted; St0ny's patcher and ForeverUIPatcher are mutually
 incompatible in either order (verified). ForeverUI's loose GlueXML conflicted with the Ascension
-glue and was removed; the Ascension MPQ owns the glue screens. Named creation/barber choices are
+glue and was removed; the Ascension MPQ owns the glue screens. (Superseded 2026-11-23: the measured
+winner for `Interface\GlueXML\CharacterCreate.lua` is `patch-I.mpq`; `patch-A.MPQ` has no
+`Interface\GlueXML` entries. See
+[runbook/operation/client-bundle.md](../../runbook/operation/client-bundle.md) and
+[RFC-007](RFC-007-race-class-combos.md).) Named creation/barber choices are
 dropped (numbered choices). Full record:
 [runbook/operation/client-bundle.md](../../runbook/operation/client-bundle.md).
 

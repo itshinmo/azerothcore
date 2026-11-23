@@ -85,7 +85,11 @@ recorded there before use.
 - The server can change gameplay data without a client patch through `*_dbc` tables.
 - New maps, zones, item icons/models, spell visuals, creature displays, and area triggers need a
   client MPQ/DBC patch.
-- After a client patch, run the extractors for `maps/`, `vmaps/`, `mmaps/`, and update `DataDir`.
+- After a client patch that changes terrain, map geometry, or collision, run the extractors for
+  `maps/`, `vmaps/`, `mmaps/`, and update `DataDir`.
+- A DBC-only client patch does **not** need map/vmap/mmap extraction. If the server also reads the
+  DBC, deploy the same bytes to `DataDir/dbc/`; the build and verification recipe is
+  [client-dbc-patch.md](../runbook/development/client-dbc-patch.md).
 - Client patches follow [client-patch.md](client-patch.md): MPQ-only, whole-file replacement, and the
   source-of-truth DBC rule. Reuse existing client assets when the patch would add none.
 

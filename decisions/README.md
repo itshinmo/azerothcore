@@ -47,5 +47,6 @@ decision supersedes one and both link each other.
 | [ADR-031](ADR-031-world-treasures.md) | proposed | hand-placed world treasures: one chest, one unique item via native `maxcount=1`, 30-60 minute shared respawn, iconic open-world placement, 100-item target in batches of 20 |
 | [ADR-032](ADR-032-map-poi-layer.md) | accepted | map POI layer: baked `ServerMapPOI` addon in `patch-Z`, stock icons, red PvP overlay, dynamic world-boss/Crow's Cache hooks |
 | [ADR-033](ADR-033-pvp-rulesets.md) | proposed | PvP rulesets: per-character PvE/War/High Risk, capital pledge, outdoor XP, High Risk gold-only chest with killer first claim and victim recovery, mercenary FFA, Outlaw 5/+5/cap 60 with no early removal, same-zone status and continent alert, anti-abuse; module with four approved seams; no purchased power; client-patch visual follow-up |
+| [ADR-035](ADR-035-race-class-combos.md) | proposed | extended race/class combos: technical direction only (client `CharBaseInfo.dbc` + server `playercreateinfo` ship together, existing Blizzard assets, whole-file DBC carrier); the proposed twelve-pair target and five-pair batch are open owner decisions in [OPEN-QUESTIONS](OPEN-QUESTIONS.md) |
 
 Open questions: [OPEN-QUESTIONS.md](OPEN-QUESTIONS.md).

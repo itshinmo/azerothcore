@@ -29,6 +29,11 @@ contested change; a small change goes straight to a spec or runbook.
 - [RFC-006-pvp-rulesets.md](active/RFC-006-pvp-rulesets.md) — draft (ADR-033 proposed) — PvE/War/High
   Risk, mercenary, Outlaw, High Risk gold chest, same-zone status, continent alert, deferred map
   feed, client-patch follow-up.
+- [RFC-007-race-class-combos.md](active/RFC-007-race-class-combos.md) — discussion — extended
+  race/class combinations: proposed twelve-pair target and recommended five-pair batch (both open
+  owner decisions), client `CharBaseInfo.dbc`/`CharStartOutfit.dbc` patch, server data, skill
+  matrix, test plan. RFC-004 is allocated on `feat/mythic-plus` and will be merged; renumber at
+  merge if needed.
 
 ### Archived
 
