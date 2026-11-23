@@ -1,0 +1,27 @@
+#
+# mod-objectives: Adventure Board, Chronicle and objective tasks.
+# See specs/objectives.md and specs/rewards.md.
+#
+
+# Master switch. 0 disables every hook, request and vendor purchase.
+Objectives.Enable = 1
+
+# Active content era: 0 Classic, 1 The Burning Crusade, 2 Wrath of the Lich King.
+# Tasks and offers with era <= this value are eligible. Classic data is seeded first (ADR-030).
+Objectives.Era = 0
+
+# Daily slots for the character board. Clamped to 1-7. "7-stack" is seven slots.
+Objectives.DailySlots = 5
+
+# Weekly slots for the character board. Clamped to 0-1; more than one is out of scope.
+Objectives.WeeklySlots = 1
+
+# Weekly slots for the account-wide Chronicle. Clamped to 0-6.
+Objectives.ChronicleSlots = 3
+
+# First gold reroll price in copper. Each later reroll in the same day costs one more base price.
+Objectives.RerollCostCopper = 2000
+
+# Dirty-write interval in milliseconds. Progress is batched; currency is written through immediately.
+# Minimum 5000.
+Objectives.FlushIntervalMs = 20000
