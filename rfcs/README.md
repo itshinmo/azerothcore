@@ -26,6 +26,9 @@ contested change; a small change goes straight to a spec or runbook.
   buildthehomelab stack.
 - [RFC-003-qol-social-slate.md](active/RFC-003-qol-social-slate.md) — accepted (gated on Phase 1
   gate) — QoL/social slate with small-balance bonus XP and extended cross-faction scope.
+- [RFC-006-pvp-rulesets.md](active/RFC-006-pvp-rulesets.md) — draft (ADR-033 proposed) — PvE/War/High
+  Risk, mercenary, Outlaw, High Risk gold chest, same-zone status, continent alert, deferred map
+  feed, client-patch follow-up.
 
 ### Archived
 
