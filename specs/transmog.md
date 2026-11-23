@@ -27,12 +27,22 @@ and toy collections are [collections.md](collections.md).
 - **Collection**: Ctrl+right-click collects an unbound appearance and soulbinds the item anywhere.
   Collecting is not changing an appearance and is not gated by the NPC.
 - **Preview**: client-side and UI-only. The model is a `DressUpModel` copy of the real player
-  (`SetUnit("player")`); staged looks are tried on top with **no `Undress`**, so the model starts
-  with both real weapons in their own hands. No player visible-item field and no server state are
-  written by a preview; Apply is the only commit. Illusions preview in their tile.
-- **Dual-wield preview limit**: 3.3.5 `DressUpModel:TryOn` has no hand-slot argument (added in
-  Legion 7.0.3). If a pending off-hand appearance still lands on the main hand after the no-Undress
-  overlay, the fix needs a client patch; it is not a server behavior.
+  (`SetUnit("player")`). `DressUpModel` has no per-slot `TryOff`, so the model is rebuilt with
+  `Undress` and every visible look is tried on again. A hidden appearance is skipped, which leaves
+  that slot empty in the preview. No player visible-item field and no server state are written by a
+  preview; Apply is the only commit. Illusions preview in their tile.
+- **Hand-specific preview items**: 3.3.5 `DressUpModel:TryOn` has no hand-slot argument (added in
+  Legion 7.0.3); it picks the hand from the item's `InventoryType`. A generic one-hand weapon
+  (`INVTYPE_WEAPON`, 13) always lands in the main hand. The server generates a hidden,
+  non-obtainable preview copy of every one-hand weapon at `entry + 2000000` with
+  `InventoryType = INVTYPE_WEAPONOFFHAND` (22), and of every thrown weapon with
+  `InventoryType = INVTYPE_WEAPONMAINHAND` (21). The addon uses the off-hand copy for the off-hand
+  slot and the main-hand copy for a thrown weapon. While a thrown weapon's ranged slot is selected,
+  the preview skips the real main hand and off hand so only the thrown weapon is shown; bows, guns
+  and wands keep both melee weapons visible. The Sets tab uses the same hand-specific copies for
+  its pieces. No client patch is needed.
+- **Preview item range**: generated preview items occupy `2000000–2999999`; they are excluded from
+  appearance source lists by item ID and are never obtainable, looted, sold, or mailed.
 
 ## Errors
 

@@ -18,7 +18,8 @@ function Transmog:setProgressBar(collected, possible)
 end
 
 -- Looks whose lead item the client hasn't cached yet, by slot then item class. Their tiles show a
--- placeholder until the item arrives; the frame below polls for that, as 3.3.5 has no event for it.
+-- placeholder until the item arrives; the frame below polls for that, and the model also listens
+-- for GET_ITEM_INFO_RECEIVED for the selected hand.
 Transmog.uncachedLooks = {}
 
 local CACHE_POLL = 0.2

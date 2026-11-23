@@ -102,6 +102,10 @@ it collects appearances the retail way (see below) and ships a migration from mo
 - With [DragonUI](https://github.com/buildthehomelab/wow-addon-DragonUI) installed, the transmog
   window takes DragonUI's retail look (bronze frame, marble panes, red buttons) instead of
   its own art.
+- The character preview rebuilds from the player (`Undress` and re-apply), so hidden armor
+  disappears and both hands preview independently. Off-hand and thrown appearances use hidden,
+  non-obtainable preview copies generated at item ID + 2,000,000; the ranged slot preview shows
+  only the thrown weapon. The world character never changes until Apply.
 - Preview tiles frame the part of the body the slot covers; weapon tiles zoom on the hand
   holding the weapon. If a race frames badly, `/transmog camera <depth> <side> <height>
   [rotation]` nudges the selected slot's tiles for the session (`/transmog camera reset` undoes
