@@ -136,8 +136,12 @@ bool Transmog::IsAppearanceKnown(uint32 accountId, ItemTemplate const* proto) co
 }
 
 // Placeholder and developer items share models with real gear; keep them out of source lists.
+// Transmog preview copies live in the reserved 2000000+ range and are never player-obtainable.
 static bool IsListableSource(ItemTemplate const& proto)
 {
+    if (proto.ItemId >= 2000000)
+        return false;
+
     if (proto.Class != ITEM_CLASS_ARMOR && proto.Class != ITEM_CLASS_WEAPON)
         return false;
 

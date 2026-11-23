@@ -63,28 +63,114 @@ function Transmog:frameFromInvType(invType, clientSlot)
     return nil
 end
 
--- The character preview is a client-side DressUpModel copy. The model starts as the real player
--- (SetUnit), so both weapons are already in their own hands; the staged looks are tried on top,
--- WITHOUT Undress. Undress removed both weapons, and 3.3.5 TryOn has no hand slot: every one-hand
--- item then landed in the main hand. Applied order: armor first, then main hand, then off hand.
-local PREVIEW_ORDER = { 1, 3, 4, 5, 6, 7, 8, 9, 10, 19, 18, 16, 17 }
+-- The character preview is a client-side DressUpModel copy. DressUpModel has no per-slot TryOff,
+-- so a hidden appearance needs a full Undress and rebuild; skipping the hidden slot leaves it empty.
+-- Applied order: armor first, then weapons. The back slot was missing before, so a cloak could not
+-- be previewed after the rebuild.
+local PREVIEW_ORDER = { 1, 3, 4, 5, 6, 7, 8, 9, 10, 15, 19, 18, 16, 17 }
+
+-- 3.3.5 TryOn has no hand argument, so it picks the hand from the item's InventoryType. A generic
+-- one-hand weapon (INVTYPE_WEAPON) always lands in the main hand. The server keeps a hidden copy of
+-- every one-hand weapon at this ID offset with InventoryType = INVTYPE_WEAPONOFFHAND (22); trying
+-- that copy on makes the client use the off hand. Thrown weapons get a main-hand copy
+-- (INVTYPE_WEAPONMAINHAND, 21), because the preview model does not show a thrown model in the
+-- ranged slot. The copies are not obtainable and have no stats.
+Transmog.PREVIEW_ITEM_OFFSET = 2000000
+
+-- Returns the hand-specific copy of an appearance. One-hand weapons map to their off-hand copy
+-- when the off-hand slot is previewed; thrown weapons map to their main-hand copy while the ranged
+-- slot is previewed. Everything else keeps its own item.
+function Transmog:PreviewItemId(itemId, slot)
+    if not itemId or itemId == 0 or itemId == Transmog.HIDDEN_ITEM_ID then
+        return itemId
+    end
+    local _, _, _, _, _, _, _, _, invType = GetItemInfo(itemId)
+    local needsCopy = (slot == self.inventorySlots.SecondaryHandSlot and invType == 'INVTYPE_WEAPON')
+        or (slot == self.inventorySlots.RangedSlot and invType == 'INVTYPE_THROWN')
+    if not needsCopy then
+        return itemId
+    end
+    local previewId = itemId + Transmog.PREVIEW_ITEM_OFFSET
+    if not GetItemInfo(previewId) then
+        self:cacheItem(previewId)
+    end
+    return previewId
+end
 
 function Transmog:RefreshPreviewModel()
     TransmogFramePlayerModel:SetUnit("player")
-    for _, InventorySlotId in ipairs(PREVIEW_ORDER) do
-        local effective = self.transmogStatusToServer[InventorySlotId]
-        if not effective or effective == 0 then
-            effective = self.equippedItems[InventorySlotId]
+    TransmogFramePlayerModel:Undress()
+    -- Only a thrown weapon is remapped to the main hand. Bows, guns and wands keep both melee
+    -- weapons visible while their slot is selected.
+    local editingThrown = false
+    if self.currentTransmogSlot == self.inventorySlots.RangedSlot then
+        local ranged = self.transmogStatusToServer[self.inventorySlots.RangedSlot]
+        if not ranged or ranged == 0 then
+            ranged = self.equippedItems[self.inventorySlots.RangedSlot]
         end
-        if effective and effective ~= 0 and effective ~= Transmog.HIDDEN_ITEM_ID then
-            if self:IsIllusionSlot(InventorySlotId) then
-                TransmogFramePlayerModel:TryOn("item:" .. effective .. ":" .. self:EnchantShownForSlot(InventorySlotId) .. ":0:0:0:0:0:0:0")
-            else
-                TransmogFramePlayerModel:TryOn(effective)
+        if ranged and ranged ~= 0 and ranged ~= Transmog.HIDDEN_ITEM_ID then
+            local _, _, _, _, _, _, _, _, invType = GetItemInfo(ranged)
+            editingThrown = invType == 'INVTYPE_THROWN'
+        end
+    end
+    for _, InventorySlotId in ipairs(PREVIEW_ORDER) do
+        -- While a thrown weapon's ranged slot is selected, show only that weapon: skip the real
+        -- main hand and off hand so neither overwrites it and the off hand does not appear.
+        local skipRangedWeapon = editingThrown and (
+            InventorySlotId == self.inventorySlots.MainHandSlot
+            or InventorySlotId == self.inventorySlots.SecondaryHandSlot)
+        if not skipRangedWeapon then
+            local effective = self.transmogStatusToServer[InventorySlotId]
+            if not effective or effective == 0 then
+                effective = self.equippedItems[InventorySlotId]
+            end
+            if effective and effective ~= 0 and effective ~= Transmog.HIDDEN_ITEM_ID then
+                effective = self:PreviewItemId(effective, InventorySlotId)
+                if self:IsIllusionSlot(InventorySlotId) then
+                    TransmogFramePlayerModel:TryOn("item:" .. effective .. ":" .. self:EnchantShownForSlot(InventorySlotId) .. ":0:0:0:0:0:0:0")
+                else
+                    TransmogFramePlayerModel:TryOn(effective)
+                end
             end
         end
     end
 end
+
+-- The weapon preview copy arrives from the server asynchronously; refresh the model when it lands,
+-- so the correct hand updates without reopening the window or reselecting the look.
+local TransmogPreviewItemInfo = CreateFrame("Frame")
+TransmogPreviewItemInfo:RegisterEvent("GET_ITEM_INFO_RECEIVED")
+TransmogPreviewItemInfo:SetScript("OnEvent", function(_, _, itemId)
+    if not TransmogFrame or not TransmogFrame:IsShown() then
+        return
+    end
+    -- The Sets tab owns the model but uses the same arrival-driven copies; only a copy arrival
+    -- needs a rebuild, not every item the set list caches while it renders.
+    if Transmog.tab == 'sets' then
+        if itemId >= Transmog.PREVIEW_ITEM_OFFSET and Transmog.selectedSet then
+            Transmog:PreviewSetOnModel(Transmog.selectedSet)
+        end
+        return
+    end
+    -- The Forms and Illusions tabs own the model; do not replace their preview with the player.
+    if Transmog.tab ~= 'items' then
+        return
+    end
+    local slots = Transmog.inventorySlots
+    if not slots then
+        return
+    end
+    for _, slot in ipairs({ slots.MainHandSlot, slots.SecondaryHandSlot, slots.RangedSlot }) do
+        local effective = Transmog.transmogStatusToServer[slot]
+        if not effective or effective == 0 then
+            effective = Transmog.equippedItems[slot]
+        end
+        if effective and (itemId == effective or itemId == effective + Transmog.PREVIEW_ITEM_OFFSET) then
+            Transmog:RefreshPreviewModel()
+            return
+        end
+    end
+end)
 
 -- Previews a transmog appearance on the selected equipment slot.
 function Transmog_Try(itemId, slotName, newReset)

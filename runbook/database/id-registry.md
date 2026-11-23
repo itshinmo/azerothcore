@@ -10,6 +10,7 @@ the same change.
 | Kind | Range | Notes |
 |------|-------|-------|
 | Items | `900000–909999` | includes mounts, cosmetics, tokens |
+| Preview items | `2000000–2999999` | generated, non-obtainable transmog preview copies; never use for content |
 | Creatures | `910000–919999` | templates and spawns use different keys |
 | Quests | `920000–929999` | includes chain addon rows |
 | GameObjects | `930000–939999` | templates and spawns |
@@ -42,6 +43,7 @@ the same change.
 | 910012 | Creature entry | Warpweaver | transmogrifier template + 10 capital spawns (`collections_npc_spawns.sql`, spawn GUID block 5400001–5400010) | collections (ADR-020) | 2026-11-20 |
 | 950110–950119 | Misc (POI) | city Warpweaver markers | `points_of_interest` rows behind the guard gossip options (`collections_guard_directions.sql`) | collections (ADR-020) | 2026-11-20 |
 | 950120 | Misc (npc_text) | guard answer | shared gossip answer text in `collections_guard_directions.sql` | collections (ADR-020) | 2026-11-20 |
+| 2000000–2999999 | Items (generated) | transmog preview copies | off-hand copies of one-hand weapons (`InventoryType 22`) and main-hand copies of thrown weapons (`InventoryType 21`) in `transmog_preview_items.sql`; non-obtainable | mod-transmog-plus (ADR-026) | 2026-11-23 |
 
 World content IDs are still unallocated. The RBAC rows live in `acore_auth`, not `acore_world`.
 

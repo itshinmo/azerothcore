@@ -30,7 +30,7 @@ INSERT INTO `points_of_interest` (`ID`, `PositionX`, `PositionY`, `Icon`, `Flags
 (950116, -1244.6, -60.6, 7, 99, 0, 'Thunder Bluff Warpweaver'),
 (950117, 9870.2, -7442.9, 7, 99, 0, 'Silvermoon Warpweaver'),
 (950118, -2006.6, 5371.1, 7, 99, 0, 'Shattrath Warpweaver'),
-(950119, 5680.8, 616.1, 7, 99, 0, 'Dalaran Warpweaver');
+(950119, 5842.8, 721.8, 7, 99, 0, 'Dalaran Warpweaver');
 
 -- The option on each guard's existing direction menu. Re-apply keys on the natural
 -- (MenuID, OptionID) pairs, so an edited ActionPoiID cannot dodge the DELETE.

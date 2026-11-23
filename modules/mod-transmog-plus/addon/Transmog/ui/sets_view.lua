@@ -202,16 +202,19 @@ function Transmog:PreviewSetOnModel(set)
                 end
             end
             if eff then
-                TransmogFramePlayerModel:TryOn(eff)
+                local previewId = self:PreviewItemId(eff, slot)
+                self:cacheItem(previewId)
+                TransmogFramePlayerModel:TryOn(previewId)
             end
         end
     end
 
-    -- Try on the previewed set pieces
+    -- Try on the previewed set pieces with the same hand-specific copies as the main preview.
     for _, p in ipairs(set.pieces) do
         if previewSetSlots[p.slot] == p.id then
-            self:cacheItem(p.id)
-            TransmogFramePlayerModel:TryOn(p.id)
+            local previewId = self:PreviewItemId(p.id, p.slot)
+            self:cacheItem(previewId)
+            TransmogFramePlayerModel:TryOn(previewId)
         end
     end
 end

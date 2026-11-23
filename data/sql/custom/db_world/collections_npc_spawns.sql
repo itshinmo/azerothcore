@@ -3,13 +3,16 @@
 -- Spawn GUID block 5400001-5400010 is reserved for this file (base MAX(guid) was 5,300,678 at
 -- creation; the block sits ~100k above it so upstream spawn updates land well below).
 -- Placement (owner decision): next to each capital's auction house — where players gather.
--- Shattrath has no auction house, so its Warpweaver stands at the Lower City bank.
+-- Shattrath has no auction house, so its Warpweaver stands at the Lower City bank. Dalaran is
+-- the exception: the owner placed it in Simply Enchanting, beside the enchanting trainer, where
+-- the transmog playtest happens.
 -- Anchors (trade-district NPCs standing at or beside the auction house / bank square; the
 -- nearest creature to each crowd point): Stormwind Thurman Mullby 1285, Ironforge Bryllia
 -- Ironbrand 5101, Darnassus Ariyell Skyshadow 4203, Exodar Onnis 16732, Orgrimmar Asoran 3350,
 -- Undercity Auctioneer Stockton 15675, Thunder Bluff Hogor Thunderhoof 3018, Silvermoon Celana
--- 16619, Shattrath banker L'lura Goldspun 19338, Dalaran Susana Averoy 28691. Every NPC sits at
--- +2.5/+2.5 from its anchor (anchor z, 1 dp), so the one orientation 3.9270 faces it.
+-- 16619, Shattrath banker L'lura Goldspun 19338. Every NPC sits at +2.5/+2.5 from its anchor
+-- (anchor z, 1 dp), so the one orientation 3.9270 faces it. Dalaran uses the Simply Enchanting
+-- floor at (5842.8, 721.8, 642.0), beside Enchanter Nalthanis 28693 and the shop sign.
 -- Re-applicable: DELETE + INSERT, per data/sql/custom conventions.
 
 SET @Entry = 910012;
@@ -39,5 +42,5 @@ VALUES
 (5400008, @Entry, 530, 0, 0, 1, 1, 0, 9870.2, -7442.9, 13.7, 3.9270, 7200, 0, 0, 1, 0, 0, 0, 0, 0, 0),
 -- Shattrath City, Lower City bank (no auction house in this city)
 (5400009, @Entry, 530, 0, 0, 1, 1, 0, -2006.6, 5371.1, -9.3, 3.9270, 7200, 0, 0, 1, 0, 0, 0, 0, 0, 0),
--- Dalaran, auction house
-(5400010, @Entry, 571, 0, 0, 1, 1, 0, 5680.8, 616.1, 648.3, 3.9270, 7200, 0, 0, 1, 0, 0, 0, 0, 0, 0);
+-- Dalaran, Simply Enchanting (beside the enchanting trainer and the shop sign)
+(5400010, @Entry, 571, 0, 0, 1, 1, 0, 5842.8, 721.8, 642.0, 3.9270, 7200, 0, 0, 1, 0, 0, 0, 0, 0, 0);
