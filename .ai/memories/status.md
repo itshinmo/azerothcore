@@ -41,6 +41,26 @@ last-verified: 2026-11-22 (23bf75546; bot rig paused; manual verification is the
 - **Tests:** `make test` 6,022 pass, including objectives and PvP; SQL lint, docs, client-patch
   tool tests (31) pass.
 
+## Session record — 2026-11-23 (Mythic+ Ragefire Chasm slice)
+
+- **Mythic+ slice 1 merged and applied.** `mod-mythic-plus` (vendored MIT, upstream commit
+  `e2a487d`, author credited): Ragefire Chasm map 389, keys 1-5, 30-minute timer, 15-minute
+  prestart, 5s death penalty, four affixes.
+- **Start:** NPC `910013`; `5400020` in Orgrimmar gives guidance, `5400021` inside the instance
+  starts. Leader or solo, level 80, same instance, out of combat, group <= 5, no raid, no GM mode.
+- **Progression:** `mod_mythic_plus_progress`, highest completed key per character per era; start at
+  `highest + 1`; completion `max(highest, key)`, cap 20; leave/rejoin marks ineligible.
+- **Scaling** comes from `mythic_plus_creature_scale` (map 389, keys 1-5, trash/boss level, health,
+  damage). Stale `mythic_plus_dungeon` rows are deleted at boot; old slice item `5373` rename is
+  reverted by a guarded migration.
+- **Data:** module-owned `ModuleDatabasePool` (no core edits), 6 prepared statements, fail-closed
+  when a table or pool is missing. RBAC `950160` (player info) and `950163` (admin status/reload).
+- **Tests:** world/characters/auth SQL applied twice (fresh and previous-slice schema), module and
+  worldserver build, `make test`, codestyle, SQL lint, docs green. In-game playtest is the owner's
+  next gate.
+- **Proposal merged:** ADR-034 and RFC-004; scaled item copies, client `Item.dbc` and the economy
+  remain later slices. Owner decisions are recommendations in `OPEN-QUESTIONS.md`.
+
 ## Session record — 2026-11-23 (transmog preview + Dalaran Warpweaver)
 
 - **Dual-wield, thrown and hidden transmog preview fixed without a client patch.** The model is
