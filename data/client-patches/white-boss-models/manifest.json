@@ -1,0 +1,360 @@
+{
+  "schema": 1,
+  "archive": "patch-Y.MPQ",
+  "sha256": "b236c1c35d2714a0e6423e87a934256fbace13168951d2c5144b0ca30016f524",
+  "size": 616530,
+  "format": "MPQ v1",
+  "compression": "zlib",
+  "built_at": "2026-11-23T09:58:02+00:00",
+  "dbc_files": 0,
+  "load_order": {
+    "client": "3.3.5a (12340), English",
+    "order": "locale non-patch; locale numeric patches; locale alphabetic patches; base non-patch; base numeric patches; base alphabetic patches (one chain, later archives win)",
+    "project_family": [
+      "Data/patch-X.MPQ",
+      "Data/patch-Y.MPQ",
+      "Data/patch-Z.MPQ"
+    ],
+    "expected_winner": "Data/patch-Y.MPQ",
+    "sources": [
+      {
+        "path": "Data/common-2.MPQ",
+        "sha256": "9c605d95443172bdfd7c6936bc636684761241657935c22da25f955083809f43",
+        "role": "stock source"
+      },
+      {
+        "path": "Data/patch-A.MPQ",
+        "sha256": "992b5f3e6badc960b2eb68b976f5be42ae5f1e1416ccb43833fbbc6cfe6c2b94",
+        "role": "broken replacement, overridden by this patch"
+      }
+    ]
+  },
+  "sources": [
+    "Data/common-2.MPQ: Character\\Goblin\\Male\\GoblinMale.m2 (sha256 57ce1c7597534331bd3ddafe5352aaccca658f88f13a839b6e9689f97e81d9c0)",
+    "Data/common-2.MPQ: Character\\Goblin\\Male\\GoblinMale00.skin (sha256 4141b0d281191164cb84c5640addcfd0c26c5be85eeb2b2ad6a25e5ca00f67fb)",
+    "Data/common-2.MPQ: Character\\Goblin\\Male\\GoblinMale0062-00.anim (sha256 82a3937b14f832fa2fd5661938b9d49d8d66a90ce93d48d2d9973d1330b95335)",
+    "Data/common-2.MPQ: Character\\Goblin\\Male\\GoblinMale0064-00.anim (sha256 1b84749a212b7b0fd9fa1163c41ab4cc3712cf54028848023eeddd3a3f8bcc7d)",
+    "Data/common-2.MPQ: Character\\Goblin\\Male\\GoblinMale0065-00.anim (sha256 4a7b14d382e8fb7c1af41a47fead03510fa560a9524bf2c3e0fb140a9cd3c327)",
+    "Data/common-2.MPQ: Character\\Goblin\\Male\\GoblinMale0066-00.anim (sha256 dea6a659ec3ad5541fbabe7c9f205e2d316c6f5a7aba171b18f22da0599eb07a)",
+    "Data/common-2.MPQ: Character\\Goblin\\Male\\GoblinMale0067-00.anim (sha256 b6f2d6a0157fe16d4169385219f44a874f023645916c988708995e7b522063ee)",
+    "Data/common-2.MPQ: Character\\Goblin\\Male\\GoblinMale0068-00.anim (sha256 0c6f8a5403b826d47cc14f8947b6539e280fe82cf3d192573088879cab6e547c)",
+    "Data/common-2.MPQ: Character\\Goblin\\Male\\GoblinMale0069-00.anim (sha256 04d18d8f2c8e2ffa0728847d3c9f5ec068f8fe7192b5e31d6ad3438ea3b5fd5f)",
+    "Data/common-2.MPQ: Character\\Goblin\\Male\\GoblinMale0070-00.anim (sha256 fdf5d4fc98f9788bb104cab59e1165f656c6718c6a2af434f96519d76e34432c)",
+    "Data/common-2.MPQ: Character\\Goblin\\Male\\GoblinMale0073-00.anim (sha256 5a59a6ca5946473de2a296880cd0ea5888418e0328fc65da3a73bae40306d66a)",
+    "Data/common-2.MPQ: Character\\Goblin\\Male\\GoblinMale0074-00.anim (sha256 ba05668adc7c4ddbaa735d1da85dbe31c764087ac0b3d82b07a089ad7ad52453)",
+    "Data/common-2.MPQ: Character\\Goblin\\Male\\GoblinMale0076-00.anim (sha256 da0216aa8ffdeee853d3aa177f6da17dfac7def8d0b9fd75904152624e4cb5ea)",
+    "Data/common-2.MPQ: Character\\Goblin\\Male\\GoblinMale0077-00.anim (sha256 640343bfc870f2ba376e347c091da1595b9a2fcf8feaeec6ed29864860552edc)",
+    "Data/common-2.MPQ: Character\\Goblin\\Male\\GoblinMale0078-00.anim (sha256 6ea6ab755c4a3982c45942e50bb93ad7fedbbe55546d361aed6d6d3d75d41775)",
+    "Data/common-2.MPQ: Character\\Goblin\\Male\\GoblinMale0079-00.anim (sha256 702ba9c9dac7fd7554fa26e39b64edee595f68846db335b9358e5f9eb79d68a2)",
+    "Data/common-2.MPQ: Character\\Goblin\\Male\\GoblinMale0080-00.anim (sha256 2d5ee2914d22ed24ac134d6ec62fbed79ece738fe7fc8069a25dd683b999945f)",
+    "Data/common-2.MPQ: Character\\Goblin\\Male\\GoblinMale0081-00.anim (sha256 f30d24d92a3958fac76eaf395b34b14c6a3a4dc3642e60d7254a462097f97838)",
+    "Data/common-2.MPQ: Character\\Goblin\\Male\\GoblinMale0082-00.anim (sha256 d5e3383e2556b522a519df85dd2d380f44a67884ab1e5d2a3c80de001b1bebb7)",
+    "Data/common-2.MPQ: Character\\Goblin\\Male\\GoblinMale0083-00.anim (sha256 48d595fb63d4382fd362a883b7b2670c97787783e2bb43242f888680c05435c2)",
+    "Data/common-2.MPQ: Character\\Goblin\\Male\\GoblinMale0084-00.anim (sha256 10bd76b9d4bc69d68da9250ecd1ffe474d0fb1c45eb2a9093649a9d538eb6328)",
+    "Data/common-2.MPQ: Character\\Goblin\\Male\\GoblinMale0096-00.anim (sha256 6ccccaa5dac526da9a24e2725b60b73ed12c285426e7139c72ecd655141919ea)",
+    "Data/common-2.MPQ: Character\\Goblin\\Male\\GoblinMale0097-00.anim (sha256 6eca2f56c6e4b241f235912e2d49897ca333dd114ee5d1e55d6df2e3268f0ffa)",
+    "Data/common-2.MPQ: Character\\Goblin\\Male\\GoblinMale0098-00.anim (sha256 e9dd7d901a639b0746bb751f9b6de087369dd0d97f073cd7b35f018e2a573f14)",
+    "Data/common-2.MPQ: Character\\Goblin\\Male\\GoblinMale0099-00.anim (sha256 58881578698d3fd6d2086b68e7628f40bd77560fca1f0b5b2d76acedc8c38218)",
+    "Data/common-2.MPQ: Character\\Goblin\\Male\\GoblinMale01.skin (sha256 f906bfd4c36401645776c018d39f1c43d4bd09db92508838c319c48155c3fb3f)",
+    "Data/common-2.MPQ: Character\\Goblin\\Male\\GoblinMale0100-00.anim (sha256 7f2e7220abcac46a4e93a81eab1f9bdaa3cc98fc9bd9ad924dab27c5158a4d52)",
+    "Data/common-2.MPQ: Character\\Goblin\\Male\\GoblinMale0101-00.anim (sha256 10aa5427dd11404dd43966c5701eaf4680a1d17812361d5bd656e94207e6016d)",
+    "Data/common-2.MPQ: Character\\Goblin\\Male\\GoblinMale0102-00.anim (sha256 dec34b6d799812431fc7451a9e663b5105fc03d8765a584b87e0dd8b2694a3cc)",
+    "Data/common-2.MPQ: Character\\Goblin\\Male\\GoblinMale0103-00.anim (sha256 39a28eefa28514adc00ede3feecbbf2828fba14a3899daf8f5d40a8da513703d)",
+    "Data/common-2.MPQ: Character\\Goblin\\Male\\GoblinMale0104-00.anim (sha256 659c44d7b191f5aa3cd8387cbe62ea6741ef5e04c3fe736bcf68410899ffd55e)",
+    "Data/common-2.MPQ: Character\\Goblin\\Male\\GoblinMale0113-00.anim (sha256 063e3e24496038936d60349ed50d3562543375caa2320b4457c3831a58428c7a)",
+    "Data/common-2.MPQ: Character\\Goblin\\Male\\GoblinMale0123-00.anim (sha256 dcea52ecbbd1fe465f947fa7568913d512058fcd3f87f3b3c72d47b753e72437)",
+    "Data/common-2.MPQ: Character\\Goblin\\Male\\GoblinMale0128-00.anim (sha256 e668e38a39338ef88b0c16862edbe2aa036d5feb139c14de02c29def853991be)",
+    "Data/common-2.MPQ: Character\\Goblin\\Male\\GoblinMale0129-00.anim (sha256 85ff7c6cc7769a280f98ff9f0c6daddeef02bae01a3573cbf2c5d0eb0045d7b4)",
+    "Data/common-2.MPQ: Character\\Goblin\\Male\\GoblinMale02.skin (sha256 5c9aa67fd884c7e48054b19a6fd17ce0e53f006ddbd929ac4b2efce2c4cd0444)"
+  ],
+  "entries": [
+    {
+      "path": "Character\\Goblin\\Male\\GoblinMale.m2",
+      "size": 819632,
+      "compressed_size": 370940,
+      "verify_flags": 80,
+      "verify_ok": true,
+      "sha256": "57ce1c7597534331bd3ddafe5352aaccca658f88f13a839b6e9689f97e81d9c0"
+    },
+    {
+      "path": "Character\\Goblin\\Male\\GoblinMale00.skin",
+      "size": 26640,
+      "compressed_size": 13279,
+      "verify_flags": 80,
+      "verify_ok": true,
+      "sha256": "4141b0d281191164cb84c5640addcfd0c26c5be85eeb2b2ad6a25e5ca00f67fb"
+    },
+    {
+      "path": "Character\\Goblin\\Male\\GoblinMale0062-00.anim",
+      "size": 23456,
+      "compressed_size": 7740,
+      "verify_flags": 80,
+      "verify_ok": true,
+      "sha256": "82a3937b14f832fa2fd5661938b9d49d8d66a90ce93d48d2d9973d1330b95335"
+    },
+    {
+      "path": "Character\\Goblin\\Male\\GoblinMale0064-00.anim",
+      "size": 13648,
+      "compressed_size": 9003,
+      "verify_flags": 80,
+      "verify_ok": true,
+      "sha256": "1b84749a212b7b0fd9fa1163c41ab4cc3712cf54028848023eeddd3a3f8bcc7d"
+    },
+    {
+      "path": "Character\\Goblin\\Male\\GoblinMale0065-00.anim",
+      "size": 15136,
+      "compressed_size": 4670,
+      "verify_flags": 80,
+      "verify_ok": true,
+      "sha256": "4a7b14d382e8fb7c1af41a47fead03510fa560a9524bf2c3e0fb140a9cd3c327"
+    },
+    {
+      "path": "Character\\Goblin\\Male\\GoblinMale0066-00.anim",
+      "size": 8224,
+      "compressed_size": 5124,
+      "verify_flags": 80,
+      "verify_ok": true,
+      "sha256": "dea6a659ec3ad5541fbabe7c9f205e2d316c6f5a7aba171b18f22da0599eb07a"
+    },
+    {
+      "path": "Character\\Goblin\\Male\\GoblinMale0067-00.anim",
+      "size": 6752,
+      "compressed_size": 4145,
+      "verify_flags": 80,
+      "verify_ok": true,
+      "sha256": "b6f2d6a0157fe16d4169385219f44a874f023645916c988708995e7b522063ee"
+    },
+    {
+      "path": "Character\\Goblin\\Male\\GoblinMale0068-00.anim",
+      "size": 16336,
+      "compressed_size": 10833,
+      "verify_flags": 80,
+      "verify_ok": true,
+      "sha256": "0c6f8a5403b826d47cc14f8947b6539e280fe82cf3d192573088879cab6e547c"
+    },
+    {
+      "path": "Character\\Goblin\\Male\\GoblinMale0069-00.anim",
+      "size": 25488,
+      "compressed_size": 18542,
+      "verify_flags": 80,
+      "verify_ok": true,
+      "sha256": "04d18d8f2c8e2ffa0728847d3c9f5ec068f8fe7192b5e31d6ad3438ea3b5fd5f"
+    },
+    {
+      "path": "Character\\Goblin\\Male\\GoblinMale0070-00.anim",
+      "size": 14992,
+      "compressed_size": 10506,
+      "verify_flags": 80,
+      "verify_ok": true,
+      "sha256": "fdf5d4fc98f9788bb104cab59e1165f656c6718c6a2af434f96519d76e34432c"
+    },
+    {
+      "path": "Character\\Goblin\\Male\\GoblinMale0073-00.anim",
+      "size": 11744,
+      "compressed_size": 8178,
+      "verify_flags": 80,
+      "verify_ok": true,
+      "sha256": "5a59a6ca5946473de2a296880cd0ea5888418e0328fc65da3a73bae40306d66a"
+    },
+    {
+      "path": "Character\\Goblin\\Male\\GoblinMale0074-00.anim",
+      "size": 14656,
+      "compressed_size": 10274,
+      "verify_flags": 80,
+      "verify_ok": true,
+      "sha256": "ba05668adc7c4ddbaa735d1da85dbe31c764087ac0b3d82b07a089ad7ad52453"
+    },
+    {
+      "path": "Character\\Goblin\\Male\\GoblinMale0076-00.anim",
+      "size": 6592,
+      "compressed_size": 4070,
+      "verify_flags": 80,
+      "verify_ok": true,
+      "sha256": "da0216aa8ffdeee853d3aa177f6da17dfac7def8d0b9fd75904152624e4cb5ea"
+    },
+    {
+      "path": "Character\\Goblin\\Male\\GoblinMale0077-00.anim",
+      "size": 13008,
+      "compressed_size": 9362,
+      "verify_flags": 80,
+      "verify_ok": true,
+      "sha256": "640343bfc870f2ba376e347c091da1595b9a2fcf8feaeec6ed29864860552edc"
+    },
+    {
+      "path": "Character\\Goblin\\Male\\GoblinMale0078-00.anim",
+      "size": 15568,
+      "compressed_size": 10816,
+      "verify_flags": 80,
+      "verify_ok": true,
+      "sha256": "6ea6ab755c4a3982c45942e50bb93ad7fedbbe55546d361aed6d6d3d75d41775"
+    },
+    {
+      "path": "Character\\Goblin\\Male\\GoblinMale0079-00.anim",
+      "size": 12208,
+      "compressed_size": 8494,
+      "verify_flags": 80,
+      "verify_ok": true,
+      "sha256": "702ba9c9dac7fd7554fa26e39b64edee595f68846db335b9358e5f9eb79d68a2"
+    },
+    {
+      "path": "Character\\Goblin\\Male\\GoblinMale0080-00.anim",
+      "size": 10304,
+      "compressed_size": 6546,
+      "verify_flags": 80,
+      "verify_ok": true,
+      "sha256": "2d5ee2914d22ed24ac134d6ec62fbed79ece738fe7fc8069a25dd683b999945f"
+    },
+    {
+      "path": "Character\\Goblin\\Male\\GoblinMale0081-00.anim",
+      "size": 8784,
+      "compressed_size": 5667,
+      "verify_flags": 80,
+      "verify_ok": true,
+      "sha256": "f30d24d92a3958fac76eaf395b34b14c6a3a4dc3642e60d7254a462097f97838"
+    },
+    {
+      "path": "Character\\Goblin\\Male\\GoblinMale0082-00.anim",
+      "size": 13808,
+      "compressed_size": 9521,
+      "verify_flags": 80,
+      "verify_ok": true,
+      "sha256": "d5e3383e2556b522a519df85dd2d380f44a67884ab1e5d2a3c80de001b1bebb7"
+    },
+    {
+      "path": "Character\\Goblin\\Male\\GoblinMale0083-00.anim",
+      "size": 10064,
+      "compressed_size": 6869,
+      "verify_flags": 80,
+      "verify_ok": true,
+      "sha256": "48d595fb63d4382fd362a883b7b2670c97787783e2bb43242f888680c05435c2"
+    },
+    {
+      "path": "Character\\Goblin\\Male\\GoblinMale0084-00.anim",
+      "size": 12576,
+      "compressed_size": 8733,
+      "verify_flags": 80,
+      "verify_ok": true,
+      "sha256": "10bd76b9d4bc69d68da9250ecd1ffe474d0fb1c45eb2a9093649a9d538eb6328"
+    },
+    {
+      "path": "Character\\Goblin\\Male\\GoblinMale0096-00.anim",
+      "size": 9120,
+      "compressed_size": 6344,
+      "verify_flags": 80,
+      "verify_ok": true,
+      "sha256": "6ccccaa5dac526da9a24e2725b60b73ed12c285426e7139c72ecd655141919ea"
+    },
+    {
+      "path": "Character\\Goblin\\Male\\GoblinMale0097-00.anim",
+      "size": 2448,
+      "compressed_size": 745,
+      "verify_flags": 80,
+      "verify_ok": true,
+      "sha256": "6eca2f56c6e4b241f235912e2d49897ca333dd114ee5d1e55d6df2e3268f0ffa"
+    },
+    {
+      "path": "Character\\Goblin\\Male\\GoblinMale0098-00.anim",
+      "size": 9632,
+      "compressed_size": 6310,
+      "verify_flags": 80,
+      "verify_ok": true,
+      "sha256": "e9dd7d901a639b0746bb751f9b6de087369dd0d97f073cd7b35f018e2a573f14"
+    },
+    {
+      "path": "Character\\Goblin\\Male\\GoblinMale0099-00.anim",
+      "size": 11008,
+      "compressed_size": 7421,
+      "verify_flags": 80,
+      "verify_ok": true,
+      "sha256": "58881578698d3fd6d2086b68e7628f40bd77560fca1f0b5b2d76acedc8c38218"
+    },
+    {
+      "path": "Character\\Goblin\\Male\\GoblinMale01.skin",
+      "size": 26640,
+      "compressed_size": 13271,
+      "verify_flags": 80,
+      "verify_ok": true,
+      "sha256": "f906bfd4c36401645776c018d39f1c43d4bd09db92508838c319c48155c3fb3f"
+    },
+    {
+      "path": "Character\\Goblin\\Male\\GoblinMale0100-00.anim",
+      "size": 3600,
+      "compressed_size": 1669,
+      "verify_flags": 80,
+      "verify_ok": true,
+      "sha256": "7f2e7220abcac46a4e93a81eab1f9bdaa3cc98fc9bd9ad924dab27c5158a4d52"
+    },
+    {
+      "path": "Character\\Goblin\\Male\\GoblinMale0101-00.anim",
+      "size": 11888,
+      "compressed_size": 7862,
+      "verify_flags": 80,
+      "verify_ok": true,
+      "sha256": "10aa5427dd11404dd43966c5701eaf4680a1d17812361d5bd656e94207e6016d"
+    },
+    {
+      "path": "Character\\Goblin\\Male\\GoblinMale0102-00.anim",
+      "size": 2224,
+      "compressed_size": 474,
+      "verify_flags": 80,
+      "verify_ok": true,
+      "sha256": "dec34b6d799812431fc7451a9e663b5105fc03d8765a584b87e0dd8b2694a3cc"
+    },
+    {
+      "path": "Character\\Goblin\\Male\\GoblinMale0103-00.anim",
+      "size": 2256,
+      "compressed_size": 478,
+      "verify_flags": 80,
+      "verify_ok": true,
+      "sha256": "39a28eefa28514adc00ede3feecbbf2828fba14a3899daf8f5d40a8da513703d"
+    },
+    {
+      "path": "Character\\Goblin\\Male\\GoblinMale0104-00.anim",
+      "size": 2256,
+      "compressed_size": 477,
+      "verify_flags": 80,
+      "verify_ok": true,
+      "sha256": "659c44d7b191f5aa3cd8387cbe62ea6741ef5e04c3fe736bcf68410899ffd55e"
+    },
+    {
+      "path": "Character\\Goblin\\Male\\GoblinMale0113-00.anim",
+      "size": 6512,
+      "compressed_size": 3497,
+      "verify_flags": 80,
+      "verify_ok": true,
+      "sha256": "063e3e24496038936d60349ed50d3562543375caa2320b4457c3831a58428c7a"
+    },
+    {
+      "path": "Character\\Goblin\\Male\\GoblinMale0123-00.anim",
+      "size": 9376,
+      "compressed_size": 2746,
+      "verify_flags": 80,
+      "verify_ok": true,
+      "sha256": "dcea52ecbbd1fe465f947fa7568913d512058fcd3f87f3b3c72d47b753e72437"
+    },
+    {
+      "path": "Character\\Goblin\\Male\\GoblinMale0128-00.anim",
+      "size": 4816,
+      "compressed_size": 2501,
+      "verify_flags": 80,
+      "verify_ok": true,
+      "sha256": "e668e38a39338ef88b0c16862edbe2aa036d5feb139c14de02c29def853991be"
+    },
+    {
+      "path": "Character\\Goblin\\Male\\GoblinMale0129-00.anim",
+      "size": 4592,
+      "compressed_size": 2324,
+      "verify_flags": 80,
+      "verify_ok": true,
+      "sha256": "85ff7c6cc7769a280f98ff9f0c6daddeef02bae01a3573cbf2c5d0eb0045d7b4"
+    },
+    {
+      "path": "Character\\Goblin\\Male\\GoblinMale02.skin",
+      "size": 26880,
+      "compressed_size": 13415,
+      "verify_flags": 80,
+      "verify_ok": true,
+      "sha256": "5c9aa67fd884c7e48054b19a6fd17ce0e53f006ddbd929ac4b2efce2c4cd0444"
+    }
+  ]
+}

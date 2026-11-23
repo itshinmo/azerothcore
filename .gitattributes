@@ -1,6 +1,14 @@
 # Auto detect text files and perform LF normalization
 * text eol=lf
 
+# Binary client artifacts: never normalize or diff as text.
+# MPQ archives and DBC files must keep their exact bytes, or StormLib and the client cannot read them.
+*.MPQ                  binary
+*.mpq                  binary
+*.dbc                  binary
+*.DBC                  binary
+data/client-patches/** -text
+
 # Whitespace rules
 # strict (no trailing, no tabs)
 *.cpp    whitespace=trailing-space,space-before-tab,tab-in-indent,cr-at-eol

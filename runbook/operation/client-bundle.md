@@ -72,9 +72,17 @@ Any client artifact this project generates (patch MPQs, modified DBCs, bundled a
 this repository so a deleted client can be rebuilt without re-downloading anything: addons ship
 from the module trees and `tools/gm-addon/` above; server DBC swaps ship from the feature's own
 data (see the feature's module or `data/sql/custom/`). When a feature generates a client MPQ, it
-lands in `data/client-patches/<feature>/` with its own README, and this runbook links it. Nothing
-is generated today — the Warpweaver guard directions are pure server data (`points_of_interest` +
-`SMSG_GOSSIP_POI`, see `data/sql/custom/db_world/collections_guard_directions.sql`).
+lands in `data/client-patches/<feature>/` with its own README, and this runbook links it. The
+Warpweaver guard directions are pure server data (`points_of_interest` + `SMSG_GOSSIP_POI`, see
+`data/sql/custom/db_world/collections_guard_directions.sql`).
+
+Artifacts:
+
+- [white-boss-models/`dist/patch-Y.MPQ`](../../data/client-patches/white-boss-models/README.md) —
+  restores the stock goblin male model over the Ascension HD replacement (white Journal previews).
+  Built, verifier-clean, and installed on the owner's client with the matching hash; **in-game pass
+  pending, not part of the verified bundle yet**. `patch-Z.MPQ` is reserved by the map/POI branch and
+  loads after it.
 
 ## Verification checklist (per client rebuild)
 
