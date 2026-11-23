@@ -43,7 +43,7 @@ the same change.
 | 910012 | Creature entry | Warpweaver | transmogrifier template + 10 capital spawns (`collections_npc_spawns.sql`, spawn GUID block 5400001–5400010) | collections (ADR-020) | 2026-11-20 |
 | 950110–950119 | Misc (POI) | city Warpweaver markers | `points_of_interest` rows behind the guard gossip options (`collections_guard_directions.sql`) | collections (ADR-020) | 2026-11-20 |
 | 950120 | Misc (npc_text) | guard answer | shared gossip answer text in `collections_guard_directions.sql` | collections (ADR-020) | 2026-11-20 |
-| 2000000–2999999 | Items (generated) | transmog preview copies | off-hand copies of one-hand weapons (`InventoryType 22`) and main-hand copies of thrown weapons (`InventoryType 21`) in `transmog_preview_items.sql`; non-obtainable | mod-transmog-plus (ADR-026) | 2026-11-23 |
+| 2000000–2999999 | Items (generated) | transmog preview copies | off-hand copies of one-hand weapons (`InventoryType 22`) and main-hand copies of thrown weapons (`InventoryType 21`) in `zz_transmog_preview_items.sql`; non-obtainable | mod-transmog-plus (ADR-026) | 2026-11-23 |
 | 901001–901020 | Item entries | world treasures batch 1 | 20 unique hand-placed chest items (`world_treasures_batch_01.sql`); 12 Classic, 4 TBC, 4 WotLK | ADR-031 | 2026-11-23 |
 | 901021–901100 | Item entries | world treasures batches 2–5 | reserved 80-item block | ADR-031 | 2026-11-23 |
 | 930001–930020 | Gameobject entries + loot tables | world treasures batch 1 | 20 type-3 chest templates and their one-row loot tables | ADR-031 | 2026-11-23 |

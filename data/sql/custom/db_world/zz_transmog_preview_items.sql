@@ -1,5 +1,11 @@
 -- Transmog: hidden off-hand preview items.
 --
+-- The zz_ prefix is deliberate: when this file is applied, it runs after item-content SQL, so
+-- one-hand weapons added by a later custom file get their preview copies in the same pass.
+-- The loader skips a custom file whose hash is unchanged. After adding a one-hand or thrown item
+-- in another SQL file, touch this file (or delete its `world.updates` row) so it runs again; the
+-- prefix only fixes the order within a pass, not when the file is selected.
+--
 -- 3.3.5 DressUpModel:TryOn has no hand argument; it picks the hand from the item's InventoryType.
 -- A generic one-hand weapon (INVTYPE_WEAPON, 13) always lands in the main hand. For each such
 -- item, this file adds a hidden copy at entry + 2000000 with InventoryType = INVTYPE_WEAPONOFFHAND
@@ -17,9 +23,9 @@
 --
 -- IDs: preview items 2000000-2999999 (generated range; see runbook/database/id-registry.md).
 -- Source items must stay below 1000000, so entry + 2000000 stays inside the reserved range.
--- Re-applicable: REPLACE rebuilds every generated row on each apply, so items added later are
--- covered without editing this file. A preview row whose source item was removed stays behind; it
--- is hidden and unreachable, and the fixed range cannot collide with content.
+-- Re-applicable: REPLACE rebuilds every generated row when this file is applied. A preview row
+-- whose source item was removed stays behind; it is hidden and unreachable, and the fixed range
+-- cannot collide with content.
 
 DROP TEMPORARY TABLE IF EXISTS `tmp_transmog_preview_items`;
 CREATE TEMPORARY TABLE `tmp_transmog_preview_items` AS
