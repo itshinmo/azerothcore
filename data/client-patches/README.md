@@ -10,7 +10,7 @@ Project client artifacts for the supported 3.3.5a client. Contract:
 |-------|------|----------|--------|-----------|
 | [item-data](item-data/README.md) | `item-data/dist/patch-X.MPQ` | `DBFilesClient\Item.dbc` with custom item rows; `dist/Item.dbc` for the server | `9ddd80c9fda95647c393a00fb2c0d2db706185b59c05364ce00d3899e95c1d50` | 1 |
 | [map-poi](map-poi/README.md) | `map-poi/dist/patch-Z.MPQ` | `ServerMapPOI` baked map layer (static + token-gated Outlaw protocol) + FrameXML canary | `1aaf23a4140a092bdad1fa0cfa8b270e8d369faef38cff85e7915c9b4b055d3f` | 0 |
-| [race-class-combos](race-class-combos/README.md) (proposal) | `race-class-combos/dist/patch-V.MPQ` | whole-file `CharBaseInfo.dbc` 62 -> 67 rows and `CharStartOutfit.dbc` 126 -> 134 rows for the proposed race/class pairs; not installed until approved | `66a5391889739e1cc0cfee1dc1a52da38986f3de1e2732c3e85b2a50c4afa460` | 2 |
+| [race-class-combos](race-class-combos/README.md) (proposal) | `race-class-combos/dist/patch-V.MPQ` | whole-file `CharBaseInfo.dbc` 62 -> 67 rows and `CharStartOutfit.dbc` 126 -> 134 rows for the proposed race/class pairs; not installed until approved | `50e4477b93678272ad35089bfbbd6c8fa7f884c98d1d3171491b29da49d4731c` | 2 |
 | [white-boss-models](white-boss-models/README.md) | `white-boss-models/dist/patch-Y.MPQ` | stock goblin male model/skins/anims over the Ascension HD conversion | `b236c1c35d2714a0e6423e87a934256fbace13168951d2c5144b0ca30016f524` | 0 |
 
 Project archive family on the English client: `patch-X` item data (only `Item.dbc` carrier),

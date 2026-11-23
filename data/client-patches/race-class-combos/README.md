@@ -13,7 +13,7 @@ This patch carries two whole-file character-creation DBCs:
 
 `CharBaseInfo` adds `(2,8)`, `(3,8)`, `(7,5)`, `(8,9)`, `(10,1)`. The source is Ascension-modified:
 stock WotLK has 61 rows, and the effective file has 62 because it already contains `(8,8)` Troll
-Mage. `CharStartOutfit` adds IDs `950200-950207`, copied from the same-class source rows (including
+Mage. `CharStartOutfit` adds IDs `950400-950407`, copied from the same-class source rows (including
 the display and inventory-slot arrays) for the four pairs without an existing row; Dwarf Mage already
 exists.
 
@@ -39,10 +39,10 @@ header's `record_size` before packing. Do not use `field_count * 4` for this tab
 - `CharBaseInfo.dbc` source: `1e81c6f8a218b187187c9f13e65cad39920aab56a57f2955d72385d94fee2e25`
   output: `23dbf975092271ca511eb6378c30697e6f2fec1ccf195ab9680977f8a43fa505`
 - `CharStartOutfit.dbc` source: `a026407cd4fa60867ac2eda1070e89679e811774b476980902125f6d5af61540`
-  output: `9dae68a440d514674333dcf9e8eb7d36e147beda44c2964f6051cc8707886d6b`
+  output: `03ab1105f505293bb89204c5a5fc88a49527c06c1eab2bddf34b979ca7d3ee52`
 
-Artifact: `dist/patch-V.MPQ`, 6,098 bytes, SHA256
-`66a5391889739e1cc0cfee1dc1a52da38986f3de1e2732c3e85b2a50c4afa460`.
+Artifact: `dist/patch-V.MPQ`, 6,099 bytes, SHA256
+`50e4477b93678272ad35089bfbbd6c8fa7f884c98d1d3171491b29da49d4731c`.
 
 ## Build and verify
 
@@ -68,11 +68,11 @@ Binary proof (this branch has `* text eol=lf`; the rules in `.gitattributes` kee
 ```text
 git hash-object --path=data/client-patches/race-class-combos/dist/patch-V.MPQ \
     data/client-patches/race-class-combos/dist/patch-V.MPQ
-# 8f68a802a0b5cd36d27bf1971f79d2abee6eea86
+# d6c466f9ea2909a368b93899b967b975e632cf1d
 git hash-object --no-filters \
     data/client-patches/race-class-combos/dist/patch-V.MPQ
-# 8f68a802a0b5cd36d27bf1971f79d2abee6eea86
-sha256 = 66a5391889739e1cc0cfee1dc1a52da38986f3de1e2732c3e85b2a50c4afa460
+# d6c466f9ea2909a368b93899b967b975e632cf1d
+sha256 = 50e4477b93678272ad35089bfbbd6c8fa7f884c98d1d3171491b29da49d4731c
 ```
 
 ## Install and test
@@ -113,7 +113,7 @@ that file. On merge:
 - [race-class-combos](race-class-combos/README.md) — `race-class-combos/dist/patch-V.MPQ`:
   character-creation DBCs for the proposed extended race/class pairs. `CharBaseInfo.dbc` 62 -> 67
   rows, `CharStartOutfit.dbc` 126 -> 134 rows; 2 DBCs; SHA256
-  66a5391889739e1cc0cfee1dc1a52da38986f3de1e2732c3e85b2a50c4afa460.
+  50e4477b93678272ad35089bfbbd6c8fa7f884c98d1d3171491b29da49d4731c.
 ```
 
 ## License

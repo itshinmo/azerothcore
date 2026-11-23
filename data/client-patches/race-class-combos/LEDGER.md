@@ -12,18 +12,18 @@ decisions.
 | Pair | RaceID | ClassID | CharBaseInfo | CharStartOutfit |
 |------|--------|---------|--------------|-----------------|
 | Dwarf Mage | 3 | 8 | added | existing rows 35/52 |
-| Orc Mage | 2 | 8 | added | added 950200/950201 |
-| Gnome Priest | 7 | 5 | added | added 950202/950203 |
-| Troll Warlock | 8 | 9 | added | added 950204/950205 |
-| Blood Elf Warrior | 10 | 1 | added | added 950206/950207 |
+| Orc Mage | 2 | 8 | added | added 950400/950401 |
+| Gnome Priest | 7 | 5 | added | added 950402/950403 |
+| Troll Warlock | 8 | 9 | added | added 950404/950405 |
+| Blood Elf Warrior | 10 | 1 | added | added 950406/950407 |
 
 Not in batch 1: Troll Druid (no Troll form models), Undead/Tauren Paladin (no class mount wiring or
 quests), Dwarf Shaman (no totem quest chain), Human/Undead Hunter (no Taming the Beast quest row).
 
 ## Artifact
 
-- `dist/patch-V.MPQ`: 2 files, 6,098 bytes, SHA256
-  `66a5391889739e1cc0cfee1dc1a52da38986f3de1e2732c3e85b2a50c4afa460`;
+- `dist/patch-V.MPQ`: 2 files, 6,099 bytes, SHA256
+  `50e4477b93678272ad35089bfbbd6c8fa7f884c98d1d3171491b29da49d4731c`;
 - `CharBaseInfo.dbc`: 62 effective rows -> 67, 155 bytes;
 - `CharStartOutfit.dbc`: 126 effective rows -> 134, 296-byte rows, 39,685 bytes.
 

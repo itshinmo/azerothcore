@@ -214,8 +214,8 @@ skills up.
 
 | Skill | Dwarf Mage 3/8 | Orc Mage 2/8 | Gnome Priest 7/5 | Troll Warlock 8/9 | Blood Elf Warrior 10/1 |
 |-------|----------------|--------------|------------------|-------------------|------------------------|
-| 43 Swords | - | - | - | - | - (add 950300) |
-| 44 Axes | - | - | - | - | - (add 950301) |
+| 43 Swords | - | - | - | - | - (add 950410) |
+| 44 Axes | - | - | - | - | - (add 950411) |
 | 45 Bows | - | - | - | - | - |
 | 46 Guns | - | - | - | - | - |
 | 54 Maces | - | - | 0/1107->135 | - | 0/1107->637 |
@@ -224,8 +224,8 @@ skills up.
 | 136 Staves | 0/1488->138 | 0/1488->138 | 0/1488->138 | 0/1488->138 | - |
 | 160 Two-Handed Maces | - | - | - | - | - |
 | 162 Unarmed | 0/0->6 | 0/0->6 | 0/0->6 | 0/0->6 | 0/0->6 |
-| 172 Two-Handed Axes | - | - | - | - | - (add 950302) |
-| 173 Daggers | - | - | - | 735/1293->129 | - (add 950303) |
+| 172 Two-Handed Axes | - | - | - | - | - (add 950412) |
+| 173 Daggers | - | - | - | 735/1293->129 | - (add 950413) |
 | 176 Thrown | - | - | - | - | 0/9->640 |
 | 226 Crossbows | - | - | - | - | - |
 | 228 Wands | 0/400->144 | 0/400->144 | 0/400->144 | 0/400->144 | - |
@@ -302,7 +302,7 @@ columns, so the client preview has the same data as the server:
 
 - source: `Data/enUS/patch-enUS-2.MPQ`, 126 rows, 37,317 bytes, MD5
   `b5352f5436a14a5ac50503e50b581fa4`;
-- add eight rows (four pairs × two genders), IDs `950200-950207`, copied from the source rows above;
+- add eight rows (four pairs × two genders), IDs `950400-950407`, copied from the source rows above;
 - result: 134 rows, 39,685 bytes, 77 fields, 296-byte records, 1-byte string block;
 - keep the header field count and record size; copy the full source row, changing only ID, RaceID,
   ClassID, and SexID.
@@ -339,8 +339,8 @@ attributes present. The build recipe is
 [runbook/development/client-dbc-patch.md](../../runbook/development/client-dbc-patch.md). The
 artifact lives at
 [`data/client-patches/race-class-combos/dist/patch-V.MPQ`](../../data/client-patches/race-class-combos/README.md):
-6,098 bytes, SHA256
-`66a5391889739e1cc0cfee1dc1a52da38986f3de1e2732c3e85b2a50c4afa460`; the directory has `build.py`,
+6,099 bytes, SHA256
+`50e4477b93678272ad35089bfbbd6c8fa7f884c98d1d3171491b29da49d4731c`; the directory has `build.py`,
 `manifest.json`, `README.md`, and `LEDGER.md`.
 
 ### Load order
@@ -419,14 +419,14 @@ still needs the DBC.
 
 ### `skillraceclassinfo_dbc`
 
-Add four rows for Blood Elf Warrior, IDs `950300-950303`:
+Add four rows for Blood Elf Warrior, IDs `950410-950413`:
 
 | ID | SkillID | RaceMask | ClassMask | Flags | MinLevel | SkillTierID | SkillCostIndex |
 |----|---------|----------|-----------|-------|----------|-------------|----------------|
-| 950300 | 43 (Swords) | 512 | 1 | 128 | 0 | 0 | 0 |
-| 950301 | 44 (Axes) | 512 | 1 | 128 | 0 | 0 | 0 |
-| 950302 | 172 (Two-Handed Axes) | 512 | 1 | 128 | 0 | 0 | 0 |
-| 950303 | 173 (Daggers) | 512 | 1 | 128 | 0 | 0 | 0 |
+| 950410 | 43 (Swords) | 512 | 1 | 128 | 0 | 0 | 0 |
+| 950411 | 44 (Axes) | 512 | 1 | 128 | 0 | 0 | 0 |
+| 950412 | 172 (Two-Handed Axes) | 512 | 1 | 128 | 0 | 0 | 0 |
+| 950413 | 173 (Daggers) | 512 | 1 | 128 | 0 | 0 | 0 |
 
 Flags 128 is `SKILL_FLAG_INCLUDE_IN_SORT`. Tier 0 is safe only with rank 0; see the note above.
 
@@ -452,7 +452,7 @@ applied in this proposal):
 
 - `DELETE` the five `playercreateinfo` pairs, then `INSERT` them;
 - `DELETE` the action rows for the five pairs, then `INSERT` them;
-- `DELETE` `skillraceclassinfo_dbc` IDs `950300-950303`, then `INSERT`;
+- `DELETE` `skillraceclassinfo_dbc` IDs `950410-950413`, then `INSERT`;
 - run the guarded `quest_template` update once; it is naturally idempotent.
 
 No `playercreateinfo_spell_custom`, `playercreateinfo_item`, or `playercreateinfo_skills` rows are

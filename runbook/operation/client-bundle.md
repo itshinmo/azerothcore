@@ -30,7 +30,7 @@ Project patch family, separate from the vendor bundle:
 | `patch-X.MPQ` | `data/client-patches/item-data/` | installed in `~/Games/wotlk-clean/Data` | `9ddd80c9fda95647c393a00fb2c0d2db706185b59c05364ce00d3899e95c1d50` |
 | `patch-Y.MPQ` | `data/client-patches/white-boss-models/` | installed in `~/Games/wotlk-clean/Data` | `b236c1c35d2714a0e6423e87a934256fbace13168951d2c5144b0ca30016f524` |
 | `patch-Z.MPQ` | `data/client-patches/map-poi/` | installed in `~/Games/wotlk-clean/Data` | `1aaf23a4140a092bdad1fa0cfa8b270e8d369faef38cff85e7915c9b4b055d3f` |
-| `patch-V.MPQ` | `data/client-patches/race-class-combos/` | **proposal, not installed** | `66a5391889739e1cc0cfee1dc1a52da38986f3de1e2732c3e85b2a50c4afa460` |
+| `patch-V.MPQ` | `data/client-patches/race-class-combos/` | **proposal, not installed** | `50e4477b93678272ad35089bfbbd6c8fa7f884c98d1d3171491b29da49d4731c` |
 
 X = item data, Y = white models, Z = map/UI; X < Y < Z, all after Reforged `patch-U`. `patch-V`,
 if approved, loads before X. Each feature's manifest is its source of truth; rebuild only through
