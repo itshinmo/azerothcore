@@ -37,10 +37,13 @@ local worldserver applies `data/sql/custom/` on restart.
 
 The module opens its own small pool against `CharacterDatabaseInfo` (one async and one sync
 connection) so it can use prepared statements without adding rows to the core statement enum.
-The pool and the table probe run even while the module is disabled, so a character deletion
-still removes its state row and a later `.reload config` can enable the module without a
-restart. Online characters load their mode at their next login or `.pledge` command. The pool
-is pinged on the world keep-alive tick and closed with the core databases.
+A `ModuleDatabasePool` subclass must resize `MySQLConnection::m_stmts` to its statement count
+in the connection constructor: `PrepareStatement` indexes that vector directly, and the core
+connections are the only ones that do the resize for themselves. The pool and the table probe
+run even while the module is disabled, so a character deletion still removes its state row and
+a later `.reload config` can enable the module without a restart. Online characters load their
+mode at their next login or `.pledge` command. The pool is pinged on the world keep-alive tick
+and closed with the core databases.
 
 ## State and storage
 

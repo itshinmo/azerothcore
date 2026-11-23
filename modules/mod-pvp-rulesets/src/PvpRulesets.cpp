@@ -30,6 +30,7 @@
 #include "Map.h"
 #include "ModuleDatabasePool.h"
 #include "MySQLConnection.h"
+#include "MySQLPreparedStatement.h"
 #include "Player.h"
 #include "PlayerScript.h"
 #include "PreparedStatement.h"
@@ -65,18 +66,38 @@ namespace
         PVP_REP_STATE,
         PVP_DEL_STATE,
         PVP_SEL_TABLE,
+        PVP_STMT_COUNT,
     };
 
     class PvpRulesetsDatabaseConnection : public MySQLConnection
     {
     public:
-        PvpRulesetsDatabaseConnection(MySQLConnectionInfo& connInfo) : MySQLConnection(connInfo) { }
+        PvpRulesetsDatabaseConnection(MySQLConnectionInfo& connInfo) : MySQLConnection(connInfo)
+        {
+            m_stmts.resize(PVP_STMT_COUNT);
+        }
+
         PvpRulesetsDatabaseConnection(ProducerConsumerQueue<SQLOperation*>* queue, MySQLConnectionInfo& connInfo)
-            : MySQLConnection(queue, connInfo) { }
+            : MySQLConnection(queue, connInfo)
+        {
+            m_stmts.resize(PVP_STMT_COUNT);
+        }
+
         ~PvpRulesetsDatabaseConnection() override = default;
 
         void DoPrepareStatements() override
         {
+            // MySQLConnection::PrepareStatement indexes m_stmts directly, so the storage must be
+            // sized here. A ModuleDatabasePool subclass cannot rely on the core to do it.
+            if (m_stmts.size() != PVP_STMT_COUNT)
+            {
+                LOG_ERROR("module.pvp.rulesets",
+                    "PvP rulesets statement storage is not sized ({} != {}).",
+                    m_stmts.size(), uint32(PVP_STMT_COUNT));
+                m_prepareError = true;
+                return;
+            }
+
             PrepareStatement(PVP_SEL_STATE,
                 "SELECT `mode`, `last_toggle` FROM `mod_pvp_rulesets_state` WHERE `guid` = ?",
                 CONNECTION_ASYNC);
