@@ -67,6 +67,17 @@ the same change.
 | 5714501–5714520 | Gameobject spawn GUIDs | world treasures batch 1 | spawn block above the global `gameobject` maximum at authoring time | ADR-031 | 2026-11-23 |
 | 950400–950407 | Misc (DBC rows) | combo starting outfits | `CharStartOutfit.dbc` rows for the batch-1 pairs (4 pairs × 2 genders), shipped in the client patch and the server `DataDir`; reserved, not yet used | ADR-035 | 2026-11-23 |
 | 950410–950413 | Misc (DBC rows) | combo weapon skills | `skillraceclassinfo_dbc` rows for Blood Elf Warrior swords/axes/2H axes/daggers; reserved, not yet used | ADR-035 | 2026-11-23 |
+| 910013 | Creature entry | Mythic Plus | start/guidance NPC template; two spawns: 5400020 Orgrimmar and 5400021 Ragefire Chasm entrance (`zz_mythic_plus.sql`) | mod-mythic-plus (RFC-004) | 2026-11-23 |
+| 5400020 | Creature spawn GUID | Mythic Plus guidance | Orgrimmar spawn outside the Ragefire Chasm entrance | mod-mythic-plus (RFC-004) | 2026-11-23 |
+| 5400021 | Creature spawn GUID | Mythic Plus start | Ragefire Chasm entrance spawn; starts the run inside the instance | mod-mythic-plus (RFC-004) | 2026-11-23 |
+| 950160 | Auth RBAC permission | Command: mythic info | player command permission in `mythic_plus_rbac.sql` | mod-mythic-plus (RFC-004) | 2026-11-23 |
+| 950163 | Auth RBAC permission | Command: mythic status/reload | admin command permission in `mythic_plus_rbac.sql` | mod-mythic-plus (RFC-004) | 2026-11-23 |
+
+`mod_mythic_plus_progress` and `mythic_plus_dungeon` are characters-database tables created by this
+slice; they allocate no entry IDs. `mythic_plus_capable_dungeon`, `mythic_plus_boss`,
+`mythic_plus_level`, `mythic_plus_affix`, `mythic_plus_level_rewards` and
+`mythic_plus_creature_scale` are world tables; they allocate no entry IDs.
+
 
 World content IDs for the objective slice are listed above; the RBAC rows live in `acore_auth`, not
 `acore_world`. Gameobject spawn GUIDs are a separate key space from the 930000 entry range; each

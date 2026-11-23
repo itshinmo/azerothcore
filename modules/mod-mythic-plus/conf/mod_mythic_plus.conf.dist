@@ -1,0 +1,26 @@
+#
+# Credits: silviu20092
+#
+
+[worldserver]
+
+########################################
+# Mythic Plus configuration
+########################################
+#
+#    MythicPlus.Enable
+#        Description: Enable or disable the system. Not hot-reloadable.
+#        Default:     1 - Enabled
+#
+
+MythicPlus.Enable = 1
+
+#
+#    MythicPlus.Penalty.OnDeath
+#        Description: Time in seconds added to the run timer when a player dies.
+#        Values:      0  - no penalty
+#                     >0 - penalty in seconds
+#        Default:     5
+#
+
+MythicPlus.Penalty.OnDeath = 5
