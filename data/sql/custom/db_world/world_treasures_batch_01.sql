@@ -1,0 +1,227 @@
+-- World treasures, batch 1: 12 Classic, 4 TBC, 4 WotLK hand-placed chests.
+-- Item entries 901001-901020, gameobject entries 930001-930020, spawn GUIDs 5714501-5714520.
+-- Contract: specs/world-treasures.md; decision: decisions/ADR-031-world-treasures.md.
+--
+-- Each chest is a consumable type-3 gameobject with a one-item loot table. The item template
+-- maxcount of 1 is the native unique check: bags, bank and equipped slots all count, so a
+-- character who already owns the item cannot loot another copy. The chest still serves other
+-- characters and respawns on spawntimesecs.
+--
+-- Re-applicable. item_template and gameobject_template rows use REPLACE because the SQL linter
+-- forbids DELETE on those tables; the rows always end up present. Spawns and loot use
+-- DELETE + INSERT over the reserved block.
+
+-- 1. Items. REPLACE, never DELETE: item_template is a protected table.
+REPLACE INTO `item_template`
+(`entry`, `class`, `subclass`, `SoundOverrideSubclass`, `name`, `displayid`, `Quality`, `Flags`,
+`FlagsExtra`, `BuyCount`, `BuyPrice`, `SellPrice`, `InventoryType`, `AllowableClass`, `AllowableRace`,
+`ItemLevel`, `RequiredLevel`, `RequiredSkill`, `RequiredSkillRank`, `maxcount`, `stackable`,
+`ContainerSlots`, `stat_type1`, `stat_value1`, `stat_type2`, `stat_value2`, `stat_type3`,
+`stat_value3`, `dmg_min1`, `dmg_max1`, `dmg_type1`, `armor`, `holy_res`, `fire_res`, `nature_res`,
+`frost_res`, `shadow_res`, `arcane_res`, `delay`, `RangedModRange`, `bonding`, `description`,
+`Material`, `sheath`, `block`, `MaxDurability`)
+VALUES
+(901001, 4, 0, -1, 'Goldshire Ledger', 54808, 2, 0, 0, 1, 0, 0,
+ 23, -1, -1, 13, 8, 0, 0, 1, 1, 0, 5, 2, 6, 2, 0, 0,
+ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 'Innkeeper Farley\'s accounts, with one page missing.',
+ 7, 0, 0, 0),
+(901002, 4, 0, -1, 'Sentinel Hill Signal Lantern', 36575, 2, 0, 0, 1, 0, 0,
+ 23, -1, -1, 20, 15, 0, 0, 1, 1, 0, 7, 3, 6, 2, 0, 0,
+ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 'A signal lantern from the Westfall militia.',
+ 7, 0, 0, 0),
+(901003, 4, 0, -1, 'Auberdine Tidecaller\'s Charm', 9657, 2, 0, 0, 1, 0, 0,
+ 2, -1, -1, 25, 20, 0, 0, 1, 1, 0, 5, 3, 6, 3, 0, 0,
+ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 'A shell charm that hums with the tide.',
+ 4, 0, 0, 0),
+(901004, 4, 0, -1, 'Astranaar Moonguard Sigil', 9845, 3, 0, 0, 1, 0, 0,
+ 11, -1, -1, 32, 27, 0, 0, 1, 1, 0, 3, 4, 7, 4, 0, 0,
+ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 'A moonstone sigil of the Astranaar sentinels.',
+ 1, 0, 0, 0),
+(901005, 4, 2, -1, 'Booty Bay Smuggler\'s Coil', 28802, 3, 0, 0, 1, 0, 0,
+ 6, -1, -1, 42, 37, 0, 0, 1, 1, 0, 3, 9, 7, 6, 0, 0,
+ 0, 0, 0, 71, 0, 0, 0, 0, 0, 0, 0, 0, 2, 'A smuggler\'s belt lined with hidden pockets.',
+ 8, 0, 0, 35),
+(901006, 4, 1, -1, 'Gadgetzan Sandstorm Goggles', 19563, 3, 0, 0, 1, 0, 0,
+ 1, -1, -1, 48, 43, 0, 0, 1, 1, 0, 5, 12, 7, 8, 0, 0,
+ 0, 0, 0, 57, 0, 0, 0, 0, 0, 0, 0, 0, 2, 'Goggles that keep the Tanaris sand out of your eyes.',
+ 7, 0, 0, 50),
+(901007, 4, 0, -1, 'Marshal\'s Refuge Field Compass', 6562, 3, 0, 0, 1, 0, 0,
+ 12, -1, -1, 52, 47, 0, 0, 1, 1, 0, 7, 5, 6, 5, 0, 0,
+ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 'A brass compass that points toward water.',
+ 3, 0, 0, 0),
+(901008, 4, 1, -1, 'Everlook Frostweave Blanket', 23136, 2, 0, 0, 1, 0, 0,
+ 16, -1, -1, 55, 50, 0, 0, 1, 1, 0, 7, 6, 0, 0, 0, 0,
+ 0, 0, 0, 36, 0, 0, 0, 5, 0, 0, 0, 0, 2, 'A thick blanket woven for Everlook winters.',
+ 7, 0, 0, 0),
+(901009, 4, 0, -1, 'Light\'s Hope Prayer Beads', 32008, 3, 0, 0, 1, 0, 0,
+ 2, -1, -1, 58, 53, 0, 0, 1, 1, 0, 5, 8, 6, 8, 7, 5,
+ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 'Prayer beads carried by the knights of Light\'s Hope.',
+ 4, 0, 0, 0),
+(901010, 2, 5, -1, 'Brill Gravedigger\'s Spade', 8585, 2, 0, 0, 1, 0, 0,
+ 17, -1, -1, 24, 19, 0, 0, 1, 1, 0, 4, 7, 7, 4, 0, 0,
+ 37, 57, 0, 0, 0, 0, 0, 0, 0, 0, 3100, 0, 2, 'A spade that has dug more graves than graves have names.',
+ 2, 1, 0, 75),
+(901011, 4, 2, -1, 'Shimmering Flats Salt Goggles', 18322, 2, 0, 0, 1, 0, 0,
+ 1, -1, -1, 36, 31, 0, 0, 1, 1, 0, 3, 8, 7, 6, 0, 0,
+ 0, 0, 0, 84, 0, 0, 0, 0, 0, 0, 0, 0, 2, 'Salt-crusted goggles from the Mirage Raceway.',
+ 8, 0, 0, 50),
+(901012, 2, 2, -1, 'Feathermoon Sentinel\'s Longbow', 28543, 3, 0, 0, 1, 0, 0,
+ 15, -1, -1, 50, 45, 0, 0, 1, 1, 0, 3, 7, 7, 5, 0, 0,
+ 58, 108, 0, 0, 0, 0, 0, 0, 0, 0, 2700, 100, 2, 'A longbow cut from a Feathermoon limb.',
+ 2, 0, 0, 65),
+(901013, 4, 6, -1, 'Honor Hold Bulwark Fragment', 40781, 3, 0, 0, 1, 0, 0,
+ 14, -1, -1, 84, 58, 0, 0, 1, 1, 0, 4, 9, 7, 12, 0, 0,
+ 0, 0, 0, 2513, 0, 0, 0, 0, 0, 0, 0, 0, 2, 'A splinter of the Honor Hold bulwark.',
+ 1, 0, 51, 85),
+(901014, 4, 0, -1, 'Cenarion Refuge Sporeling Charter', 44544, 2, 0, 0, 1, 0, 0,
+ 23, -1, -1, 93, 62, 0, 0, 1, 1, 0, 5, 12, 6, 10, 0, 0,
+ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 'A charter for the sporeling refuge at Cenarion.',
+ 7, 0, 0, 0),
+(901015, 4, 0, -1, 'Garadar Ancestor\'s Totem', 37552, 3, 0, 0, 1, 0, 0,
+ 12, -1, -1, 103, 66, 0, 0, 1, 1, 0, 7, 18, 5, 12, 0, 0,
+ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 'A carved totem of the Garadar ancestors.',
+ 3, 0, 0, 0),
+(901016, 2, 19, -1, 'Area 52 Telemetric Rod', 43449, 3, 0, 0, 1, 0, 0,
+ 26, -1, -1, 112, 69, 0, 0, 1, 1, 0, 5, 9, 7, 8, 45, 12,
+ 158, 293, 0, 0, 0, 0, 0, 0, 0, 0, 1800, 100, 2, 'A telemetric rod calibrated in Area 52.',
+ 2, 0, 0, 65),
+(901017, 4, 1, -1, 'Valiance Keep Winter Cloak', 50050, 2, 0, 0, 1, 0, 0,
+ 16, -1, -1, 130, 68, 0, 0, 1, 1, 0, 7, 20, 0, 0, 0, 0,
+ 0, 0, 0, 80, 0, 0, 0, 10, 0, 0, 0, 0, 2, 'A winter cloak issued at Valiance Keep.',
+ 7, 0, 0, 0),
+(901018, 2, 15, -1, 'Amberpine Trapper\'s Knife', 52445, 3, 0, 0, 1, 0, 0,
+ 13, -1, -1, 146, 72, 0, 0, 1, 1, 0, 3, 19, 7, 12, 31, 10,
+ 111, 206, 0, 0, 0, 0, 0, 0, 0, 0, 1800, 0, 1, 'A trapper\'s knife from the Amberpine woods.',
+ 1, 3, 0, 65),
+(901019, 4, 0, -1, 'K3 Surveyor\'s Sextant', 34188, 3, 0, 0, 1, 0, 0,
+ 12, -1, -1, 158, 76, 0, 0, 1, 1, 0, 3, 28, 31, 15, 7, 21,
+ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 'A surveyor\'s sextant from the K3 expedition.',
+ 3, 0, 0, 0),
+(901020, 4, 0, -1, 'Crusader\'s Oathband', 35313, 4, 0, 0, 1, 0, 0,
+ 11, -1, -1, 200, 80, 0, 0, 1, 1, 0, 4, 30, 7, 35, 0, 0,
+ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 'An oathband of the Argent Crusade.',
+ 1, 0, 0, 0);
+
+-- 2. Gameobject templates. Data1 is the loot table entry; Data3=1 makes the chest despawn on loot.
+REPLACE INTO `gameobject_template`
+(`entry`, `type`, `displayId`, `name`, `size`, `Data0`, `Data1`, `Data2`, `Data3`)
+VALUES
+(930001, 3, 18, 'Goldshire Ledger', 1, 0, 930001, 0, 1),
+(930002, 3, 336, 'Sentinel Hill Signal Lantern', 1, 0, 930002, 0, 1),
+(930003, 3, 644, 'Auberdine Tidecaller\'s Charm', 1, 0, 930003, 0, 1),
+(930004, 3, 10, 'Astranaar Moonguard Sigil', 1, 0, 930004, 0, 1),
+(930005, 3, 5511, 'Booty Bay Smuggler\'s Coil', 1, 0, 930005, 0, 1),
+(930006, 3, 335, 'Gadgetzan Sandstorm Goggles', 1, 0, 930006, 0, 1),
+(930007, 3, 259, 'Marshal\'s Refuge Field Compass', 1, 0, 930007, 0, 1),
+(930008, 3, 644, 'Everlook Frostweave Blanket', 1, 0, 930008, 0, 1),
+(930009, 3, 41, 'Light\'s Hope Prayer Beads', 1, 0, 930009, 0, 1),
+(930010, 3, 10, 'Brill Gravedigger\'s Spade', 1, 0, 930010, 0, 1),
+(930011, 3, 336, 'Shimmering Flats Salt Goggles', 1, 0, 930011, 0, 1),
+(930012, 3, 259, 'Feathermoon Sentinel\'s Longbow', 1, 0, 930012, 0, 1),
+(930013, 3, 5744, 'Honor Hold Bulwark Fragment', 1, 0, 930013, 0, 1),
+(930014, 3, 7144, 'Cenarion Refuge Sporeling Charter', 1, 0, 930014, 0, 1),
+(930015, 3, 5511, 'Garadar Ancestor\'s Totem', 1, 0, 930015, 0, 1),
+(930016, 3, 5531, 'Area 52 Telemetric Rod', 1, 0, 930016, 0, 1),
+(930017, 3, 7224, 'Valiance Keep Winter Cloak', 1, 0, 930017, 0, 1),
+(930018, 3, 7144, 'Amberpine Trapper\'s Knife', 1, 0, 930018, 0, 1),
+(930019, 3, 5744, 'K3 Surveyor\'s Sextant', 1, 0, 930019, 0, 1),
+(930020, 3, 9069, 'Crusader\'s Oathband', 1, 0, 930020, 0, 1);
+
+-- 3. Template addon rows keep the chests neutral and interactable.
+REPLACE INTO `gameobject_template_addon`
+(`entry`, `faction`, `flags`, `mingold`, `maxgold`)
+VALUES
+(930001, 94, 0, 0, 0),
+(930002, 94, 0, 0, 0),
+(930003, 94, 0, 0, 0),
+(930004, 94, 0, 0, 0),
+(930005, 94, 0, 0, 0),
+(930006, 94, 0, 0, 0),
+(930007, 94, 0, 0, 0),
+(930008, 94, 0, 0, 0),
+(930009, 94, 0, 0, 0),
+(930010, 94, 0, 0, 0),
+(930011, 94, 0, 0, 0),
+(930012, 94, 0, 0, 0),
+(930013, 94, 0, 0, 0),
+(930014, 94, 0, 0, 0),
+(930015, 94, 0, 0, 0),
+(930016, 94, 0, 0, 0),
+(930017, 94, 0, 0, 0),
+(930018, 94, 0, 0, 0),
+(930019, 94, 0, 0, 0),
+(930020, 94, 0, 0, 0);
+
+-- 4. Loot: one guaranteed item per chest.
+DELETE FROM `gameobject_loot_template` WHERE `Entry` BETWEEN 930001 AND 930020;
+INSERT INTO `gameobject_loot_template`
+(`Entry`, `Item`, `Reference`, `Chance`, `QuestRequired`, `LootMode`, `GroupId`, `MinCount`, `MaxCount`, `Comment`)
+VALUES
+(930001, 901001, 0, 100, 0, 1, 0, 1, 1, 'World treasure: Goldshire Ledger'),
+(930002, 901002, 0, 100, 0, 1, 0, 1, 1, 'World treasure: Sentinel Hill Signal Lantern'),
+(930003, 901003, 0, 100, 0, 1, 0, 1, 1, 'World treasure: Auberdine Tidecaller\'s Charm'),
+(930004, 901004, 0, 100, 0, 1, 0, 1, 1, 'World treasure: Astranaar Moonguard Sigil'),
+(930005, 901005, 0, 100, 0, 1, 0, 1, 1, 'World treasure: Booty Bay Smuggler\'s Coil'),
+(930006, 901006, 0, 100, 0, 1, 0, 1, 1, 'World treasure: Gadgetzan Sandstorm Goggles'),
+(930007, 901007, 0, 100, 0, 1, 0, 1, 1, 'World treasure: Marshal\'s Refuge Field Compass'),
+(930008, 901008, 0, 100, 0, 1, 0, 1, 1, 'World treasure: Everlook Frostweave Blanket'),
+(930009, 901009, 0, 100, 0, 1, 0, 1, 1, 'World treasure: Light\'s Hope Prayer Beads'),
+(930010, 901010, 0, 100, 0, 1, 0, 1, 1, 'World treasure: Brill Gravedigger\'s Spade'),
+(930011, 901011, 0, 100, 0, 1, 0, 1, 1, 'World treasure: Shimmering Flats Salt Goggles'),
+(930012, 901012, 0, 100, 0, 1, 0, 1, 1, 'World treasure: Feathermoon Sentinel\'s Longbow'),
+(930013, 901013, 0, 100, 0, 1, 0, 1, 1, 'World treasure: Honor Hold Bulwark Fragment'),
+(930014, 901014, 0, 100, 0, 1, 0, 1, 1, 'World treasure: Cenarion Refuge Sporeling Charter'),
+(930015, 901015, 0, 100, 0, 1, 0, 1, 1, 'World treasure: Garadar Ancestor\'s Totem'),
+(930016, 901016, 0, 100, 0, 1, 0, 1, 1, 'World treasure: Area 52 Telemetric Rod'),
+(930017, 901017, 0, 100, 0, 1, 0, 1, 1, 'World treasure: Valiance Keep Winter Cloak'),
+(930018, 901018, 0, 100, 0, 1, 0, 1, 1, 'World treasure: Amberpine Trapper\'s Knife'),
+(930019, 901019, 0, 100, 0, 1, 0, 1, 1, 'World treasure: K3 Surveyor\'s Sextant'),
+(930020, 901020, 0, 100, 0, 1, 0, 1, 1, 'World treasure: Crusader\'s Oathband');
+
+-- 5. Spawns. All locations are non-instanced and were checked against the local world DB.
+DELETE FROM `gameobject` WHERE `id` BETWEEN 930001 AND 930020 AND `guid` BETWEEN 5714501 AND 5714520;
+INSERT INTO `gameobject`
+(`guid`, `id`, `map`, `zoneId`, `areaId`, `spawnMask`, `phaseMask`, `position_x`, `position_y`,
+ `position_z`, `orientation`, `rotation0`, `rotation1`, `rotation2`, `rotation3`, `spawntimesecs`,
+ `animprogress`, `state`, `ScriptName`, `VerifiedBuild`, `Comment`)
+VALUES
+(5714501, 930001, 0, 0, 0, 1, 1, -9457.50, 7.00, 56.96, 0, 0, 0, 0, 1,
+ 1800, 255, 1, '', NULL, 'World treasure: Goldshire Ledger'),
+(5714502, 930002, 0, 0, 0, 1, 1, -10506.00, 1047.00, 60.70, 0, 0, 0, 0, 1,
+ 1800, 255, 1, '', NULL, 'World treasure: Sentinel Hill Signal Lantern'),
+(5714503, 930003, 1, 0, 0, 1, 1, 6411.50, 518.50, 9.94, 0, 0, 0, 0, 1,
+ 1800, 255, 1, '', NULL, 'World treasure: Auberdine Tidecaller\'s Charm'),
+(5714504, 930004, 1, 0, 0, 1, 1, 2777.50, -435.50, 116.58, 0, 0, 0, 0, 1,
+ 2700, 255, 1, '', NULL, 'World treasure: Astranaar Moonguard Sigil'),
+(5714505, 930005, 0, 0, 0, 1, 1, -14414.50, 526.50, 7.67, 0, 0, 0, 0, 1,
+ 2700, 255, 1, '', NULL, 'World treasure: Booty Bay Smuggler\'s Coil'),
+(5714506, 930006, 1, 0, 0, 1, 1, -7153.00, -3835.50, 8.64, 0, 0, 0, 0, 1,
+ 2700, 255, 1, '', NULL, 'World treasure: Gadgetzan Sandstorm Goggles'),
+(5714507, 930007, 1, 0, 0, 1, 1, -6140.00, -1090.00, -200.20, 0, 0, 0, 0, 1,
+ 2700, 255, 1, '', NULL, 'World treasure: Marshal\'s Refuge Field Compass'),
+(5714508, 930008, 1, 0, 0, 1, 1, 6691.00, -4668.50, 721.57, 0, 0, 0, 0, 1,
+ 2700, 255, 1, '', NULL, 'World treasure: Everlook Frostweave Blanket'),
+(5714509, 930009, 0, 0, 0, 1, 1, 2154.50, -5261.80, 95.87, 0, 0, 0, 0, 1,
+ 2700, 255, 1, '', NULL, 'World treasure: Light\'s Hope Prayer Beads'),
+(5714510, 930010, 0, 0, 0, 1, 1, 1642.50, 227.00, -43.10, 0, 0, 0, 0, 1,
+ 1800, 255, 1, '', NULL, 'World treasure: Brill Gravedigger\'s Spade'),
+(5714511, 930011, 1, 0, 0, 1, 1, 252.00, 1249.00, 193.43, 0, 0, 0, 0, 1,
+ 2700, 255, 1, '', NULL, 'World treasure: Shimmering Flats Salt Goggles'),
+(5714512, 930012, 1, 0, 0, 1, 1, -4502.50, 3340.00, 14.12, 0, 0, 0, 0, 1,
+ 2700, 255, 1, '', NULL, 'World treasure: Feathermoon Sentinel\'s Longbow'),
+(5714513, 930013, 530, 0, 0, 1, 1, -813.00, 2620.00, 109.18, 0, 0, 0, 0, 1,
+ 2700, 255, 1, '', NULL, 'World treasure: Honor Hold Bulwark Fragment'),
+(5714514, 930014, 530, 0, 0, 1, 1, -169.00, 5536.00, 29.49, 0, 0, 0, 0, 1,
+ 2700, 255, 1, '', NULL, 'World treasure: Cenarion Refuge Sporeling Charter'),
+(5714515, 930015, 530, 0, 0, 1, 1, 1060.50, 7366.00, 39.58, 0, 0, 0, 0, 1,
+ 2700, 255, 1, '', NULL, 'World treasure: Garadar Ancestor\'s Totem'),
+(5714516, 930016, 530, 0, 0, 1, 1, 9687.00, -7366.50, 11.93, 0, 0, 0, 0, 1,
+ 2700, 255, 1, '', NULL, 'World treasure: Area 52 Telemetric Rod'),
+(5714517, 930017, 571, 0, 0, 1, 1, 2281.00, 5214.00, 12.58, 0, 0, 0, 0, 1,
+ 3600, 255, 1, '', NULL, 'World treasure: Valiance Keep Winter Cloak'),
+(5714518, 930018, 571, 0, 0, 1, 1, 1449.00, -3259.50, 167.30, 0, 0, 0, 0, 1,
+ 3600, 255, 1, '', NULL, 'World treasure: Amberpine Trapper\'s Knife'),
+(5714519, 930019, 571, 0, 0, 1, 1, 6101.50, -1080.00, 404.23, 0, 0, 0, 0, 1,
+ 3600, 255, 1, '', NULL, 'World treasure: K3 Surveyor\'s Sextant'),
+(5714520, 930020, 571, 0, 0, 1, 1, 8488.50, 1114.00, 554.31, 0, 0, 0, 0, 1,
+ 3600, 255, 1, '', NULL, 'World treasure: Crusader\'s Oathband');

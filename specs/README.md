@@ -19,6 +19,7 @@ change updates its spec in the same change.
 - [`server.md`](server.md) — topology, ports, config, startup, shutdown, health, logging.
 - [`database.md`](database.md) — three databases, SQL tree, updater, schema conventions, safety.
 - [`content-pipeline.md`](content-pipeline.md) — how content is authored, stored, and verified.
+- [`world-treasures.md`](world-treasures.md) — hand-placed chests, unique-item rule, respawn, placement, batch authoring.
 - [`world-data.md`](world-data.md) — public catalog export, spawn sets, map coordinates, live spawn overlay.
 - [`collections.md`](collections.md) — account-wide mounts, pets and toys: ownership, delivery, cast gate.
 - [`transmog.md`](transmog.md) — transmogrifier-only appearance changes, Journal tab visibility, client-side preview.
