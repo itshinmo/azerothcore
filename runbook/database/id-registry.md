@@ -49,6 +49,16 @@ the same change.
 | 930001–930020 | Gameobject entries + loot tables | world treasures batch 1 | 20 type-3 chest templates and their one-row loot tables | ADR-031 | 2026-11-23 |
 | 930021–930100 | Gameobject entries + loot tables | world treasures batches 2–5 | reserved 80-chest block | ADR-031 | 2026-11-23 |
 | 5714501–5714520 | Gameobject spawn GUIDs | world treasures batch 1 | spawn block above the global `gameobject` maximum at authoring time | ADR-031 | 2026-11-23 |
+| 910013 | Creature entry | Mythic Plus | start/guidance NPC template; two spawns: 5400020 Orgrimmar and 5400021 Ragefire Chasm entrance (`zz_mythic_plus.sql`) | mod-mythic-plus (RFC-004) | 2026-11-23 |
+| 5400020 | Creature spawn GUID | Mythic Plus guidance | Orgrimmar spawn outside the Ragefire Chasm entrance | mod-mythic-plus (RFC-004) | 2026-11-23 |
+| 5400021 | Creature spawn GUID | Mythic Plus start | Ragefire Chasm entrance spawn; starts the run inside the instance | mod-mythic-plus (RFC-004) | 2026-11-23 |
+| 950160 | Auth RBAC permission | Command: mythic info | player command permission in `mythic_plus_rbac.sql` | mod-mythic-plus (RFC-004) | 2026-11-23 |
+| 950163 | Auth RBAC permission | Command: mythic status/reload | admin command permission in `mythic_plus_rbac.sql` | mod-mythic-plus (RFC-004) | 2026-11-23 |
+
+`mod_mythic_plus_progress` and `mythic_plus_dungeon` are characters-database tables created by this
+slice; they allocate no entry IDs. `mythic_plus_capable_dungeon`, `mythic_plus_boss`,
+`mythic_plus_level`, `mythic_plus_affix`, `mythic_plus_level_rewards` and
+`mythic_plus_creature_scale` are world tables; they allocate no entry IDs.
 
 The RBAC rows live in `acore_auth`, not `acore_world`. Gameobject spawn GUIDs are a separate key
 space from the 930000 entry range; each feature reserves its own block above the current global
