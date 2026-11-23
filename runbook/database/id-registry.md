@@ -46,6 +46,7 @@ the same change.
 | 910020 | Creature entry | Adventure Quartermaster | objective reward vendor template, Stormwind spawn GUID 5400011 (`objectives_engine.sql`) | ADR-029 | 2026-11-23 |
 | 910021 | Creature entry | Chronicle Quartermaster | objective reward vendor template, Orgrimmar spawn GUID 5400012 (`objectives_engine.sql`) | ADR-029 | 2026-11-23 |
 | 950151 | Auth RBAC permission | Command: pledge (project) | PvP rulesets `.pledge` player command (`pvp_rulesets_command.sql`) | ADR-033 | 2026-11-23 |
+| 950152 | Auth RBAC permission | Command: treasure placer (project) | GM-only `.treasure` placement command (`treasure_placer_command.sql`); never grant to players | ADR-031 | 2026-11-23 |
 | 950200 | Misc (npc_text) | Objective vendor greeting | reward vendor gossip text | ADR-029 | 2026-11-23 |
 | 950300–950324 | Misc (task rows) | `mod_objectives_task` launch tasks | 25 Classic objective definitions | ADR-028 | 2026-11-23 |
 | 950340–950348 | Misc (offer rows) | `mod_objectives_offer` launch offers | reward vendor items | ADR-029 | 2026-11-23 |

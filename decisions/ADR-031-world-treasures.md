@@ -20,7 +20,10 @@ TBC, and 4 WotLK. The remaining 80 are authored in four more batches of 20 with 
 The native game already has every mechanism the feature needs. `item_template.maxcount` is the
 unique-ownership check: `Player::CanTakeMoreSimilarItems` counts the item in bags, bank, and
 equipped slots through `GetItemCount(entry, true, item)`. A type-3 gameobject with a loot table and
-`spawntimesecs` already provides a shared object that respawns. No C++ change is required.
+`spawntimesecs` already provides a shared object that respawns. One core gap surfaced in testing:
+unlocked chests (`lockId = 0`) were not opened by `GameObject::Use`; locked chests worked only through
+`Spell::EffectOpenLock`. Batch 1 adds the missing direct-use branch, and a GM-only `.treasure`
+placement tool (module, RBAC `950152`) previews and records chest coordinates.
 
 ## Decision
 
@@ -69,8 +72,10 @@ equipped slots through `GetItemCount(entry, true, item)`. A type-3 gameobject wi
   per character, and the respawn gives the second player another chance.
 - `maxcount = 1` also blocks receiving a second copy by trade or mail. That matches the unique
   promise and is a native behavior, not a new rule.
-- No C++ path is added. If a future requirement needs per-player loot visibility or a hidden loot
-  row when the player owns the item, that is a new decision and a core or module change.
+- The core now has one chest direct-use branch for unlocked chests; locked chests keep the
+  `EffectOpenLock` path. The `.treasure` preview/save/export tool is a GM-only module and never
+  appears to players. If a future requirement needs per-player loot visibility or a hidden loot row
+  when the player owns the item, that is a new decision and a core or module change.
 - The 100-item target needs four more batches. The CSV format, the ID formula, and the overlap
   check make each batch mechanical.
 

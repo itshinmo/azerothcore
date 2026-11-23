@@ -1658,6 +1658,19 @@ void GameObject::Use(Unit* user)
                 player->SendPreparedGossip(this);
                 return;
             }
+        case GAMEOBJECT_TYPE_CHEST:                         //3
+            {
+                if (!user->IsPlayer())
+                    return;
+
+                // Locked chests go through Spell::EffectOpenLock; opening them here would
+                // bypass the lock skill or key. Only unlocked chests use the direct path.
+                if (GetGOInfo()->GetLockId())
+                    return;
+
+                user->ToPlayer()->SendLoot(GetGUID(), LOOT_CORPSE);
+                return;
+            }
         case GAMEOBJECT_TYPE_TRAP:                          //6
             {
                 GameObjectTemplate const* goInfo = GetGOInfo();
