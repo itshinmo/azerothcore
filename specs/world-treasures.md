@@ -52,9 +52,10 @@ restock timer.
 ### Placement
 
 - Non-instanced open-world locations only.
-- Coordinates must be on valid floor. Batch 1 uses the position of a nearby anchor spawn as the
-  height reference, then offsets by 1-8 yards. The CSV records the final position; the content note
-  names the landmark.
+- Coordinates must be on valid floor and verified in-game. The batch-1 first pass used guessed
+  offsets and produced nine blocked or floating chests; use the placement tool below and save the
+  position of the preview chest. The CSV records the final position; the content note names the
+  landmark.
 - No overlap with an existing spawn: at least 1.5 yards from an existing gameobject and at least 2
   yards from an existing creature, measured in 3D.
 - Iconic, era-appropriate locations. Batch 1 visits inns, towers, chapels, auction houses, expedition
@@ -95,6 +96,20 @@ Items use `901000+`. Gameobject entries and their loot tables use `930000+`. Spa
 separate key space and use a reserved block above the global maximum, recorded in the ID registry.
 The batch-1 SQL is
 [data/sql/custom/db_world/world_treasures_batch_01.sql](../data/sql/custom/db_world/world_treasures_batch_01.sql).
+
+### Placement tool
+
+Use the GM-only `.treasure` command (`modules/mod-treasure-placer`, RBAC `950152`):
+
+1. `.treasure preview 901001` spawns a temporary chest 1.5 yards ahead for 10 minutes; no DB write.
+2. Stand on the final spot and `.treasure save 901001`; the saved position is the preview chest's
+   position when one is active.
+3. `.treasure export` prints `UPDATE gameobject` lines with map, position, orientation and the
+   rotation quaternion.
+4. Copy the values into the spawn `INSERT` tuple in the batch SQL and into the matching
+   `batch_01.csv` row; the CSV remains the source of truth.
+
+Placement must be on the ground, outside walls and furniture, and reachable by a normal character.
 
 ### Authoring format
 
@@ -195,8 +210,8 @@ Re-run the overlap check when a zone is changed or when a new batch is authored.
 
 - `Errors.log` reports an unknown item, gameobject, display, or loot entry at load time.
 - `updates` records the custom SQL apply.
-- In game: `.gobject near`, `.lookup object <entry>`, `.lookup item <entry>`, and the chest tooltip
-  confirm the spawn and item.
+- In game: `.gobject near`, `.lookup object <entry>`, `.lookup item <entry>`, `.treasure preview`, and
+  the chest tooltip confirm the spawn and item.
 - The loot window shows the item and the unique error on a character who already owns it.
 
 ## References
