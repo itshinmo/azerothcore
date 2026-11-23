@@ -6,10 +6,12 @@
 *.MPQ binary
 *.mpq binary
 *.dbc binary
+*.DBC binary
 *.blp binary
 *.m2 binary
 *.skin binary
 *.anim binary
+data/client-patches/** -text
 
 # Whitespace rules
 # strict (no trailing, no tabs)
