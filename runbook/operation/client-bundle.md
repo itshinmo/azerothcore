@@ -20,6 +20,18 @@ and [ADR-020](../../decisions/ADR-020-collections-transmog-stack.md).
 | GM Helper | `tools/gm-addon/` | active — testing addon |
 | Chat Notice Guard | `tools/client-addons/ChatNoticeGuard/` | active workaround — supplies the `CHAT_<token>_NOTICE` strings the Ascension client omits, otherwise a LookingForGroup notice throws `format(nil)` |
 
+Project patch family, separate from the vendor bundle:
+
+| Archive | Owner | State | SHA256 |
+|---------|-------|-------|--------|
+| `patch-X.MPQ` | this branch, `data/client-patches/item-data/` | installed in `~/Games/wotlk-clean/Data` | `9ddd80c9fda95647c393a00fb2c0d2db706185b59c05364ce00d3899e95c1d50` |
+| `patch-Y.MPQ` | `data/client-patches/white-boss-models/` | installed in `~/Games/wotlk-clean/Data` | `b236c1c35d2714a0e6423e87a934256fbace13168951d2c5144b0ca30016f524` |
+| `patch-Z.MPQ` | `data/client-patches/map-poi/` | installed in `~/Games/wotlk-clean/Data` | `1aaf23a4140a092bdad1fa0cfa8b270e8d369faef38cff85e7915c9b4b055d3f` |
+
+X = item data, Y = white models, Z = map/UI; X < Y < Z, all after Reforged `patch-U`. Each
+feature's manifest is its source of truth; rebuild only through that feature's `build.py`. Verify an
+archive with `git hash-object --path=<path> <file>` equal to `git hash-object --no-filters <file>`.
+
 Paths: client `~/Games/wotlk-clean` (WoWSilicon launcher, realmlist `127.0.0.1`); vanilla reference
 exe kept at `~/Downloads/wow-related/Wow-clean.exe` (build-12340, unmodified).
 
@@ -71,18 +83,22 @@ The verified path, in the order actually performed (recorded so any client copy 
 Any client artifact this project generates (patch MPQs, modified DBCs, bundled addons) is stored in
 this repository so a deleted client can be rebuilt without re-downloading anything: addons ship
 from the module trees and `tools/gm-addon/` above; server DBC swaps ship from the feature's own
-data (see the feature's module or `data/sql/custom/`). When a feature generates a client MPQ, it
-lands in `data/client-patches/<feature>/` with its own README, and this runbook links it. The
+data (see the feature's module or `data/sql/custom/`). A generated client MPQ lands in
+`data/client-patches/<feature>/` with its own README and manifest, and this runbook links it. The
 Warpweaver guard directions are pure server data (`points_of_interest` + `SMSG_GOSSIP_POI`, see
 `data/sql/custom/db_world/collections_guard_directions.sql`).
 
-Artifacts:
+Current project patches:
 
-- [white-boss-models/`dist/patch-Y.MPQ`](../../data/client-patches/white-boss-models/README.md) —
-  restores the stock goblin male model over the Ascension HD replacement (white Journal previews).
-  Built, verifier-clean, and installed on the owner's client with the matching hash; **in-game pass
-  pending, not part of the verified bundle yet**. `patch-Z.MPQ` is reserved by the map/POI branch and
-  loads after it.
+- [item-data](../../data/client-patches/item-data/README.md) — `patch-X.MPQ`: whole
+  `DBFilesClient\Item.dbc` with custom item rows for the world treasures. Only X carries Item.dbc.
+- [white-boss-models](../../data/client-patches/white-boss-models/README.md) — `patch-Y.MPQ`: stock
+  goblin male model over the Ascension HD replacement, fixing white Journal previews.
+- [map-poi](../../data/client-patches/map-poi/README.md) — `patch-Z.MPQ`: baked `ServerMapPOI`
+  world-map layer (Warpweaver, PvP vendors, world-boss skulls, red PvP overlay, Outlaw protocol)
+  plus a FrameXML load-order canary. No DBC change.
+
+Procedure: [client-patch.md](client-patch.md).
 
 ## Verification checklist (per client rebuild)
 
@@ -92,6 +108,10 @@ Artifacts:
 - In-world: HD models and gear, Reforged spell VFX, GM Helper tabs, Transmog/Journal windows, FPS
   in the expected range; capital guards offer "The transmogrifier" with a minimap marker — in
   Dalaran, ask the Violet Citadel teleport-service NPCs (the city has no guards).
+- Project patches (when installed): `patch-Z.MPQ` canary line at login and `ServerMapPOI` markers on
+  the world map; `patch-X.MPQ` makes custom item IDs render an icon instead of the red question mark.
+  Test steps: [map-poi README](../../data/client-patches/map-poi/README.md),
+  [item-data README](../../data/client-patches/item-data/README.md).
 
 ## References
 

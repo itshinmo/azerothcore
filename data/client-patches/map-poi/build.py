@@ -1,0 +1,353 @@
+#!/usr/bin/env python3
+"""Build data/client-patches/map-poi/dist/patch-Z.MPQ.
+
+The patch contains:
+
+* Interface\\AddOns\\ServerMapPOI\\* (the baked map layer)
+* Interface\\FrameXML\\WorldMapFrame.lua (canary, copied whole from the
+  highest-priority source below patch-Z and extended with a login message)
+
+No DBC is shipped. Re-run after a client bundle update or a spawn move.
+
+Usage::
+
+    python3 data/client-patches/map-poi/build.py
+    python3 data/client-patches/map-poi/build.py --check
+    python3 data/client-patches/map-poi/build.py --client ~/Games/wotlk-clean
+"""
+
+from __future__ import annotations
+
+import argparse
+import datetime
+import json
+import os
+import shutil
+import subprocess
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[3]
+HERE = Path(__file__).resolve().parent
+sys.path.insert(0, str(ROOT / "tools" / "client-patch"))
+sys.path.insert(0, str(HERE))
+
+import mpq  # noqa: E402
+import generate_poi_data  # noqa: E402
+
+DEFAULT_CLIENT = os.environ.get("WOW_CLIENT", os.path.expanduser("~/Games/wotlk-clean"))
+LOCALE = "enUS"
+ARCHIVE_PATH = "Interface\\FrameXML\\WorldMapFrame.lua"
+ADDON_PATH = "Interface\\AddOns\\ServerMapPOI"
+DEFAULT_OUT = HERE / "dist" / "patch-Z.MPQ"
+DEFAULT_MANIFEST = HERE / "manifest.json"
+BUILD_DIR = HERE / "build"
+ADDON_SOURCE_PREFIX = "data/client-patches/map-poi/src/ServerMapPOI/"
+CANARY_SOURCE = "data/client-patches/map-poi/src/canary_framexml.lua"
+FIXED_MTIME = datetime.datetime(2026, 11, 23, tzinfo=datetime.timezone.utc).timestamp()
+
+
+def rel(path: Path) -> str:
+    try:
+        return path.resolve().relative_to(ROOT).as_posix()
+    except ValueError:
+        return path.name
+
+
+def rel_client(path: Path, client: Path) -> str:
+    try:
+        return path.resolve().relative_to(client.resolve()).as_posix()
+    except ValueError:
+        return path.name
+
+
+def check_lua(path: Path) -> None:
+    if not path.suffix == ".lua":
+        return
+    luajit = shutil.which("luajit")
+    if luajit:
+        result = subprocess.run(
+            [luajit, "-b", str(path), os.devnull], capture_output=True, text=True
+        )
+        if result.returncode != 0:
+            raise SystemExit(f"Lua syntax check failed: {path}\n{result.stderr}")
+        return
+    luac = shutil.which("luac")
+    if luac:
+        result = subprocess.run([luac, "-p", str(path)], capture_output=True, text=True)
+        if result.returncode != 0:
+            raise SystemExit(f"Lua syntax check failed: {path}\n{result.stderr}")
+
+
+def canary_source(data_dir: Path) -> tuple[Path, mpq.WhichResult]:
+    result = mpq.find_highest(data_dir, ARCHIVE_PATH, locale=LOCALE, order="english")
+    if not result.winner:
+        raise SystemExit(f"cannot find {ARCHIVE_PATH} in {data_dir}")
+    # A previous patch-Z may already be installed in the client. Never use our
+    # own output as the source; take the highest archive below patch-Z instead.
+    candidates = [path for path in result.sources if path.name.lower() != "patch-z.mpq"]
+    if not candidates:
+        raise SystemExit(
+            f"{ARCHIVE_PATH} only exists in patch-Z; install a clean client bundle "
+            "or pass a client root without the project patch"
+        )
+    return candidates[-1], result
+
+
+def build(args) -> int:
+    client = Path(args.client).expanduser()
+    data_dir = client / "Data"
+    out = Path(args.out).expanduser()
+    manifest_path = Path(args.manifest).expanduser()
+
+    if args.check:
+        return check(out, manifest_path)
+
+    if not data_dir.is_dir():
+        raise SystemExit(f"client Data directory not found: {data_dir}")
+
+    BUILD_DIR.mkdir(parents=True, exist_ok=True)
+    source_dir = BUILD_DIR / "source"
+    root_dir = BUILD_DIR / "root"
+    for folder in (source_dir, root_dir):
+        if folder.exists():
+            shutil.rmtree(folder)
+        folder.mkdir(parents=True)
+
+    # 1. Regenerate the baked POI tables from the client DBCs unless asked not to.
+    gen_metadata = None
+    data_lua = HERE / "src" / "ServerMapPOI" / "Data.lua"
+    if not args.no_regenerate:
+        text, gen_metadata = generate_poi_data.generate(client)
+        data_lua.write_text(text, encoding="utf-8")
+        print(f"generated {rel(data_lua)}")
+
+    # 2. Copy the addon.
+    addon_src = HERE / "src" / "ServerMapPOI"
+    addon_dst = root_dir / ADDON_PATH.replace("\\", "/")
+    shutil.copytree(addon_src, addon_dst)
+    for path in addon_dst.rglob("*"):
+        if path.name == ".DS_Store":
+            path.unlink()
+        if path.is_file():
+            check_lua(path)
+
+    # 3. Canary: whole-file copy of the highest-priority source plus our block.
+    source_archive, which = canary_source(data_dir)
+    with mpq.Archive(source_archive) as archive:
+        original = archive.read_file(ARCHIVE_PATH)
+        original_hash = mpq.sha256_bytes(original)
+    if b"patch-Z.MPQ canary" in original:
+        raise SystemExit(
+            f"{source_archive} already contains the project canary; pick a clean source below patch-Z"
+        )
+    if not original.endswith(b"\n"):
+        original += b"\n"
+    canary = (HERE / "src" / "canary_framexml.lua").read_bytes()
+    output = original + b"\n" + canary
+    canary_path = source_dir / "WorldMapFrame.lua"
+    canary_path.write_bytes(output)
+    check_lua(canary_path)
+    framedump = root_dir / ARCHIVE_PATH.replace("\\", "/")
+    framedump.parent.mkdir(parents=True, exist_ok=True)
+    framedump.write_bytes(output)
+
+    # 4. Pack. MPQ v1, listfile, attributes, zlib, like the other client patches.
+    files = sorted(
+        (path, path.relative_to(root_dir).as_posix().replace("/", "\\"))
+        for path in root_dir.rglob("*")
+        if path.is_file()
+    )
+    # Stable source times make the archive byte-identical across rebuilds.
+    for path, _ in files:
+        os.utime(path, (FIXED_MTIME, FIXED_MTIME))
+    dbc = [name for _, name in files if name.lower().startswith("dbfilesclient\\")]
+    if dbc:
+        raise SystemExit(f"map-poi must not ship DBC files: {dbc}")
+    if out.exists():
+        out.unlink()
+    out.parent.mkdir(parents=True, exist_ok=True)
+    with mpq.Archive.create(out, max_files=max(16, len(files) * 2)) as archive:
+        for path, name in files:
+            archive.add_file(path, name)
+
+    # 5. Verify what the client will read, not what we intended to write.
+    failures = []
+    with mpq.Archive(out) as archive:
+        info = archive.inspect()
+        if info["format"] != "MPQ v1":
+            failures.append(f"format is {info['format']}, expected MPQ v1")
+        packed = {entry.name: entry for entry in archive.list_files()}
+        for path, name in files:
+            if name not in packed:
+                failures.append(f"missing from archive: {name}")
+                continue
+            result = archive.verify_file(name)
+            if not result.ok:
+                failures.append(f"verify failed: {name} flags={result.flags:#x}")
+            if archive.sha256(name) != mpq.sha256_file(path):
+                failures.append(f"sha256 mismatch: {name}")
+    if failures:
+        for failure in failures:
+            print(f"error: {failure}", file=sys.stderr)
+        return 1
+
+    # 6. Manifest. The archive hash is recorded after packing; a rebuild changes it.
+    with mpq.Archive(out) as archive:
+        info = archive.inspect()
+        entries = [
+            {
+                "path": entry.name,
+                "size": entry.size,
+                "compressed_size": entry.compressed_size,
+                "sha256": archive.sha256(entry.name),
+                "verify_flags": archive.verify_file(entry.name).flags,
+            }
+            for entry in sorted(archive.list_files(), key=lambda item: item.name.lower())
+        ]
+    sources = []
+    addon_prefix = ADDON_PATH + "\\"
+    for path, name in files:
+        if name.startswith(addon_prefix):
+            source = "data/client-patches/map-poi/src/ServerMapPOI/" + name[len(addon_prefix):].replace("\\", "/")
+        elif name == ARCHIVE_PATH:
+            source = f"canary: {rel_client(source_archive, client)}"
+        else:
+            source = rel(path)
+        sources.append(
+            {
+                "path": name,
+                "source": source,
+                "sha256": mpq.sha256_file(path),
+            }
+        )
+    manifest = {
+        "schema": 1,
+        "archive": out.name,
+        "sha256": info["sha256"],
+        "size": info["size"],
+        "format": info["format"],
+        "compression": "zlib",
+        "built_at": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds"),
+        "dbc_files": 0,
+        "load_order": {
+            "client": "3.3.5a enUS",
+            "locale": LOCALE,
+            "order": "english",
+            "canary_path": ARCHIVE_PATH,
+            "canary_source_archive": rel_client(source_archive, client),
+            "canary_source_sha256": original_hash,
+            "canary_output_sha256": mpq.sha256_file(framedump),
+            "canary_block_sha256": mpq.sha256_bytes(canary),
+            "expected_winner": "Data/patch-Z.MPQ",
+            "source_sources_low_to_high": [
+                rel_client(path, client)
+                for path in which.sources
+                if path.name.lower() != "patch-z.mpq"
+            ],
+            "skipped_unreadable": [rel_client(path, client) for path in which.skipped],
+        },
+        "sources": sources,
+        "entries": entries,
+    }
+    if gen_metadata:
+        manifest["poi_sources"] = {
+            "generated": gen_metadata["generated"],
+            "world_map_area": gen_metadata["world_map_area"],
+            "dungeon_map": gen_metadata["dungeon_map"],
+        }
+    manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+    print(f"wrote {out}")
+    print(f"  sha256: {info['sha256']}")
+    print(f"  files:  {len(entries)}")
+    print(f"  canary: {ARCHIVE_PATH} from {source_archive}")
+    print(f"wrote {manifest_path}")
+    print()
+    print("Install (client closed):")
+    print(f"  cp {rel(out)} <client>/Data/patch-Z.MPQ")
+    print("Rollback:")
+    print("  rm <client>/Data/patch-Z.MPQ")
+    return 0
+
+
+def source_errors(expected: dict, root: Path = ROOT) -> list[str]:
+    errors = []
+    entries = {
+        entry["source"]: entry
+        for entry in expected.get("sources", [])
+        if entry.get("source", "").startswith(ADDON_SOURCE_PREFIX)
+    }
+    if not entries:
+        errors.append("manifest has no addon source hashes")
+    addon_dir = root / ADDON_SOURCE_PREFIX
+    local = {
+        path.relative_to(root).as_posix(): path
+        for path in addon_dir.rglob("*")
+        if path.is_file() and path.name != ".DS_Store"
+    }
+    for source in sorted(set(entries) | set(local)):
+        if source not in local:
+            errors.append(f"missing addon source: {source}")
+        elif source not in entries:
+            errors.append(f"addon source not in manifest: {source}")
+        elif mpq.sha256_file(local[source]) != entries[source].get("sha256"):
+            errors.append(f"addon source changed: {source}")
+    canary_expected = (expected.get("load_order") or {}).get("canary_block_sha256")
+    canary_path = root / CANARY_SOURCE
+    if not canary_expected:
+        errors.append("manifest has no canary block hash")
+    elif not canary_path.is_file():
+        errors.append(f"missing canary source: {CANARY_SOURCE}")
+    elif mpq.sha256_file(canary_path) != canary_expected:
+        errors.append(f"canary source changed: {CANARY_SOURCE}")
+    return errors
+
+
+def check(out: Path, manifest_path: Path) -> int:
+    if not out.is_file():
+        raise SystemExit(f"patch not found: {out}")
+    if not manifest_path.is_file():
+        raise SystemExit(f"manifest not found: {manifest_path}")
+    expected = json.loads(manifest_path.read_text(encoding="utf-8"))
+    drift = source_errors(expected)
+    if drift:
+        for error in drift:
+            print(f"error: {error}", file=sys.stderr)
+        return 1
+    actual = mpq.sha256_file(out)
+    if actual != expected.get("sha256"):
+        print(
+            f"stale patch: sha256 {actual} != manifest {expected.get('sha256')}",
+            file=sys.stderr,
+        )
+        return 1
+    with mpq.Archive(out) as archive:
+        entries = {entry["path"]: entry for entry in expected.get("entries", [])}
+        packed = {entry.name for entry in archive.list_files()}
+        if set(entries) != packed:
+            print("entry list differs from manifest", file=sys.stderr)
+            return 1
+        for name, entry in entries.items():
+            if archive.sha256(name) != entry["sha256"]:
+                print(f"sha256 mismatch: {name}", file=sys.stderr)
+                return 1
+            if not archive.verify_file(name).ok:
+                print(f"verify failed: {name}", file=sys.stderr)
+                return 1
+    print(f"{out}: matches manifest ({actual})")
+    return 0
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument("--client", default=DEFAULT_CLIENT, help="client root containing Data/")
+    parser.add_argument("--out", default=str(DEFAULT_OUT))
+    parser.add_argument("--manifest", default=str(DEFAULT_MANIFEST))
+    parser.add_argument("--no-regenerate", action="store_true", help="use the committed Data.lua")
+    parser.add_argument("--check", action="store_true", help="verify the built patch against the manifest")
+    return build(parser.parse_args())
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -1,0 +1,91 @@
+{
+  "archive": "patch-Z.MPQ",
+  "built_at": "2026-11-23T10:54:07+00:00",
+  "compression": "zlib",
+  "dbc_files": 0,
+  "entries": [
+    {
+      "compressed_size": 1878,
+      "path": "Interface\\AddOns\\ServerMapPOI\\Data.lua",
+      "sha256": "3d593e32610f729963c04bc831e10834c897f5f6ba6161e7611af24a17200c7d",
+      "size": 7144,
+      "verify_flags": 80
+    },
+    {
+      "compressed_size": 5081,
+      "path": "Interface\\AddOns\\ServerMapPOI\\ServerMapPOI.lua",
+      "sha256": "db9dc309cf27c30d3682db6350b42cc54613e116027fd343b17aba1eece8ad8b",
+      "size": 15121,
+      "verify_flags": 80
+    },
+    {
+      "compressed_size": 197,
+      "path": "Interface\\AddOns\\ServerMapPOI\\ServerMapPOI.toc",
+      "sha256": "3eeb797f8a66d3501d29db6acf42bd182916f1a8facf9e26deebc21a4de2a90f",
+      "size": 237,
+      "verify_flags": 80
+    },
+    {
+      "compressed_size": 22528,
+      "path": "Interface\\FrameXML\\WorldMapFrame.lua",
+      "sha256": "8bac9f7dccf659fff5891d22b0a5fd401f3495bb70a10a0ce980f1095bda7fe1",
+      "size": 76447,
+      "verify_flags": 80
+    }
+  ],
+  "format": "MPQ v1",
+  "load_order": {
+    "canary_block_sha256": "ad087e160069352cd02fa009c9d6503cea5bf97e31f6e8ab8f60e1bdd3090644",
+    "canary_output_sha256": "8bac9f7dccf659fff5891d22b0a5fd401f3495bb70a10a0ce980f1095bda7fe1",
+    "canary_path": "Interface\\FrameXML\\WorldMapFrame.lua",
+    "canary_source_archive": "Data/enUS/patch-enUS-3.MPQ",
+    "canary_source_sha256": "e05b75b212cdda98f86beef35eb024aa1ff416a7164d08873c49b7ae1f3105c8",
+    "client": "3.3.5a enUS",
+    "expected_winner": "Data/patch-Z.MPQ",
+    "locale": "enUS",
+    "order": "english",
+    "skipped_unreadable": [],
+    "source_sources_low_to_high": [
+      "Data/enUS/locale-enUS.MPQ",
+      "Data/enUS/patch-enUS.MPQ",
+      "Data/enUS/patch-enUS-2.MPQ",
+      "Data/enUS/patch-enUS-3.MPQ"
+    ]
+  },
+  "poi_sources": {
+    "dungeon_map": {
+      "archive": "Data/patch-M.mpq",
+      "sha256": "34beae04678c69cf536946217106d3e935d65d833dc86c59d120e8f335e756e9"
+    },
+    "generated": "2026-11-23",
+    "world_map_area": {
+      "archive": "Data/patch-M.mpq",
+      "sha256": "c7361fae70d2f3136e98b8d19f86a594b3592a6ec3351e184eafb350db7d6503"
+    }
+  },
+  "schema": 1,
+  "sha256": "1aaf23a4140a092bdad1fa0cfa8b270e8d369faef38cff85e7915c9b4b055d3f",
+  "size": 30558,
+  "sources": [
+    {
+      "path": "Interface\\AddOns\\ServerMapPOI\\Data.lua",
+      "sha256": "3d593e32610f729963c04bc831e10834c897f5f6ba6161e7611af24a17200c7d",
+      "source": "data/client-patches/map-poi/src/ServerMapPOI/Data.lua"
+    },
+    {
+      "path": "Interface\\AddOns\\ServerMapPOI\\ServerMapPOI.lua",
+      "sha256": "db9dc309cf27c30d3682db6350b42cc54613e116027fd343b17aba1eece8ad8b",
+      "source": "data/client-patches/map-poi/src/ServerMapPOI/ServerMapPOI.lua"
+    },
+    {
+      "path": "Interface\\AddOns\\ServerMapPOI\\ServerMapPOI.toc",
+      "sha256": "3eeb797f8a66d3501d29db6acf42bd182916f1a8facf9e26deebc21a4de2a90f",
+      "source": "data/client-patches/map-poi/src/ServerMapPOI/ServerMapPOI.toc"
+    },
+    {
+      "path": "Interface\\FrameXML\\WorldMapFrame.lua",
+      "sha256": "8bac9f7dccf659fff5891d22b0a5fd401f3495bb70a10a0ce980f1095bda7fe1",
+      "source": "canary: Data/enUS/patch-enUS-3.MPQ"
+    }
+  ]
+}

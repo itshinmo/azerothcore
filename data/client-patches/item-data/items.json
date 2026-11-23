@@ -1,0 +1,222 @@
+[
+  {
+    "id": 901001,
+    "name": "Goldshire Ledger",
+    "class": 4,
+    "subclass": 0,
+    "sound_override_subclass": -1,
+    "material": 7,
+    "display_info_id": 54808,
+    "inventory_type": 23,
+    "sheathe_type": 0
+  },
+  {
+    "id": 901002,
+    "name": "Sentinel Hill Signal Lantern",
+    "class": 4,
+    "subclass": 0,
+    "sound_override_subclass": -1,
+    "material": 7,
+    "display_info_id": 36575,
+    "inventory_type": 23,
+    "sheathe_type": 0
+  },
+  {
+    "id": 901003,
+    "name": "Auberdine Tidecaller's Charm",
+    "class": 4,
+    "subclass": 0,
+    "sound_override_subclass": -1,
+    "material": 4,
+    "display_info_id": 9657,
+    "inventory_type": 2,
+    "sheathe_type": 0
+  },
+  {
+    "id": 901004,
+    "name": "Astranaar Moonguard Sigil",
+    "class": 4,
+    "subclass": 0,
+    "sound_override_subclass": -1,
+    "material": 1,
+    "display_info_id": 9845,
+    "inventory_type": 11,
+    "sheathe_type": 0
+  },
+  {
+    "id": 901005,
+    "name": "Booty Bay Smuggler's Coil",
+    "class": 4,
+    "subclass": 2,
+    "sound_override_subclass": -1,
+    "material": 8,
+    "display_info_id": 28802,
+    "inventory_type": 6,
+    "sheathe_type": 0
+  },
+  {
+    "id": 901006,
+    "name": "Gadgetzan Sandstorm Goggles",
+    "class": 4,
+    "subclass": 1,
+    "sound_override_subclass": -1,
+    "material": 7,
+    "display_info_id": 19563,
+    "inventory_type": 1,
+    "sheathe_type": 0
+  },
+  {
+    "id": 901007,
+    "name": "Marshal's Refuge Field Compass",
+    "class": 4,
+    "subclass": 0,
+    "sound_override_subclass": -1,
+    "material": 3,
+    "display_info_id": 6562,
+    "inventory_type": 12,
+    "sheathe_type": 0
+  },
+  {
+    "id": 901008,
+    "name": "Everlook Frostweave Blanket",
+    "class": 4,
+    "subclass": 1,
+    "sound_override_subclass": -1,
+    "material": 7,
+    "display_info_id": 23136,
+    "inventory_type": 16,
+    "sheathe_type": 0
+  },
+  {
+    "id": 901009,
+    "name": "Light's Hope Prayer Beads",
+    "class": 4,
+    "subclass": 0,
+    "sound_override_subclass": -1,
+    "material": 4,
+    "display_info_id": 32008,
+    "inventory_type": 2,
+    "sheathe_type": 0
+  },
+  {
+    "id": 901010,
+    "name": "Brill Gravedigger's Spade",
+    "class": 2,
+    "subclass": 5,
+    "sound_override_subclass": -1,
+    "material": 2,
+    "display_info_id": 8585,
+    "inventory_type": 17,
+    "sheathe_type": 1
+  },
+  {
+    "id": 901011,
+    "name": "Shimmering Flats Salt Goggles",
+    "class": 4,
+    "subclass": 2,
+    "sound_override_subclass": -1,
+    "material": 8,
+    "display_info_id": 18322,
+    "inventory_type": 1,
+    "sheathe_type": 0
+  },
+  {
+    "id": 901012,
+    "name": "Feathermoon Sentinel's Longbow",
+    "class": 2,
+    "subclass": 2,
+    "sound_override_subclass": -1,
+    "material": 2,
+    "display_info_id": 28543,
+    "inventory_type": 15,
+    "sheathe_type": 0
+  },
+  {
+    "id": 901013,
+    "name": "Honor Hold Bulwark Fragment",
+    "class": 4,
+    "subclass": 6,
+    "sound_override_subclass": -1,
+    "material": 1,
+    "display_info_id": 40781,
+    "inventory_type": 14,
+    "sheathe_type": 0
+  },
+  {
+    "id": 901014,
+    "name": "Cenarion Refuge Sporeling Charter",
+    "class": 4,
+    "subclass": 0,
+    "sound_override_subclass": -1,
+    "material": 7,
+    "display_info_id": 44544,
+    "inventory_type": 23,
+    "sheathe_type": 0
+  },
+  {
+    "id": 901015,
+    "name": "Garadar Ancestor's Totem",
+    "class": 4,
+    "subclass": 0,
+    "sound_override_subclass": -1,
+    "material": 3,
+    "display_info_id": 37552,
+    "inventory_type": 12,
+    "sheathe_type": 0
+  },
+  {
+    "id": 901016,
+    "name": "Area 52 Telemetric Rod",
+    "class": 2,
+    "subclass": 19,
+    "sound_override_subclass": -1,
+    "material": 2,
+    "display_info_id": 43449,
+    "inventory_type": 26,
+    "sheathe_type": 0
+  },
+  {
+    "id": 901017,
+    "name": "Valiance Keep Winter Cloak",
+    "class": 4,
+    "subclass": 1,
+    "sound_override_subclass": -1,
+    "material": 7,
+    "display_info_id": 50050,
+    "inventory_type": 16,
+    "sheathe_type": 0
+  },
+  {
+    "id": 901018,
+    "name": "Amberpine Trapper's Knife",
+    "class": 2,
+    "subclass": 15,
+    "sound_override_subclass": -1,
+    "material": 1,
+    "display_info_id": 52445,
+    "inventory_type": 13,
+    "sheathe_type": 3
+  },
+  {
+    "id": 901019,
+    "name": "K3 Surveyor's Sextant",
+    "class": 4,
+    "subclass": 0,
+    "sound_override_subclass": -1,
+    "material": 3,
+    "display_info_id": 34188,
+    "inventory_type": 12,
+    "sheathe_type": 0
+  },
+  {
+    "id": 901020,
+    "name": "Crusader's Oathband",
+    "class": 4,
+    "subclass": 0,
+    "sound_override_subclass": -1,
+    "material": 1,
+    "display_info_id": 35313,
+    "inventory_type": 11,
+    "sheathe_type": 0
+  }
+]

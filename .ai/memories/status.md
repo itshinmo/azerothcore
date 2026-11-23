@@ -46,6 +46,51 @@ last-verified: 2026-11-22 (23bf75546; bot rig paused; manual verification is the
   `data/sql/custom/db_world/collections_npc_spawns.sql`,
   `data/sql/custom/db_world/collections_guard_directions.sql`, ADR-026, spec, ID registry, this
   status.
+## Session record — 2026-11-23 (client-patch pipeline + map POI v1)
+
+Built the first MPQ-only client patch family and the tooling; merged into `local-server-setup`.
+
+- **Pipeline** ([ADR-027](../../decisions/ADR-027-client-patch-pipeline.md),
+  [specs/client-patch.md](../../specs/client-patch.md),
+  [runbook/operation/client-patch.md](../../runbook/operation/client-patch.md)): `tools/client-patch/`
+  wraps StormLib 9.40 (`brew install stormlib`, `/opt/homebrew/lib/libstorm.dylib`) with
+  `inspect/list/which/extract/pack/verify/manifest`. MPQ v1, zlib, listfile and attributes.
+  Safe extraction rejects traversal and symlink escapes. `which` models the English 3.3.5 chain.
+- **Map POI layer** ([ADR-032](../../decisions/ADR-032-map-poi-layer.md)):
+  `data/client-patches/map-poi/` builds `dist/patch-Z.MPQ`
+  (`sha256 1aaf23a4140a092bdad1fa0cfa8b270e8d369faef38cff85e7915c9b4b055d3f`, 30,558 bytes, 4 entries,
+  0 DBC). Contents: `ServerMapPOI` addon (24 static markers: 10 Warpweaver entry `910012`, 12 PvP
+  vendor clusters, 2 skull world-boss examples; red overlay on Wintergrasp/SAA/IoC; dynamic
+  world-boss/Crow's Cache hooks; Outlaw visual contract: `SMPOI` v2 `AUTH` token, 5 s server
+  throttle, same-zone exact / same-continent coarse, hidden in instances/BGs/arenas, 15 s TTL,
+  kill-feed chat line) plus a canary appended to the whole `Interface\FrameXML\WorldMapFrame.lua`
+  copied from `Data/enUS/patch-enUS-3.MPQ` (source sha256 `e05b75b2...`). POI coordinates are generated
+  from `WorldMapArea.dbc`/`DungeonMap.dbc` in `Data/patch-M.mpq`; zone maps are rotated (map X follows
+  world Y, map Y follows world X). Dalaran's Warpweaver now follows the SQL/live `5842.8, 721.8`
+  Simply Enchanting spawn (about 39.8, 40.5 on the micro-map); the arena-vendor pair stays the only
+  imported approximation.
+- **Item data** ([ADR-027](../../decisions/ADR-027-client-patch-pipeline.md),
+  [item-data README](../../data/client-patches/item-data/README.md)): `patch-X.MPQ` archive
+  `sha256 9ddd80c9fda95647c393a00fb2c0d2db706185b59c05364ce00d3899e95c1d50`, 320,268 bytes; it carries
+  only `DBFilesClient\Item.dbc`, output `sha256 ab6b3f61e901babd4e14a2c87aaffeab8e34158ee8ab033a074d9b4360218f13`,
+  1,475,733 bytes, rows 46,096 -> 46,116, 20 added IDs 901001-901020. Source
+  `Data/enUS/patch-enUS-3.MPQ` Item.dbc (`sha256 d455bc30...`); 8 fields, 32-byte rows, sorted,
+  display IDs checked against ItemDisplayInfo.dbc. `items.json` is generated/validated against the
+  frozen world-treasure CSV/SQL and the server `item_dbc` mirror; `dist/Item.dbc` is the matching
+  server-side copy. A full server Item.dbc replacement must pass the `--server-dbc` union check;
+  `item_dbc` table rows are the separate deployment path.
+- **Load order**: English client base alphabetic patches load last; project family X < Y < Z all load
+  after Reforged U. `patch-Z` wins map/UI, `patch-X` wins Item.dbc, and only X carries a DBC.
+  `patch-Y` is the white-model patch from `fix-journal-white-models`
+  (`sha256 b236c1c35d2714a0e6423e87a934256fbace13168951d2c5144b0ca30016f524`, 616,530 bytes); this
+  branch cross-references it and does not rebuild it. Verified with `which` on a symlinked `Data`
+  tree; owner in-client test pending. Non-English locale chains are not supported by this family.
+- **Tests**: `python3 -m unittest discover -s tools/client-patch/tests -v` 31 pass; `client_patch.py
+  verify --manifest` ok; both `build.py --check` pass; Lua syntax gate via luajit. `patch-X` and
+  `patch-Y` and `patch-Z` are installed in `~/Games/wotlk-clean/Data` with matching hashes. The binary
+  `.gitattributes` rules (`*.MPQ`, `*.mpq`, `*.dbc`, `*.blp`, `*.m2`, `*.skin`, `*.anim`) are in this
+  branch too.
+
 
 ## Session record — 2026-11-22 (collections playtest fixes)
 
@@ -635,13 +680,16 @@ Remaining:
    [runbook/audits/2026-11-19-manual-instance-runs.md](../../runbook/audits/2026-11-19-manual-instance-runs.md).
    Onyxia's Lair (the level-80 rework) is verified on a player report like the rest.
 
-### Client-patch pipeline (next)
+### Client-patch pipeline (in progress)
 
-- Build `tools/client-patch/`: inspect the client MPQs, build a late-loading patch MPQ, verify hashes
-  and load order; document in `runbook/` with an ADR.
-- Targets, in order: the white dungeon/raid preview models and the character-creation armor toggle
-  (glue patch). The dual-wield and thrown transmog previews no longer need the client pipeline;
-  they are solved by generated preview items (ADR-026 revision, 2026-11-23).
+- Built `tools/client-patch/` and the `patch-X/Y/Z` family: X item data, Y white preview models,
+  Z map POI layer. Owner in-client test is the remaining gate. See the 2026-11-23 session record and
+  [ADR-027](../../decisions/ADR-027-client-patch-pipeline.md).
+- Next targets, in order: the character-creation armor toggle (glue patch) and the race/class
+  combination DBC rows (`patch-V`, proposal).
+- Mythic+ item rows are not in `patch-X` yet. The proposed ranges are `1100000-1899999` (obtainable)
+  and `1900000-1999999` (QA) in the `feat/mythic-plus` worktree; generate their Item.dbc rows from
+  `item_template` when the rows exist. Do not hand-write the range.
 
 ### Phase 2 — custom content
 

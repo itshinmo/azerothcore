@@ -25,6 +25,8 @@ change updates its spec in the same change.
 - [`transmog.md`](transmog.md) — transmogrifier-only appearance changes, Journal tab visibility, client-side preview.
 - [`objectives.md`](objectives.md) — shared objective engine, Adventure Board, Chronicle, resets, zone focus, reroll, addon protocol.
 - [`rewards.md`](rewards.md) — Adventure Marks, Mythic Coins, Raider's Commendations and the vendor spend path.
+- [`client-patch.md`](client-patch.md) — project client patch pipeline: MPQ v1, load order,
+  whole-file replacement, manifest.
 - [`gm-tools.md`](gm-tools.md) — GM handbook, RBAC, audit, GM API, future website, in-game addon.
 - [`gm-api.openapi.yaml`](gm-api.openapi.yaml) — wire contract for the GM API endpoints
   (machine-readable; skips the prose spec template on purpose).

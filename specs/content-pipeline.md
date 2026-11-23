@@ -13,7 +13,9 @@ the split between SQL, C++ scripts, modules, and client data.
 ## Boundary
 
 Owns content storage and loading. Does not own individual content design; that belongs in a content
-spec. Does not own the client patch pipeline, which is documented but not implemented.
+spec. Client-side delivery is owned by [client-patch.md](client-patch.md) and
+[ADR-027](../decisions/ADR-027-client-patch-pipeline.md); this spec only states when client data is
+required.
 
 ## Contract
 
@@ -25,7 +27,7 @@ spec. Does not own the client patch pipeline, which is documented but not implem
 | Upstream-shaped fix | `data/sql/updates/pending_db_world/` | one-time; follows SQL lint |
 | C++ behavior | `modules/mod-*` | preferred over core edits or `scripts/Custom/` |
 | Core script | `src/server/scripts/` | only for upstream behavior; not project content |
-| Client assets | external client patch | DBC/MPQ plus map/vmap/mmap extraction |
+| Client assets | `data/client-patches/<feature>/` | MPQ-only project patch plus map/vmap/mmap extraction; see [client-patch.md](client-patch.md) |
 
 ### Reserved IDs
 
@@ -84,7 +86,8 @@ recorded there before use.
 - New maps, zones, item icons/models, spell visuals, creature displays, and area triggers need a
   client MPQ/DBC patch.
 - After a client patch, run the extractors for `maps/`, `vmaps/`, `mmaps/`, and update `DataDir`.
-- Reuse existing assets until the client-patch pipeline is documented and approved.
+- Client patches follow [client-patch.md](client-patch.md): MPQ-only, whole-file replacement, and the
+  source-of-truth DBC rule. Reuse existing client assets when the patch would add none.
 
 ### Verification
 
