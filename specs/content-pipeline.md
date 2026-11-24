@@ -78,6 +78,61 @@ recorded there before use.
 - Client Map.dbc/MapDifficulty.dbc/AreaTrigger.dbc rows if the map is new.
 - Server `maps/`, `vmaps/`, `mmaps/` files extracted from the patched client.
 
+### Item balance
+
+Never invent item numbers. Derive them from stock peers with the same `class`, `subclass`,
+`InventoryType` and `Quality`: `ItemLevel` within +/-5 first; if that yields fewer than five peers,
+widen to +/-8, then to the nearest ten items. Restrict stat peers to items sharing at least one stat
+type with the new item, so a crit trinket is not compared with a spell-power trinket; apply that
+filter by hand (or as an extra `AND` in the query) before taking the median, and count peers after
+the filter. Do not average armor across qualities: armor scales with quality, so a rare chest must be
+compared with rare peers. Count only peers that carry at least one stat when taking the stat median;
+a slot where most peers are statless would otherwise demand zero stats. Take the armor median from
+every armored peer, statless ones included, and only for slots that carry armor; a trinket or ring
+keeps `armor = 0`.
+
+- Target 90% of the peer median for a treasure or exploration reward. Never above the peer median,
+  except a sparse slot (fewer than five filtered peers), which may sit anywhere at or below the
+  highest observed peer.
+- Split the budget across 2-3 stats that fit the slot; prefer one primary stat plus a secondary.
+  A single stat is allowed where the slot's peers are single-stat (for example a green cloak with
+  only stamina). Never add a stat the slot does not use.
+- Armor: peer median * 0.97, copied from peers, never invented. If fewer than three exact-quality
+  peers exist, use the nearest lower-quality peer as a documented exception and cap the result at
+  0.97 × that peer's armor.
+- Uniqueness (`maxcount`) stays a separate rule; see [world-treasures.md](world-treasures.md).
+- Record the peer count, the medians and the resulting numbers in the commit message so a later
+  reviewer can reproduce them. The batch CSV has no stat columns on purpose.
+- A sparse slot is one with fewer than five peers after the shared-stat-type filter. Run the ladder
+  above, record the item as an exception in the commit message, and keep it at or below the highest
+  observed peer; never above it.
+
+```sql
+SET @class = 4, @subclass = 1, @slot = 16, @ilvl = 55, @quality = 2;
+-- Band ladder when peers < 5: +/-5, then +/-8, then the nearest ten items.
+-- Add the shared-stat-type filter by hand for trinkets and other mixed slots.
+
+-- Stat median: peers that carry at least one stat.
+SELECT MAX(n) AS peers,
+       ROUND(AVG(CASE WHEN sr IN ((n+1) DIV 2, (n+2) DIV 2) THEN s END)) AS median_stat_sum
+FROM (SELECT s, COUNT(*) OVER () n, ROW_NUMBER() OVER (ORDER BY s) sr
+      FROM (SELECT stat_value1 + stat_value2 + stat_value3 + stat_value4 + stat_value5 AS s
+            FROM item_template
+            WHERE class = @class AND subclass = @subclass AND InventoryType = @slot
+              AND Quality = @quality AND ItemLevel BETWEEN @ilvl - 5 AND @ilvl + 5
+              AND entry < 900000
+              AND stat_value1 + stat_value2 + stat_value3 + stat_value4 + stat_value5 > 0) p) r;
+
+-- Armor median: every armored peer, statless ones included. Run it only for armor slots.
+SELECT MAX(n) AS peers,
+       ROUND(AVG(CASE WHEN ar IN ((n+1) DIV 2, (n+2) DIV 2) THEN armor END)) AS median_armor
+FROM (SELECT armor, COUNT(*) OVER () n, ROW_NUMBER() OVER (ORDER BY armor) ar
+      FROM item_template
+      WHERE class = @class AND subclass = @subclass AND InventoryType = @slot
+        AND Quality = @quality AND ItemLevel BETWEEN @ilvl - 5 AND @ilvl + 5
+        AND entry < 900000 AND armor > 0) p;
+```
+
 ### SmartAI
 
 - Prefer SmartAI for data-driven creature behavior.

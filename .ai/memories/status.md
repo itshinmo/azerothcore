@@ -20,6 +20,31 @@ last-verified: 2026-11-22 (23bf75546; bot rig paused; manual verification is the
   remain out of scope until the base game is done.
 - Branch: `local-server-setup` is the integration branch. Confirm with `git status`.
 
+## Session record — 2026-11-24 (treasure placement, chest fix, item balance)
+
+- **Unlocked chests were unclickable.** `GameObject::Use` had no `GAMEOBJECT_TYPE_CHEST` case; most
+  stock chests carry a lock and the client casts the opening spell, so the gap only showed on
+  lockless chests. The missing branch now sends `SendLoot(..., LOOT_SKINNING)` — the same call
+  `Spell::EffectOpenLock` makes. `LOOT_CORPSE` is refused for spawned-by-default objects with a
+  respawn time, which is why the first attempt still failed silently.
+- **GM placement tool.** `modules/mod-treasure-placer`, permission `950152` (content-tester + admin):
+  `.treasure list|preview|save|export|clear`. Preview is a 10-minute temp chest; `save` records the
+  preview's position and facing; `export` prints map/XYZ/orientation/rotation quaternion. Runbook:
+  `runbook/gm/treasure-placer.md`, including the `/chatlog` capture procedure.
+- **Nine chests re-placed** from the owner's in-game pass (Goldshire, Auberdine, Gadgetzan,
+  Marshal's Refuge, Brill, Shimmering Flats, Cenarion Refuge, Valiance Keep, Amberpine). Coordinates
+  are in `world_treasures_batch_01.sql` and `specs/world-treasures/batch_01.csv`.
+- **Items rebalanced** against same-slot/quality/level stock peers; rule in
+  [content-pipeline.md](../../specs/content-pipeline.md#item-balance).
+- **White humanoid NPCs: root cause identified (no fix yet).** Every reported boss is a
+  `CreatureDisplayInfoExtra` NPC (a player-model NPC with a baked texture); every fine one is a plain
+  `CreatureDisplayInfo` with a fixed model. The Ascension HD race models moved 12-38% of the naked
+  body onto texture types other than the type-1 skin slot, and a bake only fills the skin slot, so
+  the rest draws white. Skeleton is the extreme: 100% of the body is on type 11. Mordresh Fire Eye
+  is a second, separate defect: `patch-C` remaps model 912 from `SkeletonNaked` to
+  `Character\skeleton\male` and gives display 8055 a human bake. The fix shape is a stock-model
+  revert archive (~25 MB) plus a DBC revert for the skeleton. Not implemented.
+
 ## Session record — 2026-11-23 (objectives, PvP, client patch family)
 
 - **Adventure Board and Chronicle live.** `mod-objectives` merged and applied: 25 tasks across

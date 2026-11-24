@@ -53,9 +53,11 @@ restock timer.
 
 - Non-instanced open-world locations only.
 - Coordinates must be on valid floor and verified in-game. The batch-1 first pass used guessed
-  offsets and produced nine blocked or floating chests; use the placement tool below and save the
-  position of the preview chest. The CSV records the final position; the content note names the
-  landmark.
+  offsets and produced nine blocked or floating chests; all nine were re-placed from in-game
+  `.treasure save` positions on 2026-11-24. Floor and reachability of the new positions are still
+  awaiting the owner's re-check; keep this line until it passes. Use the placement tool below and
+  save the position of the preview chest. The CSV records the final position; the content note names
+  the landmark.
 - No overlap with an existing spawn: at least 1.5 yards from an existing gameobject and at least 2
   yards from an existing creature, measured in 3D.
 - Iconic, era-appropriate locations. Batch 1 visits inns, towers, chapels, auction houses, expedition
@@ -90,6 +92,16 @@ current global `gameobject` maximum and record the block in
 - `BuyPrice = 0` and `SellPrice = 0`; the item cannot be converted into gold through a vendor.
 - No item has a random property or random suffix.
 
+Item numbers follow the [Item balance](content-pipeline.md#item-balance) rule: peers with the same
+class, subclass, slot, quality and item-level band, then 90% of the peer median, split across 2-3
+stats. Batch 1 was rebalanced this way on 2026-11-24 after the first playtest. The largest
+corrections were `901005` (armor 71 to 110, matching rare leather belts), `901006` (armor 57 to 53,
+matching rare cloth), and the stat spreads on `901014` (-10), `901016` (-11), `901018` (-10) and
+`901019` (-15); `901008`, `901013`, `901017` and `901020` were the other large ones. Five items
+(`901013`, `901014`, `901015`, `901018`, `901019`) have fewer than five stock peers in their slot
+after the shared-stat-type filter; each is recorded as a sparse-peer exception and sits at or below
+the highest observed peer, never above it.
+
 ### IDs
 
 Items use `901000+`. Gameobject entries and their loot tables use `930000+`. Spawn GUIDs are a
@@ -101,9 +113,12 @@ The batch-1 SQL is
 
 Use the GM-only `.treasure` command (`modules/mod-treasure-placer`, RBAC `950152`):
 
-1. `.treasure preview 901001` spawns a temporary chest 1.5 yards ahead for 10 minutes; no DB write.
-2. Stand on the final spot and `.treasure save 901001`; the saved position is the preview chest's
-   position when one is active.
+1. Stand 1.5 yards behind the intended spot, facing it. `.treasure preview 901001` spawns a temporary
+   chest 1.5 yards in front of you, on that spot, for 10 minutes; no DB write.
+2. Adjust your position until the preview sits right, then `.treasure save 901001`. `save` records
+   the preview chest's position, so the saved point is where the chest stands, not your feet. If the
+   preview expired (600 s), died, or you changed map, `save` silently falls back to your standing
+   position; re-preview before saving.
 3. `.treasure export` prints `UPDATE gameobject` lines with map, position, orientation and the
    rotation quaternion.
 4. Copy the values into the spawn `INSERT` tuple in the batch SQL and into the matching
@@ -153,7 +168,7 @@ batch workflow are in [specs/world-treasures/README.md](world-treasures/README.m
 | 901007 | Marshal's Refuge Field Compass | Classic / Un'Goro Crater | Battered chest 259 / Smotts' Compass 6562 | rare / BoE | A field compass at Marshal's Refuge, the Un'Goro expedition camp. |
 | 901008 | Everlook Frostweave Blanket | Classic / Winterspring | Basket 644 / Mystical Cape 23136 | uncommon / BoE | A winter blanket from the Everlook inn in Winterspring. |
 | 901009 | Light's Hope Prayer Beads | Classic / Eastern Plaguelands | Chest 41 (Benedict's Chest) / Scout's Medallion 32008 | rare / BoP | Prayer beads from Light's Hope Chapel, the Argent Dawn outpost. |
-| 901010 | Brill Gravedigger's Spade | Classic / Tirisfal Glades | Wooden chest 10 / Battering Hammer 8585 | uncommon / BoE | A gravedigger's spade from Brill, the Forsaken starting hub. |
+| 901010 | Brill Gravedigger's Spade | Classic / Undercity | Wooden chest 10 / Battering Hammer 8585 | uncommon / BoE | A gravedigger's spade from Brill, placed in the Undercity trade quarter. |
 | 901011 | Shimmering Flats Salt Goggles | Classic / Thousand Needles | Supply crate 336 / Adventurer's Pith Helmet 18322 | uncommon / BoE | Salt goggles from the Mirage Raceway in the Shimmering Flats. |
 | 901012 | Feathermoon Sentinel's Longbow | Classic / Feralas | Battered chest 259 / Harpy Needler 28543 | rare / BoE | A longbow from Feathermoon Stronghold in Feralas. |
 | 901013 | Honor Hold Bulwark Fragment | TBC / Hellfire Peninsula | Adamantite chest 5744 / Emperor Shield 40781 | rare / BoE | A shield splinter from Honor Hold, the Alliance foothold in Hellfire. |
@@ -171,8 +186,9 @@ batch workflow are in [specs/world-treasures/README.md](world-treasures/README.m
 2. ID check: item entries, gameobject entries, loot entries, and spawn GUIDs are free in the local
    world database before the batch is applied.
 3. Spawn overlap check: for every CSV row, select creatures and gameobjects on the same map within
-   6 yards in 3D. Batch 1 minimums are 1.89 yards to an existing gameobject (Goldshire food crate)
-   and 2.86 yards to an existing creature (Goldshire Barkeep Dobbins). No spawn is coincident.
+   6 yards in 3D. After the 2026-11-24 re-place, batch 1 minimums are 2.27 yards to an existing
+   gameobject (Astranaar) and 2.90 yards to an existing creature (Everlook). No spawn is
+   coincident.
 4. Unique check: all 20 item rows have `maxcount = 1`; all 20 loot rows have one item, 100% chance,
    `MinCount = 1`, `MaxCount = 1`; item and loot entries are one-to-one.
 5. Model check: every item display id and gameobject display id belongs to an existing template of

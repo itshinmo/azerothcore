@@ -1668,7 +1668,9 @@ void GameObject::Use(Unit* user)
                 if (GetGOInfo()->GetLockId())
                     return;
 
-                user->ToPlayer()->SendLoot(GetGUID(), LOOT_CORPSE);
+                // Match EffectOpenLock: LOOT_CORPSE is refused for a spawned-by-default
+                // object that still has a respawn time.
+                user->ToPlayer()->SendLoot(GetGUID(), LOOT_SKINNING);
                 return;
             }
         case GAMEOBJECT_TYPE_TRAP:                          //6

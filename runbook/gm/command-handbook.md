@@ -81,6 +81,19 @@ Do not use `.gm on` during combat to avoid a test. Use the e2e damage helpers.
 
 Temporary spawns must be removed after the test. Permanent spawns need tracked SQL, not `.npc add`.
 
+### Treasure placement
+
+```text
+.treasure list
+.treasure preview <item>
+.treasure save <item>
+.treasure export
+.treasure clear
+```
+
+GM-only (`950152`). A preview is temporary and never writes the database. Procedure:
+[treasure-placer.md](treasure-placer.md).
+
 ## Quests
 
 ```text

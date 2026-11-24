@@ -59,6 +59,7 @@ I do it"; behavior lives in `specs/`.
 
 - [command-handbook.md](gm/command-handbook.md) — command reference and danger levels.
 - [command-index.md](gm/command-index.md) — generated command and RBAC permission index.
+- [treasure-placer.md](gm/treasure-placer.md) — place, verify and export world treasure chest positions with `.treasure`.
 - [rbac-roles.md](gm/rbac-roles.md) — least-privilege roles.
 - [audit.md](gm/audit.md) — GM command audit table, queries, redaction, failure behavior.
 - [gm-api.md](gm/gm-api.md) — GM API, HMAC auth, actor identity, RBAC, audit, endpoints.
