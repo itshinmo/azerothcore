@@ -114,6 +114,7 @@ the work is merged or abandoned. Procedure:
 |------|----------------|
 | documenter | requirements to specs, ADRs, RFCs, runbooks |
 | content-author | future content design and SQL drafts |
+| game-designer | abuse analysis, mitigation cost, shop angle |
 | implementer | C++ and script changes to spec |
 | db-admin | schema, queries, DBeaver, migrations, backups |
 | reviewer | correctness, security, regression, spec drift |

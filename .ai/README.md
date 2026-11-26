@@ -58,15 +58,16 @@ Load only what the task needs.
 
 ### Agents
 
-Order: documenter → content-author / db-admin / implementer → verifier → human review → reviewer →
-commit on request. pr-shepherd on request.
+Order: documenter → content-author → game-designer → implementer → db-admin → verifier → human review →
+reviewer → commit on request. pr-shepherd on request.
 
 - [`documenter.md`](agents/documenter.md) — requirements to specs, ADRs, RFCs, runbooks.
 - [`content-author.md`](agents/content-author.md) — future content design and SQL drafts.
+- [`game-designer.md`](agents/game-designer.md) — abuse analysis, mitigation cost, shop angle.
 - [`implementer.md`](agents/implementer.md) — C++ and script changes to spec.
 - [`db-admin.md`](agents/db-admin.md) — schema, queries, DBeaver, migrations, backups.
-- [`reviewer.md`](agents/reviewer.md) — strict gate: correctness, security, regression, spec drift.
 - [`verifier.md`](agents/verifier.md) — build, unit/e2e, smoke, manual evidence.
+- [`reviewer.md`](agents/reviewer.md) — strict gate: correctness, security, regression, spec drift.
 - [`server-operator.md`](agents/server-operator.md) — local/test start-stop, SQL apply, backups, logs.
 - [`pr-shepherd.md`](agents/pr-shepherd.md) — GitHub PR review and follow-up, drafts only.
 
