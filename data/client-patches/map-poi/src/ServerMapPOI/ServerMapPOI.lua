@@ -128,13 +128,33 @@ local function CreatePin(poi)
     return pin
 end
 
-local function SetPinPosition(pin, x, y)
+-- Several markers can share one world position: every battleground emissary in a city stands in
+-- the same spot, and 131 pins sit on only 22 distinct coordinates (worst case six on one point).
+-- Drawing them all at the exact centre leaves only the topmost hoverable. Fan them out on a small
+-- deterministic ring instead: the same pin always keeps the same offset, so nothing jitters
+-- between refreshes.
+local STACK_RADIUS = 14
+local STACK_GOLDEN = 2.399963229728653  -- golden angle in radians
+
+local function stackOffset(index)
+    if index <= 1 then
+        return 0, 0
+    end
+    -- Slot 1 is the centre; the next six share the first ring, then the next six a wider one.
+    -- A zero radius here would pile every slot onto the centre, which is the bug this replaces.
+    local radius = STACK_RADIUS * math.ceil((index - 1) / 6)
+    local angle = STACK_GOLDEN * (index - 1)
+    return math.cos(angle) * radius, math.sin(angle) * radius
+end
+
+local function SetPinPosition(pin, x, y, slot)
+    local offset_x, offset_y = stackOffset(slot or 1)
     pin:SetPoint(
         "CENTER",
         WorldMapButton,
         "TOPLEFT",
-        x * WorldMapButton:GetWidth(),
-        -y * WorldMapButton:GetHeight()
+        x * WorldMapButton:GetWidth() + offset_x,
+        -y * WorldMapButton:GetHeight() + offset_y
     )
     return true
 end
@@ -149,7 +169,7 @@ local function ZoneMapPosition(zone, worldX, worldY)
         (bounds.xMax - worldX) / (bounds.xMax - bounds.xMin)
 end
 
-local function PositionPin(pin)
+local function PositionPin(pin, slot)
     local poi = pin.poi
     local x, y = poi.mapX, poi.mapY
     if not x or not y then
@@ -159,7 +179,7 @@ local function PositionPin(pin)
         end
         poi.mapX, poi.mapY = x, y
     end
-    return SetPinPosition(pin, x, y)
+    return SetPinPosition(pin, x, y, slot)
 end
 
 function Frame:GetPins()
@@ -285,6 +305,11 @@ function Frame:Refresh()
     local inInstance = IsInInstance and IsInInstance() or false
     local dungeonLevel = GetCurrentMapDungeonLevel and GetCurrentMapDungeonLevel() or 0
     local pins = self:GetPins()
+
+    -- Visibility first, then stack slots. Only pins that actually share a coordinate are spread:
+    -- every emissary in a city stands on one spot, and a blanket offset would scatter the rest of
+    -- the map for no reason.
+    local shown = {}
     for index = 1, #pins do
         local pin = pins[index]
         local poi = pin.poi
@@ -292,7 +317,25 @@ function Frame:Refresh()
         if visible and poi.dungeonOnly and dungeonLevel <= 0 then
             visible = false
         end
-        if visible and PositionPin(pin) then
+        if visible then
+            shown[#shown + 1] = pin
+        else
+            pin:Hide()
+        end
+    end
+
+    local slots = {}
+    for index = 1, #shown do
+        local poi = shown[index].poi
+        local key = string.format("%d:%d", math.floor((poi.mapX or 0) * 4096),
+            math.floor((poi.mapY or 0) * 4096))
+        slots[key] = (slots[key] or 0) + 1
+        shown[index].stackSlot = slots[key]
+    end
+
+    for index = 1, #shown do
+        local pin = shown[index]
+        if PositionPin(pin, pin.stackSlot) then
             pin:Show()
         else
             pin:Hide()

@@ -110,8 +110,17 @@ the kinds a player actually needs to find, so the layer now generates from a rea
 
 - **Kinds added:** flight masters (155), innkeepers (124), battlemasters (187, one marker per
   zone and name because the same emissary stands at 20-25 spots per city), meeting stones (47) with
-  their level range, portals (49) with their destination, and transport routes (20 ships and
-  zeppelins, hover shows both ends).
+  their level range, and portals (43) with their destination. The ten Warpweavers and the two
+  outdoor bosses stay as hand-placed markers, so the existing layer keeps them.
+- **Ships and zeppelins are not drawn in this revision.** Their dock coordinates are not derivable
+  from the tables, and a wrong dock marker is worse than none. Follow-up: harvest dock positions
+  from the named dock gameobjects or from an in-game pass.
+- **Meeting stone ranges join by name, not by map.** A stone's `data2` is the dungeon's own area;
+  its name is the dungeon name, and the LFD row of the same name carries the range. Keying by map
+  was wrong twice: Hellfire Citadel has four wings on map 540, and holiday rows (Coren Direbrew,
+  Headless Horseman, Crown Chemical Co.) share a map with a real dungeon and were winning the name.
+- **Instance maps are dropped.** Markers on maps the world map cannot open are filtered out, which
+  removed six dead portal pins (Oculus, Ulduar, Icecrown Citadel, Sunwell).
 - **Zone coverage:** every zone that `WorldMapArea.dbc` gives usable bounds for, not a fixed list.
   Spawns with no zone id are resolved by the smallest containing zone rectangle.
 - **Meeting stone ranges:** a stone's `data2` is the dungeon's areaID; that area's map is the
@@ -122,9 +131,9 @@ the kinds a player actually needs to find, so the layer now generates from a rea
 - **Data pipeline:** `harvest_poi_data.py` is the only part that touches MySQL and it only reads. It
   writes `poidata/snapshot.json`, which `generate_poi_data.py` consumes, so the patch builds without
   a database.
-- **Red zones:** the five contested open-world zones the owner named (Silithus, Eastern Plaguelands,
-  Hellfire Peninsula, Nagrand, Wintergrasp, Zangarmarsh) plus the two stock battlegrounds that had
-  the overlay before.
+- **Red zones:** the six contested open-world zones the owner named (Silithus, Eastern
+  Plaguelands, Hellfire Peninsula, Nagrand, Wintergrasp, Zangarmarsh) plus the two stock
+  battlegrounds that had the overlay before.
 - **Icons:** still stock client textures only. A custom BLP set is deferred until the owner approves
   concept art, per the art-direction rule.
 

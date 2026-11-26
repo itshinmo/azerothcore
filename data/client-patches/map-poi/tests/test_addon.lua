@@ -158,7 +158,7 @@ for _, zoneId in ipairs({ 1519, 1637, 4395, 3483, 3703, 571 }) do
         "zone " .. zoneId .. " must show exactly its own markers")
 end
 assert(expectedIn(1519) > 10, "Stormwind must carry flight masters, innkeepers and battlemasters")
-assert(expectedIn(3483) > 3, "Hellfire must carry its flight masters and Kazzak skull")
+assert(expectedIn(3483) > 3, "Hellfire must carry its flight masters and other markers")
 assert(visibleCount(99999) == 0, "an unknown zone must show no markers")
 
 -- Every drawn kind has an icon and a faction colour; an unknown kind would silently fall back.
@@ -171,7 +171,35 @@ assert(seenKinds.innkeeper, "the layer must draw innkeepers")
 assert(seenKinds.meetingstone, "the layer must draw meeting stones")
 assert(seenKinds.portal, "the layer must draw portals")
 assert(seenKinds.battlemaster, "the layer must draw battlemasters")
-assert(#ns.TransportRoutes > 0, "transport routes must be baked")
+assert(seenKinds.warpweaver, "the layer must draw the capital Warpweavers")
+assert(seenKinds.boss, "the layer must draw the outdoor world bosses")
+assert(ns.TransportRoutes == nil, "ships are not drawn in this slice; remove the stale fixture")
+
+-- Stacked markers must not hide each other. Emissaries share one coordinate, so the refresh
+-- spreads only those pins; a pin alone at its coordinate stays exactly centred.
+do
+    zone = 1519
+    area = 1519
+    hooks.WorldMapFrame_Update[1]()
+    local positions = {}
+    local singles = 0
+    for _, pin in ipairs(addon.pins) do
+        if pin:IsShown() then
+            -- The mock records SetPoint arguments, so compare the final offset pair.
+            local point = pin.points[#pin.points]
+            local x, y = point[#point - 1], point[#point]
+            positions[#positions + 1] = string.format("%.3f:%.3f", x, y)
+            if pin.stackSlot == 1 then singles = singles + 1 end
+        end
+    end
+    local distinct = {}
+    for _, key in ipairs(positions) do distinct[key] = true end
+    local count = 0
+    for _ in pairs(distinct) do count = count + 1 end
+    assert(count == #positions,
+        "no two shown pins may share a screen position: " .. #positions .. " pins, " .. count .. " positions")
+    assert(singles > 0, "pins alone at their coordinate must keep slot 1")
+end
 
 -- Tooltip and click handlers.
 zone = 1519

@@ -8,7 +8,7 @@ Decision: [ADR-032](../../../decisions/ADR-032-map-poi-layer.md). Pipeline:
 ## What it draws
 
 Generated from `poidata/snapshot.json` (a read-only harvest of `acore_world`) plus the client DBCs.
-562 markers over the whole world:
+568 markers over the whole world:
 
 | Kind | Count | Source | Hover text |
 |---|---|---|---|
@@ -16,12 +16,15 @@ Generated from `poidata/snapshot.json` (a read-only harvest of `acore_world`) pl
 | Innkeeper | 124 | `npcflag & 0x10000` | NPC name |
 | Battlemaster | 187 | `npcflag & 0x100000`, one per zone+name | NPC name |
 | Meeting stone | 47 | `gameobject_template.type 23` | `Utgarde Keep (68-83)` |
-| Portal | 49 | `gameobject_template.type 22`, name-filtered | destination |
+| Portal | 43 | `gameobject_template.type 22`, name-filtered, instance maps dropped | destination |
 | Warpweaver | 10 | creature entry `910012` | city |
 | World boss | 2 | Doom Lord Kazzak, Doomwalker | boss name |
 
-Plus 20 **transport routes** (ships and zeppelins) baked from `acore_world.transports`, so hovering a
-boat or zeppelin marker names both ends of the route.
+Ships and zeppelins are **not drawn in this slice**. Their dock coordinates cannot be derived from
+the tables: `transports` stores only a route name, and `TransportAnimation.dbc` is keyed by a
+different id space than `transports.entry`. A marker at a guessed dock would be worse than none.
+The follow-up is to harvest dock positions from the named dock gameobjects in the world (for example
+the zeppelin towers, which carry the route in their name) or from an in-game pass.
 
 Faction tint: alliance blue, horde red, shared/neutral gold, applied with `SetVertexColor` on one
 stock icon per kind.
@@ -68,7 +71,7 @@ Recorded in `manifest.json`; the build re-resolves them.
 | `WorldMapArea.dbc` SHA256 | `c7361fae70d2f3136e98b8d19f86a594b3592a6ec3351e184eafb350db7d6503` |
 | `DungeonMap.dbc` source | `Data/patch-M.mpq` |
 | `DungeonMap.dbc` SHA256 | `34beae04678c69cf536946217106d3e935d65d833dc86c59d120e8f335e756e9` |
-| Spawn snapshot | `acore_world.creature`, 2026-11-23 |
+| Spawn snapshot | `acore_world` creatures, gameobjects and transports, 2026-11-26 |
 
 The Warpweaver snapshot uses the live `creature` table. The Dalaran row and
 `data/sql/custom/db_world/collections_npc_spawns.sql` now agree on `5842.8, 721.8` in Simply
@@ -90,8 +93,8 @@ with listfile/attributes/zlib, verifies every entry, and writes `manifest.json`.
 Refresh the spawn data after a move (the only step that needs MySQL; it never writes):
 
 ```bash
-python3 data/client-patches/map-poi/harvest_poi_data.py \
-    --user acore --password '****' --out data/client-patches/map-poi/poidata/snapshot.json
+export POI_DB_PASSWORD='...'   # never on the command line: ps and shell history expose it
+python3 data/client-patches/map-poi/harvest_poi_data.py --user acore
 ```
 
 Offline addon smoke test (map API mock, no client):

@@ -64,6 +64,23 @@ DALARAN_ZONE_ID = 4395
 DALARAN_MAP_ID = 571
 DALARAN_DUNGEON_MAP_ID = 27
 
+# Hand-placed markers that no world table can generate: the capital Warpweaver spawns (one per
+# city, creature entry 910012) and the outdoor bosses. Coordinates are a snapshot like the rest.
+STATIC_POIS = [
+    (1519, -8829.3, 598.9, "warpweaver", "Warpweaver", "Transmogrifier"),
+    (1537, -4959.6, -1021.3, "warpweaver", "Warpweaver", "Transmogrifier"),
+    (1657, 9926.8, 2319.0, "warpweaver", "Warpweaver", "Transmogrifier"),
+    (3557, -3931.7, -11625.6, "warpweaver", "Warpweaver", "Transmogrifier"),
+    (1637, 1894.1, -4324.3, "warpweaver", "Warpweaver", "Transmogrifier"),
+    (1497, 1581.6, 190.5, "warpweaver", "Warpweaver", "Transmogrifier"),
+    (1638, -1244.6, -60.6, "warpweaver", "Warpweaver", "Transmogrifier"),
+    (3487, 9870.2, -7442.9, "warpweaver", "Warpweaver", "Transmogrifier"),
+    (3703, -2006.6, 5371.1, "warpweaver", "Warpweaver", "Transmogrifier"),
+    (4395, 5842.8, 721.8, "warpweaver", "Warpweaver", "Transmogrifier"),
+    (3483, 943.5, 2269.8, "boss", "Doom Lord Kazzak", "Outdoor raid boss"),
+    (3520, -3563.3, 233.9, "boss", "Doomwalker", "Outdoor raid boss"),
+]
+
 # Zones that get the translucent red PvP overlay. The owner's list is the five contested open-world
 # zones; the two stock battlegrounds stay on the list as well so their maps keep the highlight they
 # had before the layer was expanded.
@@ -78,26 +95,13 @@ RED_ZONES = {
     4710: "Isle of Conquest",
 }
 
-# Maps that are instances. Faction capitals on Outland/Northrend use world maps 530 and 571, which
-# are not instanced, so this list stays empty for now; it exists so the rule is explicit.
-INSTANCE_MAPS: set[int] = set()
+# Maps that are instances, read from Map.dbc (InstanceType != 0). Capitals on Outland and Northrend
+# use world maps 530 and 571, which are type 0, so they stay drawable.
 
 # Faction from creature_template.faction: 1 = human/Alliance, 2 = orc/Horde in the stock data.
 # Rather than trust that mapping, flight master tint is decided by zone, which is unambiguous.
 ALLIANCE_ZONES = {1519, 1537, 1657, 3557}
 HORDE_ZONES = {1637, 1497, 1638, 3487}
-
-KIND_ICON = {
-    "flightmaster": "flightmaster",
-    "innkeeper": "innkeeper",
-    "battlemaster": "battlemaster",
-    "meetingstone": "meetingstone",
-    "portal": "portal",
-    "transport": "transport",
-    "warpweaver": "warpweaver",
-    "boss": "boss",
-    "cache": "cache",
-}
 
 
 def dbc(data: bytes) -> tuple[list[list[int]], bytes]:
@@ -212,6 +216,18 @@ def area_table(data_dir: Path) -> dict[int, dict]:
     return out
 
 
+def instance_map_ids(data_dir: Path) -> set[int]:
+    """Map ids whose InstanceType is non-zero. Used to drop markers on maps the world map cannot open."""
+    path = "DBFilesClient\\\\Map.dbc"
+    result = mpq.find_highest(data_dir, path, locale=LOCALE, order="english")
+    if not result.winner:
+        return set()
+    with mpq.Archive(result.winner) as archive:
+        data = archive.read_file(path)
+    rows, _strings = dbc(data)
+    return {row[0] for row in rows if len(row) > 2 and row[2] != 0}
+
+
 def dungeon_levels(data_dir: Path) -> dict[int, dict]:
     """Instance map id -> {name, min, max} from LFGDungeons.dbc.
 
@@ -226,7 +242,7 @@ def dungeon_levels(data_dir: Path) -> dict[int, dict]:
     with mpq.Archive(result.winner) as archive:
         data = archive.read_file(path)
     rows, strings = dbc(data)
-    out: dict[int, dict] = {}
+    out: dict[str, dict] = {}
     for row in rows:
         if len(row) < 24:
             continue
@@ -241,13 +257,16 @@ def dungeon_levels(data_dir: Path) -> dict[int, dict]:
         name = dbc_string(strings, row[1])
         if not name:
             continue
-        # Several LFD entries share a map (normal/heroic, seasonal variants). Keep the widest
-        # range so the note never understates the level a player can enter at.
-        existing = out.get(map_id)
-        if existing and existing["min"] <= minimum and existing["max"] >= maximum:
-            continue
-        out[map_id] = {"name": name, "min": min(minimum, existing["min"]) if existing else minimum,
-                       "max": max(maximum, existing["max"]) if existing else maximum}
+        # Key by name: several dungeons share a map (Hellfire Citadel has four wings on map 540),
+        # and holiday rows (Coren Direbrew, Headless Horseman, Crown Chemical Co.) share a map with
+        # the real dungeon. Keying by map would pick an event name and a wrong range.
+        key = name.strip().lower()
+        existing = out.get(key)
+        if existing:
+            existing["min"] = min(existing["min"], minimum)
+            existing["max"] = max(existing["max"], maximum)
+        else:
+            out[key] = {"name": name, "min": minimum, "max": maximum}
     return out
 
 
@@ -319,6 +338,7 @@ def generate(client: Path) -> tuple[str, dict]:
     dungeon_rows, _, dungeon_source, _ = load_table(data_dir, "DungeonMap")
     areas = area_table(data_dir)
     dungeons = dungeon_levels(data_dir)
+    instance_maps = instance_map_ids(data_dir)
     bounds = zone_bounds(wma_rows, wma_strings, wma_fields, areas)
     missing = [zone for zone in NAMED_ZONES if zone not in bounds and zone != DALARAN_ZONE_ID]
     if missing:
@@ -334,13 +354,18 @@ def generate(client: Path) -> tuple[str, dict]:
     pois: list[dict] = []
     skipped = {"creature_no_zone": 0, "portal_no_zone": 0, "stone_no_zone": 0}
 
+    dropped = {"out_of_bounds": 0}
+
     def add(zone: int, world_x: float, world_y: float, kind: str, label: str, note: str,
             faction: str = "neutral") -> None:
         bound = bounds[zone]
         map_x = (bound["yMax"] - world_y) / (bound["yMax"] - bound["yMin"])
         map_y = (bound["xMax"] - world_x) / (bound["xMax"] - bound["xMin"])
         if not (0.0 <= map_x <= 1.0 and 0.0 <= map_y <= 1.0):
-            return  # spawn outside the drawn bounds; drop rather than draw wrongly
+            # A spawn outside the drawn bounds is dropped rather than drawn wrongly, but it must be
+            # counted: a spawn move must never silently remove a marker.
+            dropped["out_of_bounds"] += 1
+            return
         pois.append({
             "zone": zone, "kind": kind, "label": label, "note": note, "faction": faction,
             "worldX": world_x, "worldY": world_y, "mapX": map_x, "mapY": map_y,
@@ -354,34 +379,35 @@ def generate(client: Path) -> tuple[str, dict]:
     # actually walks to.
     buckets: dict[tuple[int, str, str], list[dict]] = {}
     for c in snapshot["creatures"]:
-        if c["map"] in INSTANCE_MAPS:
+        if c["map"] in instance_maps:
             continue
         zone = resolve_zone(c["area"], c["zone"], areas, bounds)
         if zone is None:
             skipped["creature_no_zone"] += 1
             continue
         if c["flightmaster"]:
-            kind, note = "flightmaster", "Flight master"
+            kind, kind_note = "flightmaster", "Flight master"
         elif c["innkeeper"]:
-            kind, note = "innkeeper", "Innkeeper"
+            kind, kind_note = "innkeeper", "Innkeeper"
         elif c["battlemaster"]:
-            kind, note = "battlemaster", "Battlemaster"
+            kind, kind_note = "battlemaster", "Battlemaster"
         else:
             continue
-        buckets.setdefault((zone, c["name"], kind), []).append(c)
+        buckets.setdefault((zone, c["name"], kind), []).append((c, kind_note))
 
     for (zone, name, kind), items in sorted(buckets.items()):
         bound = bounds[zone]
         centre_x = (bound["xMax"] + bound["xMin"]) / 2.0
         centre_y = (bound["yMax"] + bound["yMin"]) / 2.0
-        best = min(items, key=lambda c: (c["x"] - centre_x) ** 2 + (c["y"] - centre_y) ** 2)
+        best, kind_note = min(items, key=lambda item: (item[0]["x"] - centre_x) ** 2
+                                                      + (item[0]["y"] - centre_y) ** 2)
         faction = "alliance" if zone in ALLIANCE_ZONES else (
             "horde" if zone in HORDE_ZONES else "neutral")
-        add(zone, best["x"], best["y"], kind, name, note, faction)
+        add(zone, best["x"], best["y"], kind, name, kind_note, faction)
 
     # Meeting stones: the instance they summon to gets the note.
     for s in snapshot["meeting_stones"]:
-        if s["map"] in INSTANCE_MAPS:
+        if s["map"] in instance_maps:
             continue
         zone = resolve_zone(s["area"], s["zone"], areas, bounds)
         if zone is None:
@@ -389,20 +415,22 @@ def generate(client: Path) -> tuple[str, dict]:
         if zone is None:
             skipped["stone_no_zone"] += 1
             continue
-        # data2 is the dungeon's areaID; the area's map is the instance map the dungeon lives on.
+        # data2 is the dungeon's own areaID, and the area's name is the dungeon's name, so the
+        # range comes from the LFD row of the same name. Keying by map would confuse the four
+        # Hellfire Citadel wings and the holiday bosses that share a map.
         dungeon_area = areas.get(s.get("data2", 0))
-        dungeon = dungeons.get(dungeon_area["map"]) if dungeon_area else None
+        dungeon = dungeons.get(dungeon_area["name"].strip().lower()) if dungeon_area else None
         if dungeon:
-            note = "%s (%d-%d)" % (dungeon["name"], dungeon["min"], dungeon["max"])
-            label = dungeon["name"]
+            label = dungeon_area["name"]
+            note = "%s (%d-%d)" % (label, dungeon["min"], dungeon["max"])
         else:
-            note = "Dungeon meeting stone"
             label = "Meeting Stone"
+            note = "Dungeon meeting stone"
         add(zone, s["x"], s["y"], "meetingstone", label, note)
 
     # Portals: destination is in the template name.
     for p in snapshot["portals"]:
-        if p["map"] in INSTANCE_MAPS:
+        if p["map"] in instance_maps:
             continue
         zone = resolve_zone(p["area"], p["zone"], areas, bounds)
         if zone is None:
@@ -412,12 +440,15 @@ def generate(client: Path) -> tuple[str, dict]:
             continue
         add(zone, p["x"], p["y"], "portal", p["name"], "Portal")
 
-    # Transports have no single position: the marker goes on each dock zone and the note is the
-    # whole route, so hovering a boat icon tells you where it goes.
-    route_pois = []
-    for route in snapshot["transport_routes"]:
-        text, faction = transport_dock(route["name"])
-        route_pois.append({"entry": route["entry"], "route": text, "faction": faction})
+    # Ships and zeppelins are deliberately not drawn yet. Their dock positions are not derivable
+    # from the tables: `transports` has no coordinates, and `TransportAnimation.dbc` is keyed by a
+    # different id space than `transports.entry`. Shipping a marker at a guessed dock would be
+    # worse than shipping none. See the README for the follow-up.
+
+    # Hand-placed markers: Warpweavers and the outdoor bosses, which no world table can generate.
+    for zone, world_x, world_y, kind, label, note in STATIC_POIS:
+        if zone in bounds:
+            add(zone, world_x, world_y, kind, label, note, "neutral")
 
     # Deduplicate exact duplicates (several spawns can share a position, e.g. stacked innkeepers).
     seen = set()
@@ -453,11 +484,6 @@ def generate(client: Path) -> tuple[str, dict]:
     lines += ["}", "", "ns.RedZones = {"]
     for zone in sorted(RED_ZONES):
         lines.append("    [%d] = true, -- %s" % (zone, RED_ZONES[zone]))
-    lines += ["}", ""
-              "", "ns.TransportRoutes = {"]
-    for r in route_pois:
-        lines.append("    { entry = %d, route = %s, faction = %s },"
-                     % (r["entry"], lua_quote(r["route"]), lua_quote(r["faction"])))
     lines += ["}", "", "ns.POIs = {"]
     for poi in unique:
         lines.append("    {")
@@ -477,12 +503,14 @@ def generate(client: Path) -> tuple[str, dict]:
         by_kind[poi["kind"]] = by_kind.get(poi["kind"], 0) + 1
     metadata = {
         "generated": snapshot["generated"],
+        "snapshot_sha256": __import__("hashlib").sha256(
+            SNAPSHOT_FILE.read_bytes()).hexdigest(),
+        "dropped_out_of_bounds": dropped['out_of_bounds'],
         "world_map_area": wma_source,
         "dungeon_map": dungeon_source,
         "counts": by_kind,
         "skipped": skipped,
         "pois": len(unique),
-        "transport_routes": len(route_pois),
         "red_zones": RED_ZONES,
     }
     return "\n".join(lines), metadata
@@ -509,7 +537,7 @@ def main() -> int:
         return 0
     out.write_text(text, encoding="utf-8")
     print(f"wrote {out}")
-    print(f"  {metadata['pois']} markers, {metadata['transport_routes']} transport routes")
+    print(f"  {metadata['pois']} markers")
     for kind, count in sorted(metadata["counts"].items()):
         print(f"    {kind:14} {count}")
     if any(metadata["skipped"].values()):
