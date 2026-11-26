@@ -102,6 +102,32 @@ Possible client-side routes:
 - The first patch proves MPQ addon loading and FrameXML load order with one canary, so later UI
   features can reuse the same pipeline.
 
+## Revision 2026-11-26 — world-wide coverage, transports, portals, meeting stones
+
+The first layer drew 24 hand-written markers in ten capitals plus two bosses. The owner asked for
+the kinds a player actually needs to find, so the layer now generates from a read-only harvest of
+`acore_world` instead of a hand-written list.
+
+- **Kinds added:** flight masters (155), innkeepers (124), battlemasters (187, one marker per
+  zone and name because the same emissary stands at 20-25 spots per city), meeting stones (47) with
+  their level range, portals (49) with their destination, and transport routes (20 ships and
+  zeppelins, hover shows both ends).
+- **Zone coverage:** every zone that `WorldMapArea.dbc` gives usable bounds for, not a fixed list.
+  Spawns with no zone id are resolved by the smallest containing zone rectangle.
+- **Meeting stone ranges:** a stone's `data2` is the dungeon's areaID; that area's map is the
+  instance map; `LFGDungeons.dbc` for that map carries min and max level (fields 18 and 19). This
+  replaces the earlier guess that `data2` was an LFD or map id.
+- **Faction tint** replaces per-faction icon textures: one stock icon per kind, `SetVertexColor`
+  alliance blue, horde red, shared gold.
+- **Data pipeline:** `harvest_poi_data.py` is the only part that touches MySQL and it only reads. It
+  writes `poidata/snapshot.json`, which `generate_poi_data.py` consumes, so the patch builds without
+  a database.
+- **Red zones:** the five contested open-world zones the owner named (Silithus, Eastern Plaguelands,
+  Hellfire Peninsula, Nagrand, Wintergrasp, Zangarmarsh) plus the two stock battlegrounds that had
+  the overlay before.
+- **Icons:** still stock client textures only. A custom BLP set is deferred until the owner approves
+  concept art, per the art-direction rule.
+
 ## References
 
 - [ADR-027](ADR-027-client-patch-pipeline.md)

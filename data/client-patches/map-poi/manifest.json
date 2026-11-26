@@ -1,21 +1,21 @@
 {
   "archive": "patch-Z.MPQ",
-  "built_at": "2026-11-23T10:54:07+00:00",
+  "built_at": "2026-11-26T14:31:57+00:00",
   "compression": "zlib",
   "dbc_files": 0,
   "entries": [
     {
-      "compressed_size": 1878,
+      "compressed_size": 31210,
       "path": "Interface\\AddOns\\ServerMapPOI\\Data.lua",
-      "sha256": "3d593e32610f729963c04bc831e10834c897f5f6ba6161e7611af24a17200c7d",
-      "size": 7144,
+      "sha256": "f5212bcb35a5aac7498ceb7ef922c3b4c122ca4f9c212cf534eb2976605782f1",
+      "size": 153419,
       "verify_flags": 80
     },
     {
-      "compressed_size": 5081,
+      "compressed_size": 5529,
       "path": "Interface\\AddOns\\ServerMapPOI\\ServerMapPOI.lua",
-      "sha256": "db9dc309cf27c30d3682db6350b42cc54613e116027fd343b17aba1eece8ad8b",
-      "size": 15121,
+      "sha256": "072d1ac381b74d6fdf62dd582b85a887961f17602a386f0bbf22727807884ad1",
+      "size": 16180,
       "verify_flags": 80
     },
     {
@@ -57,24 +57,24 @@
       "archive": "Data/patch-M.mpq",
       "sha256": "34beae04678c69cf536946217106d3e935d65d833dc86c59d120e8f335e756e9"
     },
-    "generated": "2026-11-23",
+    "generated": "2026-11-26",
     "world_map_area": {
       "archive": "Data/patch-M.mpq",
       "sha256": "c7361fae70d2f3136e98b8d19f86a594b3592a6ec3351e184eafb350db7d6503"
     }
   },
   "schema": 1,
-  "sha256": "1aaf23a4140a092bdad1fa0cfa8b270e8d369faef38cff85e7915c9b4b055d3f",
-  "size": 30558,
+  "sha256": "fa0efd3d2bc0ee965e03587ccc401ef40130845d1699d47efc0782d477ba9748",
+  "size": 60338,
   "sources": [
     {
       "path": "Interface\\AddOns\\ServerMapPOI\\Data.lua",
-      "sha256": "3d593e32610f729963c04bc831e10834c897f5f6ba6161e7611af24a17200c7d",
+      "sha256": "f5212bcb35a5aac7498ceb7ef922c3b4c122ca4f9c212cf534eb2976605782f1",
       "source": "data/client-patches/map-poi/src/ServerMapPOI/Data.lua"
     },
     {
       "path": "Interface\\AddOns\\ServerMapPOI\\ServerMapPOI.lua",
-      "sha256": "db9dc309cf27c30d3682db6350b42cc54613e116027fd343b17aba1eece8ad8b",
+      "sha256": "072d1ac381b74d6fdf62dd582b85a887961f17602a386f0bbf22727807884ad1",
       "source": "data/client-patches/map-poi/src/ServerMapPOI/ServerMapPOI.lua"
     },
     {
