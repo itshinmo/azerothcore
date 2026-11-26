@@ -167,10 +167,10 @@ These are recorded in the RFC-006 test plan, not as open design questions.
 
 This revision replaces decision 2's location gate only. Nothing else in the ADR changes.
 
-**Owner decision.** `.pledge` is allowed **only** in these ten areas, and only when the area
-faction is neutral or matches the player's faction:
+**Owner decision.** `.pledge` is allowed **only** in these ten zones, and only when the player's
+faction is the zone's faction or the zone is shared:
 
-| Faction | Areas |
+| Faction | Zones |
 |---------|-------|
 | Alliance | 1519 Stormwind City, 1537 Ironforge, 1657 Darnassus, 3557 The Exodar |
 | Horde | 1637 Orgrimmar, 1497 Undercity, 1638 Thunder Bluff, 3487 Silvermoon City |
@@ -178,50 +178,55 @@ faction is neutral or matches the player's faction:
 
 Everything else is refused.
 
-**Measured fact that forced the change.** The stock `AreaTable.dbc` carries
-`AREA_FLAG_CAPITAL` (0x100) on **35 rows**, not on the eight faction capitals. They include
-4411 Stormwind Harbor, 4281 Acherus: The Ebon Hold, 3704 The Shepherd's Gate, 4679 The Forlorn
-Cavern, and nineteen Dalaran rows (4560 The Underbelly, 4564 Krasus' Landing, 4567 The Violet
-Hold, 4601 Dalaran Island, 4613 Dalaran City, 4616 Sunreaver's Sanctuary, 4619 The Violet
-Citadel, 4620 Magus Commerce Exchange, 4739 Runeweaver Square, 4740 The Silver Enclave, …).
-The flag alone therefore accepted a pledge almost anywhere in Dalaran and inside Ebon Hold.
+**The defect this fixes.** The replaced gate read `IsCapitalZone(player->GetZoneId())`, so it
+already resolved to the parent zone. Measured against the stock `AreaTable.dbc`, only **10** of the
+35 rows that carry `AREA_FLAG_CAPITAL` are zone-level rows, and they are exactly the ten above; the
+other 25 are sub-areas whose zone id is their parent, which is why Stormwind Harbor (4411, zone
+1519) and every Dalaran sub-area were already accepted, and why Acherus (4281, zone 139 Eastern
+Plaguelands) was already refused. A flag-based gate was therefore not the broken part.
 
-The old gate also never read the player's faction, so a Horde character could pledge in
-Stormwind. The area's AreaTable `team` column is 2 for Alliance cities, 4 for Horde cities and
-6 for Shattrath and Dalaran, so the list and the faction check are two separate conditions.
+The broken part was **faction**: the gate never read it, so a Horde character could pledge in
+Stormwind. That is what this revision closes. An explicit list replaces the flag so the design
+decision is auditable in one place rather than inferred from a DBC flag whose meaning is wider than
+the design.
 
 **Implementation.** `PLEDGE_AREAS` in `modules/mod-pvp-rulesets/src/PvpRulesets.h` is the single
-auditable list of `{ area id, faction }`; `IsPledgeAreaAllowed()` and `EvaluateToggle()` in
-`PvpRulesetsLogic.cpp` apply it, with separate refusal results for "not a pledge city" and
-"wrong faction". The check uses `Player::GetAreaId()`, not the parent zone: a sub-area reports
-its own id (Stormwind Harbor is 4411 inside zone 1519), so a listed city means the city row
-itself and not its sub-zones. The list is a code constant, not a config option: it is a
-game-design decision, not a tuning knob. Every other guard (out of combat, alive, not in an
-instance/BG/arena/battlefield, not while Outlaw, not in GM mode, the persisted cooldown) is
-unchanged. Unit tests pin all ten ids, both neutral hubs, the wrong-faction case and eight
-capital-flagged sub-areas.
+list of `{ zone id, faction }`; `EvaluateToggle()` applies it through `IsPledgeAreaAllowed()`, one
+copy of the rule, with separate refusal results for "not a pledge zone" and "wrong faction".
+`ToggleContext::zoneId` carries `Player::GetZoneId()` and defaults to faction `Any`, so a caller
+that forgets to set the faction is refused rather than silently treated as Alliance. The list is a
+code constant, not a config option: it is a game-design decision, not a tuning knob. The faction in
+the list is a hand-written constant, **not** read from the AreaTable `team` column. Every other
+guard (out of combat, alive, not in an instance/BG/arena/battlefield, not while Outlaw, not in GM
+mode, the persisted cooldown) is unchanged.
+
+**Sub-areas pass with their city.** Because the id is a zone, a player standing in Stormwind Harbor
+reports 1519, and one in The Underbelly reports 4395. That is intended: the listed zones are the
+cities a player moves around in. A unit test on the pure function cannot see this wiring, so it
+asserts only that the list is an exact match on ten zone ids; the zone-versus-area intent is pinned
+by the field comment and by a test that an unset faction is refused.
 
 This closes the "per-capital `AREA_FLAG_CAPITAL` … checks" and "Shattrath/Dalaran capital status"
-verification gates listed under Open decisions. The per-capital guard DBC flag check stays open.
+verification gates. The per-capital guard DBC flag check stays open.
 
-### Area versus zone, and the accepted residue
+### Accepted residue — quest turn-in XP
 
-`Player::GetAreaId()` returns the **most specific** area, not the zone: standing in Darnassus'
-Cenarion Enclave returns the sub-area, and Dalaran has 20 sub-areas. Gating on that id would
-refuse a pledge in most of Darnassus and all of Dalaran, so the command path passes
-`Player::GetZoneId()` instead, which the core resolves from the sub-area's parent in
-`WorldObject::ProcessPositionDataChanged`. Verified in the source, not observed in game: the
-in-game check is still owed.
+The owner chose not to add a per-quest mode snapshot, so the mode bonus can still reach a quest
+turn-in. The mechanism is narrower than "pledge then hand in", and this is the measured behaviour,
+not a live test:
 
-Consequence accepted with it: Stormwind Harbor has zone 1519, so a pledge is allowed there. The
-harbour is a normal part of the city a player walks through, so this is intended.
+- `IsOutdoorXpEligible()` excludes `inNoPvPArea`, and the core sets `IsInNoPvPArea = true` on
+  entering any area flagged `AREA_FLAG_CAPITAL` (`PlayerUpdates.cpp`, the capital branch). All ten
+  listed zones carry that flag, so **on first entering the city the mode bonus does not apply**.
+- `IsInNoPvPArea` is cleared by `ProcessPositionDataChanged` on any intra-zone area change and is
+  only re-set if the new area is a sanctuary. Moving between two sub-areas of the same city
+  therefore clears it.
+- So the residue is reachable by entering the city, walking from one sub-area to another, then
+  turning the quest in. It is not reachable by standing still.
 
-**Accepted residue — quest turn-in XP.** The owner chose not to add a per-quest mode snapshot. A
-player can therefore take a completed quest, pledge High Risk inside a capital, and turn it in for
-the mode bonus. The window is small: the pledge has a 5-minute cooldown, the mode change needs a
-capital, and the bonus is a percentage of one quest's XP rather than a repeatable loop. It is
-recorded here as a known, owner-accepted residue to be revisited when quest XP is next touched, not
-as a closed hole. Do not describe the ten-city gate as closing it.
+The owner accepted this. It is recorded as an open, known residue to revisit when quest XP is next
+touched, and **not** as a closed hole: the ten-zone gate does not close it. A live test is still
+owed, since no in-game run measured the flag transitions above.
 
 ## References
 

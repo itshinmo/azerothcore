@@ -111,7 +111,7 @@ TEST(PvpRulesetsToggleTest, AcceptsAliveOutOfCombatCapital)
     ToggleContext context;
     context.enabled = true;
     context.alive = true;
-    context.areaId = 1519;
+    context.zoneId = 1519;
     context.faction = PledgeFaction::Alliance;
 
     EXPECT_EQ(EvaluateToggle(context), ToggleResult::Ok);
@@ -153,7 +153,8 @@ TEST(PvpRulesetsToggleTest, GuardsInFixedOrder)
     context.inBattlefield = false;
     EXPECT_EQ(EvaluateToggle(context), ToggleResult::NotInPledgeArea);
 
-    context.areaId = 1519;
+    context.zoneId = 1519;
+    context.faction = PledgeFaction::Alliance;
     context.cooldownRemainingSeconds = 1;
     EXPECT_EQ(EvaluateToggle(context), ToggleResult::Cooldown);
 
@@ -166,10 +167,22 @@ TEST(PvpRulesetsToggleTest, AreaAndCooldownAreBothRequired)
     ToggleContext context;
     context.enabled = true;
     context.alive = true;
-    context.areaId = 0;
+    context.zoneId = 0;
+    context.faction = PledgeFaction::Alliance;
     context.cooldownRemainingSeconds = 300;
 
     EXPECT_EQ(EvaluateToggle(context), ToggleResult::NotInPledgeArea);
+}
+
+TEST(PvpRulesetsToggleTest, UnsetFactionIsRefusedNotTreatedAsAlliance)
+{
+    // The context defaults faction to Any so a caller that forgets to set it fails closed.
+    ToggleContext context;
+    context.enabled = true;
+    context.alive = true;
+    context.zoneId = 1519; // Stormwind City, an Alliance capital
+
+    EXPECT_EQ(EvaluateToggle(context), ToggleResult::WrongFaction);
 }
 
 TEST(PvpRulesetsToggleTest, EveryRefusalHasAMessage)
@@ -219,15 +232,16 @@ TEST(PvpRulesetsPledgeAreaTest, RefusesTheOtherFactionsCapitals)
     EXPECT_FALSE(IsPledgeAreaAllowed(3487, PledgeFaction::Alliance));
 }
 
-TEST(PvpRulesetsPledgeAreaTest, RefusesCapitalFlaggedSubAreasAndOtherAreas)
+TEST(PvpRulesetsPledgeAreaTest, RefusesAreaIdsOtherThanTheTenZones)
 {
-    // The gate receives the player's ZONE, not the most specific area, so these sub-area ids must
-    // never be passed by the command path. They are still refused if one is passed by mistake:
-    // the allow-list is an exact test, not a prefix or a flag check.
+    // These are AREA ids, not zone ids. The command path passes Player::GetZoneId(), so a player
+    // standing in one of these rooms reports its parent zone (Stormwind Harbor -> 1519, The
+    // Underbelly -> 4395) and is allowed there. This test only says the allow-list is an exact
+    // match on the ten zone ids: it must never widen to "any area under a listed city".
     //
-    // Why this matters: GetAreaId() reports the sub-area, and Darnassus has 5 of them while
-    // Dalaran has 20, so an area-id gate would refuse a pledge in most of those two cities.
-    // Every one of these carries AREA_FLAG_CAPITAL in the stock AreaTable.dbc.
+    // A unit test on this pure function cannot see the wiring in PvpRulesets.cpp, so it cannot
+    // prove the command path passes a zone. That intent is pinned by
+    // UnsetFactionIsRefusedNotTreatedAsAlliance and by the comment on ToggleContext::zoneId.
     EXPECT_FALSE(IsPledgeAreaAllowed(4411, PledgeFaction::Alliance)); // Stormwind Harbor
     EXPECT_FALSE(IsPledgeAreaAllowed(4281, PledgeFaction::Alliance)); // Acherus: The Ebon Hold
     EXPECT_FALSE(IsPledgeAreaAllowed(4560, PledgeFaction::Alliance)); // The Underbelly
@@ -253,7 +267,7 @@ TEST(PvpRulesetsToggleTest, NonPlayableFactionIsRefusedEvenInANeutralHub)
     ToggleContext context;
     context.enabled = true;
     context.alive = true;
-    context.areaId = 4395; // Dalaran
+    context.zoneId = 4395; // Dalaran
     context.faction = PledgeFaction::Any;
 
     EXPECT_EQ(EvaluateToggle(context), ToggleResult::WrongFaction);
@@ -276,7 +290,7 @@ TEST(PvpRulesetsToggleTest, RefusesWrongFactionCapitalWithItsOwnReason)
     ToggleContext context;
     context.enabled = true;
     context.alive = true;
-    context.areaId = 1519; // Stormwind City
+    context.zoneId = 1519; // Stormwind City
     context.faction = PledgeFaction::Horde;
 
     EXPECT_EQ(EvaluateToggle(context), ToggleResult::WrongFaction);

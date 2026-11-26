@@ -436,8 +436,9 @@ namespace
             context.inBattleground = player->InBattleground();
             context.inArena = player->InArena();
             context.inBattlefield = IsBattlefieldZone(player->GetZoneId());
-            // Area, not zone: sub-areas carry their own row and must be refused separately.
-            context.areaId = player->GetZoneId();
+            // Zone, not area: GetAreaId() reports the most specific sub-area (Darnassus has five,
+            // Dalaran twenty), so a sub-area id would refuse a pledge in most of both cities.
+            context.zoneId = player->GetZoneId();
             context.faction = PlayerPledgeFaction(player);
             context.cooldownRemainingSeconds = PvpRulesets::CooldownRemainingSeconds(
                 now, state.LastToggle, ToggleCooldownSeconds());

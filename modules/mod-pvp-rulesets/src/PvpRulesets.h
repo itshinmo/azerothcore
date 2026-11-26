@@ -100,7 +100,8 @@ namespace PvpRulesets
 
     // The player faction must be Alliance or Horde; `Any` is an area requirement only.
     // An area whose list entry is `Any` accepts both factions.
-    bool IsPledgeAreaAllowed(uint32 areaId, PledgeFaction playerFaction);
+    // Takes a ZONE id (Player::GetZoneId()), not an area id.
+    bool IsPledgeAreaAllowed(uint32 zoneId, PledgeFaction playerFaction);
 
     // Pledge guards (RFC-006 section 3), evaluated in this fixed order.
     enum class ToggleResult : uint8
@@ -129,8 +130,11 @@ namespace PvpRulesets
         bool inBattleground = false;
         bool inArena = false;
         bool inBattlefield = false;
-        uint32 areaId = 0; // `Player::GetAreaId()`, not the parent zone
-        PledgeFaction faction = PledgeFaction::Alliance;
+        // A zone id, not an area id: `Player::GetZoneId()`. Do not "fix" this to GetAreaId(),
+        // which reports the most specific sub-area and would refuse every city that has one.
+        uint32 zoneId = 0;
+        // Neutral default: a context that forgets to set this is refused, not silently Alliance.
+        PledgeFaction faction = PledgeFaction::Any;
         int64 cooldownRemainingSeconds = 0;
     };
 

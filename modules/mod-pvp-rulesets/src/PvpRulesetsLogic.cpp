@@ -95,22 +95,22 @@ namespace PvpRulesets
 
     namespace
     {
-        PledgeArea const* FindPledgeArea(uint32 areaId)
+        PledgeArea const* FindPledgeArea(uint32 zoneId)
         {
             for (PledgeArea const& area : PLEDGE_AREAS)
-                if (area.AreaId == areaId)
+                if (area.AreaId == zoneId)
                     return &area;
 
             return nullptr;
         }
     }
 
-    bool IsPledgeAreaAllowed(uint32 areaId, PledgeFaction playerFaction)
+    bool IsPledgeAreaAllowed(uint32 zoneId, PledgeFaction playerFaction)
     {
         if (playerFaction != PledgeFaction::Alliance && playerFaction != PledgeFaction::Horde)
             return false;
 
-        PledgeArea const* area = FindPledgeArea(areaId);
+        PledgeArea const* area = FindPledgeArea(zoneId);
         return area && (area->Faction == PledgeFaction::Any || area->Faction == playerFaction);
     }
 
@@ -133,14 +133,15 @@ namespace PvpRulesets
         if (context.inBattlefield)
             return ToggleResult::InBattlefield;
 
-        // A sub-area has its own AreaTable row (Stormwind Harbor 4411, The Underbelly 4560,
-        // Krasus' Landing 4564, ...), so only the listed city rows themselves pass.
-        PledgeArea const* pledgeArea = FindPledgeArea(context.areaId);
+        // `context.zoneId` is the parent zone, so a sub-area inside a listed city passes with its
+        // city: Stormwind Harbor arrives as 1519, The Underbelly as 4395. That is intended; the
+        // listed rows are the cities a player moves around in, not every room.
+        PledgeArea const* pledgeArea = FindPledgeArea(context.zoneId);
         if (!pledgeArea)
             return ToggleResult::NotInPledgeArea;
-        if (context.faction != PledgeFaction::Alliance && context.faction != PledgeFaction::Horde)
-            return ToggleResult::WrongFaction;
-        if (pledgeArea->Faction != PledgeFaction::Any && pledgeArea->Faction != context.faction)
+        // One copy of the faction rule: IsPledgeAreaAllowed() rejects a non-playable faction and
+        // applies the area's own faction, so this branch cannot drift from the allow-list.
+        if (!IsPledgeAreaAllowed(context.zoneId, context.faction))
             return ToggleResult::WrongFaction;
 
         if (context.cooldownRemainingSeconds > 0)
