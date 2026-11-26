@@ -1,14 +1,14 @@
 {
   "archive": "patch-Z.MPQ",
-  "built_at": "2026-11-26T16:29:47+00:00",
+  "built_at": "2026-11-26T19:27:41+00:00",
   "compression": "zlib",
   "dbc_files": 0,
   "entries": [
     {
-      "compressed_size": 30805,
+      "compressed_size": 31349,
       "path": "Interface\\AddOns\\ServerMapPOI\\Data.lua",
-      "sha256": "fee2623bd4b8f3da2c591e556f9fa686fcd1f3b443a680ac2c45f312211c12ee",
-      "size": 151763,
+      "sha256": "9d0345983512b599fc73b580a54e9d84356310be4559bef8cc9c887e4666fc82",
+      "size": 155175,
       "verify_flags": 80
     },
     {
@@ -64,12 +64,12 @@
     }
   },
   "schema": 1,
-  "sha256": "9074eed1c062656c22e74d2039619b0dbf713d6c0d4f0a389f2c89fa9c206b5a",
-  "size": 60902,
+  "sha256": "06f0dcfab669615654efd88fb51520297a6b994ff872471e1b8e3fc7e1c9cc4b",
+  "size": 61446,
   "sources": [
     {
       "path": "Interface\\AddOns\\ServerMapPOI\\Data.lua",
-      "sha256": "fee2623bd4b8f3da2c591e556f9fa686fcd1f3b443a680ac2c45f312211c12ee",
+      "sha256": "9d0345983512b599fc73b580a54e9d84356310be4559bef8cc9c887e4666fc82",
       "source": "data/client-patches/map-poi/src/ServerMapPOI/Data.lua"
     },
     {
