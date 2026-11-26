@@ -1,5 +1,5 @@
 /*
- * Dungeon XP rebalance for AzerothCore (ADR-012 revision 2026-11-20 / RFC-003 Group A).
+ * Dungeon XP rebalance for AzerothCore (ADR-012 revisions 2026-11-20 / 2026-11-26 / RFC-003 Group A).
  *
  * Local module for the modernization fork, retail/Wow-Forever-style split: dungeon mob and
  * boss kills are a farmable repeat path, so their XP is reduced; dungeon quests are one-time
@@ -18,7 +18,9 @@
  */
 
 #include "Config.h"
+#include "Creature.h"
 #include "DBCStores.h"
+#include "DungeonXpMath.h"
 #include "Map.h"
 #include "Player.h"
 #include "PlayerScript.h"
@@ -26,20 +28,25 @@
 #include "World.h"
 #include "WorldScript.h"
 
-#include <algorithm>
-
 namespace
 {
-    float KillFactor = 0.33f;   // dungeon/raid mob XP multiplier (0.5 = retail-neutral; fork default deeper per owner)
-    float QuestFactor = 2.0f;   // dungeon quest XP multiplier, on top of the global Rate.XP.Quest
-    bool IncludeRaids = true;   // raid kills get the same reduction
+    // Trash is the repeatable income, so it takes the deeper cut; bosses keep the
+    // 2026-11-20 depth because they are the goal of a run, not its farm.
+    float TrashKillFactor = 0.10f; // dungeon/raid trash mob XP multiplier
+    float BossKillFactor = 0.33f;  // dungeon/raid boss XP multiplier
+    float QuestFactor = 3.0f;      // dungeon quest XP multiplier, on top of the global Rate.XP.Quest
+    bool IncludeRaids = true;      // raids get the same split
 
     void LoadConfig()
     {
         // Clamped: a negative multiplier would be undefined behavior in the float->uint32
-        // conversions the hooks perform (KillFactor also must not exceed 1 = no-op gate).
-        KillFactor = std::clamp(sConfigMgr->GetOption<float>("DungeonXp.KillFactor", 0.33f), 0.0f, 1.0f);
-        QuestFactor = std::max(1.0f, sConfigMgr->GetOption<float>("DungeonXp.QuestFactor", 2.0f));
+        // conversions the hooks perform (a kill factor also must not exceed 1 = no-op gate).
+        TrashKillFactor = DungeonXp::Math::ClampKillFactor(
+            sConfigMgr->GetOption<float>("DungeonXp.TrashKillFactor", 0.10f));
+        BossKillFactor = DungeonXp::Math::ClampKillFactor(
+            sConfigMgr->GetOption<float>("DungeonXp.BossKillFactor", 0.33f));
+        QuestFactor = DungeonXp::Math::ClampQuestFactor(
+            sConfigMgr->GetOption<float>("DungeonXp.QuestFactor", 3.0f));
         IncludeRaids = sConfigMgr->GetOption<bool>("DungeonXp.IncludeRaids", true);
     }
 
@@ -77,7 +84,21 @@ namespace
         if (!mapEntry)
             return false;
 
-        return mapEntry->IsDungeon() && (IncludeRaids || mapEntry->map_type != MAP_RAID);
+        return mapEntry->IsDungeon() && (IncludeRaids || !mapEntry->IsRaid());
+    }
+
+    // Boss classification shared with mod-objectives: a dungeon encounter creature, plus a
+    // world boss that happens to stand inside an instance. mod-objectives asks
+    // `killed->GetMap()->IsDungeon() && (killed->IsDungeonBoss() || killed->isWorldBoss())`
+    // for its objective credit; the two modules must agree or a kill pays one rate and
+    // counts as another.
+    bool IsBossKill(Unit* victim)
+    {
+        if (!victim || !victim->IsCreature())
+            return false;
+
+        Creature* killed = victim->ToCreature();
+        return killed->GetMap()->IsDungeon() && (killed->IsDungeonBoss() || killed->isWorldBoss());
     }
 
     class DungeonXpPlayerScript : public PlayerScript
@@ -88,20 +109,22 @@ namespace
             PLAYERHOOK_ON_QUEST_COMPUTE_EXP
         }) { }
 
-        // Mob side: kill XP inside an instance map is scaled down. BG kills pass through
-        // untouched (battlegrounds are not IsDungeon); the hook also fires for BG kill XP.
-        void OnPlayerGiveXP(Player* player, uint32& amount, Unit* /*victim*/, uint8 xpSource) override
+        // Mob side: kill XP inside an instance map is scaled by the trash or boss factor.
+        // BG kills pass through untouched (battlegrounds are not IsDungeon); the hook also
+        // fires for BG kill XP. A null victim is treated as trash.
+        void OnPlayerGiveXP(Player* player, uint32& amount, Unit* victim, uint8 xpSource) override
         {
-            if (amount < 1 || KillFactor >= 1.0f || xpSource != PlayerXPSource::XPSOURCE_KILL)
+            if (amount < 1 || xpSource != PlayerXPSource::XPSOURCE_KILL)
                 return;
 
-            if (!IncludeRaids && player->GetMap()->IsRaid())
+            float const factor = DungeonXp::Math::SelectKillFactor(player->GetMap()->IsDungeon(),
+                player->GetMap()->IsRaid(), IncludeRaids, IsBossKill(victim), TrashKillFactor,
+                BossKillFactor);
+
+            if (factor >= 1.0f)
                 return;
 
-            if (!player->GetMap()->IsDungeon())
-                return;
-
-            amount = uint32(amount * KillFactor);
+            amount = uint32(amount * factor);
         }
 
         // Quest side: the hook fires wherever the quest XP is computed (the reward sites and

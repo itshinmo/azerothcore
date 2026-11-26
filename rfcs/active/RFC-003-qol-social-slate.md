@@ -16,7 +16,11 @@ and pay-to-win. Everything adopted must be free (no subscription gating, no sold
 ## Proposal — first slate, grouped for separate ADRs
 
 **Group A — leveling QoL (server modules, small):**
-- Auto-learn class spells at level (module hook on level-up).
+- ~~Auto-learn class spells at level (module hook on level-up).~~ Withdrawn 2026-11-26; see the
+  amendment at the end of this RFC and the
+  [ADR-021 revision](../../decisions/ADR-021-leveling-qol-batch-1.md#revision-2026-11-26--auto-learn-class-spells-withdrawn):
+  it removed a layer of transaction, and trainers must sell spells again for the planned
+  class-trainer shop convenience to have anything to sell.
 - Auto flight paths on level-up/login.
 - Cheap dual spec (verify core cost config first).
 - XP bonus sources, **small-balance rule** (owner decision 2026-11-20): gathering, rare kills, and
@@ -98,5 +102,12 @@ auto flight paths are **dropped** from Group A — players must discover flight 
 `AllFlightPaths` config stays off). Dual spec is fixed at **level 30, free** (core verified free;
 level gate lowered from 40). Auto-learn class ships as `mod-auto-learn-spells`, driven by the core
 trainer data instead of a hand-maintained spell list.
+
+**Amendment 2026-11-26**. Auto-learn class spells is **withdrawn**
+([ADR-021 revision](../../decisions/ADR-021-leveling-qol-batch-1.md#revision-2026-11-26--auto-learn-class-spells-withdrawn)):
+it removed a layer of transaction — spells had no price and no trainer visit — and the planned
+class-trainer shop convenience needs trainers to be the sole spell source. `mod-auto-learn-spells`
+is deleted; shamans get their totems from the stock class quests again. Dual spec at level 30
+free and the dropped auto flight paths are unaffected.
 
 <!-- When accepted, fold the durable content into specs/ or decisions/ and move the RFC to archived/. -->

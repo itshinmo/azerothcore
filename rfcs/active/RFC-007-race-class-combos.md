@@ -163,10 +163,14 @@ The other create tables are:
   `raceMask = 0`) already applies to any Warrior;
 - `playercreateinfo_spell_custom`: empty; `PlayerStart.CustomSpells` defaults to false.
 
-Starting spells come from `mod-auto-learn-spells`, which learns the union of class trainer spells at
-login and level-up through the core `Trainer::CanTeachSpell` filter. That filter calls
-`Player::IsSpellFitByClassAndRace`, which reads `SkillLineAbility.dbc` masks and
-`SkillRaceClassInfo.dbc`.
+Starting spells come from the character-creation tables (`playercreateinfo_skills` ->
+`learnSkillRewardedSpells`, plus `playercreateinfo_action`); everything else is bought from the
+class trainer. Auto-learn was removed 2026-11-26
+([ADR-021 revision](../../decisions/ADR-021-leveling-qol-batch-1.md#revision-2026-11-26--auto-learn-class-spells-withdrawn)),
+so a new character starts with exactly what the core grants and buys every trainer spell. Earlier
+revisions of this RFC relied on `mod-auto-learn-spells` to fill the trainer-spell gap; that module
+no longer exists. The trainer filter still calls `Player::IsSpellFitByClassAndRace`, which reads
+`SkillLineAbility.dbc` masks and `SkillRaceClassInfo.dbc`.
 
 ### Trainers and starting zones
 

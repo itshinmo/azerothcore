@@ -1,18 +1,25 @@
 #
 # Dungeon XP
-# Rebalance split (ADR-012 revision 2026-11-20): dungeon mob/boss XP reduced, dungeon
-# quest XP raised — dungeons become one-time story events, not repeatable XP farms, and
-# world questing stays the fastest path to 80.
+# Rebalance split (ADR-012 revisions 2026-11-20 and 2026-11-26): dungeon trash and boss
+# kill XP reduced, dungeon quest XP raised — dungeons become one-time story events, not
+# repeatable XP farms, and world questing stays the fastest path to 80.
 #
 
-# Multiplier for kill XP earned inside dungeon (and raid, see below) maps. Applies to the
-# core kill XP for every mob and boss in the instance. BG kills unaffected.
-DungeonXp.KillFactor = 0.33
+# Multiplier for trash kill XP inside dungeon (and raid, see below) maps. Trash is the
+# repeatable income, so it takes the deeper cut. BG kills unaffected.
+DungeonXp.TrashKillFactor = 0.10
 
-# Multiplier for dungeon quest XP, on top of the global Rate.XP.Quest (2x here): with the
-# default, a dungeon quest pays 4x one-time. Detection is data-driven (the quest's zone
-# points at the dungeon's area); quests with no dungeon zone keep the world rate.
-DungeonXp.QuestFactor = 2.0
+# Multiplier for boss kill XP inside dungeon and raid maps. Bosses are the goal of a run,
+# not its farm, so they keep the 2026-11-20 depth. A boss is a creature the core flags with
+# CREATURE_FLAG_EXTRA_DUNGEON_BOSS (set from instance_encounters) or CREATURE_TYPE_FLAG_BOSS_MOB
+# (world bosses); mod-objectives credits its boss tasks with the same rule.
+DungeonXp.BossKillFactor = 0.33
+
+# Multiplier for dungeon quest XP, on top of the global Rate.XP.Quest: with the 2x default,
+# 3.0 x 2 = 6x base, one-time per character. Stacks with Ancestral Wisdom and other
+# percentage bonuses exactly as before. Detection is data-driven (the quest's zone points at
+# the dungeon's area); quests with no dungeon zone keep the world rate.
+DungeonXp.QuestFactor = 3.0
 
 # Apply the kill reduction to raid maps too (MapEntry::IsDungeon covers both).
 DungeonXp.IncludeRaids = 1

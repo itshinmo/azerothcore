@@ -23,7 +23,7 @@ Run once per faction (Alliance and Horde), once per expansion bracket if time al
 
 - [ ] Character creation and first login for both factions.
 - [ ] Starting zone: intro quests complete; class starter quests work.
-- [ ] Trainer: spells train and cost money; auto-learn on level-up where applicable.
+- [ ] Trainer: spells train and cost money; no auto-learn; a class trainer sells the next rank.
 - [ ] Talent panel opens; spending a point applies the effect.
 - [ ] First profession learned; skill increases on use; trainer teaches recipes.
 - [ ] Death: corpse run works, spirit healer resurrects, durability damage appears.

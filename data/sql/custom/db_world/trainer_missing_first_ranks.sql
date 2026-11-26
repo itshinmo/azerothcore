@@ -3,7 +3,7 @@
 -- (ReqAbility) or spell_required. Without them, characters — fresh GM-leveled, legacy, and
 -- normally-leveled alike — could never learn those chains (the trainer never offered rank 1).
 -- Retail levels taken from the spell level in Spell.dbc; MoneyCost 0 (free learning, per the
--- server's QoL direction; the auto-learn module teaches free regardless).
+-- server's QoL direction).
 -- Coverage: all classes, found by a data audit (trainer references vs trainer rows):
 --   druid: Bear Form, Maul, Mangle (Cat/Bear), Insect Swarm, Starfall, Typhoon, Wild Growth
 --   (Bash/Swipe/Demoralizing Roar/Enrage/Lacerate/Savage Defense chains root at Bear Form via

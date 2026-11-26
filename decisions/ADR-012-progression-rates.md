@@ -3,8 +3,10 @@
 - Status: accepted (approved by the repository owner on 2026-11-14); revised 2026-11-16 — default
   lowered to 2x and the per-account override removed (approved by the repository owner on
   2026-11-16); revised 2026-11-20 — small-balance bonus XP sources and Ancestral Wisdom added
-  (approved by the repository owner on 2026-11-20, [RFC-003](../rfcs/active/RFC-003-qol-social-slate.md) Group A)
-- Date: 2026-11-14, revised 2026-11-16, revised 2026-11-20
+  (approved by the repository owner on 2026-11-20, [RFC-003](../rfcs/active/RFC-003-qol-social-slate.md) Group A);
+  revised 2026-11-26 — dungeon kill XP split into trash and boss factors, dungeon quests raised to
+  6x base
+- Date: 2026-11-14, revised 2026-11-16, revised 2026-11-20, revised 2026-11-26
 - Related: [ADR-006](ADR-006-shop-policy.md), [ADR-011](ADR-011-world-data-and-content-verification.md)
 
 ## Context
@@ -158,3 +160,27 @@ analysis showing repeat dungeon clears at roughly ~260k XP/h — competitive wit
    the leveling backbone. Both factors are playtest knobs, configuration not policy (same rule as
    the sources above); the 0.33 depth is the owner's call and tunable in the conf without a
    rebuild.
+
+## Revision 2026-11-26 — dungeon trash/boss split and 6x dungeon quests
+
+Owner decision: split the single kill factor by creature role and raise dungeon quests to 6x
+total. Repeat income is trash, not bosses, so the two get separate depths, and a boss kill keeps
+the 2026-11-20 depth as the goal of a run.
+
+1. **Trash XP is 10%:** `DungeonXp.TrashKillFactor = 0.10` replaces `DungeonXp.KillFactor`. The
+   knob is removed outright, not left dead. Everything in an instance that is not a boss is trash.
+2. **Boss XP stays 33%:** `DungeonXp.BossKillFactor = 0.33`. Boss is the same definition
+   `mod-objectives` already uses for its boss tasks: the map is an instance and
+   `Creature::IsDungeonBoss()` or `Creature::isWorldBoss()` is true. A null victim in the XP hook
+   counts as trash.
+3. **Dungeon quests pay 6x base total:** `DungeonXp.QuestFactor = 3.0` on top of the global
+   `Rate.XP.Quest = 2`, so 3 x 2 = 6x base, one-time per character. Ancestral Wisdom and the other
+   percentage bonuses stack exactly as before. The quest-factor clamp stays "at least 1".
+4. **Raids follow the same split.** `DungeonXp.IncludeRaids` keeps its meaning: on, raid trash pays
+   10% and raid bosses 33%; off, raid kill XP keeps the world rate.
+5. **Not changed:** the 2x default, the quest detection (ZoneOrSort -> area -> instance map), the
+   `XPSOURCE_KILL` / `XPSOURCE_QUEST` filtering, and battleground/arena behavior.
+
+The factors remain playtest knobs: configuration, not policy, tunable in the conf without a
+rebuild. Unit coverage for the selection (trash, boss, world map, raid with raids excluded, clamps)
+is `modules/mod-dungeon-xp/test/DungeonXpMathTest.cpp`.
