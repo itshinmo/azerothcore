@@ -1,6 +1,6 @@
 {
   "archive": "patch-Z.MPQ",
-  "built_at": "2026-11-26T16:29:47+00:00",
+  "built_at": "2026-11-26T19:22:36+00:00",
   "compression": "zlib",
   "dbc_files": 0,
   "entries": [
@@ -26,6 +26,13 @@
       "verify_flags": 80
     },
     {
+      "compressed_size": 177,
+      "path": "Interface\\FrameXML\\Cooldown.lua",
+      "sha256": "c118ae3225f735e18b07191beb73d432359cfd63b7e2637e83daac5a98724a52",
+      "size": 291,
+      "verify_flags": 80
+    },
+    {
       "compressed_size": 22528,
       "path": "Interface\\FrameXML\\WorldMapFrame.lua",
       "sha256": "8bac9f7dccf659fff5891d22b0a5fd401f3495bb70a10a0ce980f1095bda7fe1",
@@ -41,6 +48,15 @@
     "canary_source_archive": "Data/enUS/patch-enUS-3.MPQ",
     "canary_source_sha256": "e05b75b212cdda98f86beef35eb024aa1ff416a7164d08873c49b7ae1f3105c8",
     "client": "3.3.5a enUS",
+    "cooldown_block_sha256": "af8c60081ab5f483cbe11f8bc4f0aab26083f0668d6ec49970b6b52201fd2983",
+    "cooldown_output_sha256": "c118ae3225f735e18b07191beb73d432359cfd63b7e2637e83daac5a98724a52",
+    "cooldown_path": "Interface\\FrameXML\\Cooldown.lua",
+    "cooldown_skipped_unreadable": [],
+    "cooldown_source_archive": "Data/enUS/locale-enUS.MPQ",
+    "cooldown_source_sha256": "7b93af66d6f5bb0aaaed35202a376c5e2a75df0daea8e0c6c117ab2bfbde77b5",
+    "cooldown_sources_low_to_high": [
+      "Data/enUS/locale-enUS.MPQ"
+    ],
     "expected_winner": "Data/patch-Z.MPQ",
     "locale": "enUS",
     "order": "english",
@@ -64,8 +80,8 @@
     }
   },
   "schema": 1,
-  "sha256": "9074eed1c062656c22e74d2039619b0dbf713d6c0d4f0a389f2c89fa9c206b5a",
-  "size": 60902,
+  "sha256": "daf164b63d649ad15d140aa7de376c65f16a28a1efa8ff25394a21b76551b768",
+  "size": 61129,
   "sources": [
     {
       "path": "Interface\\AddOns\\ServerMapPOI\\Data.lua",
@@ -81,6 +97,11 @@
       "path": "Interface\\AddOns\\ServerMapPOI\\ServerMapPOI.toc",
       "sha256": "3eeb797f8a66d3501d29db6acf42bd182916f1a8facf9e26deebc21a4de2a90f",
       "source": "data/client-patches/map-poi/src/ServerMapPOI/ServerMapPOI.toc"
+    },
+    {
+      "path": "Interface\\FrameXML\\Cooldown.lua",
+      "sha256": "c118ae3225f735e18b07191beb73d432359cfd63b7e2637e83daac5a98724a52",
+      "source": "cooldown: Data/enUS/locale-enUS.MPQ"
     },
     {
       "path": "Interface\\FrameXML\\WorldMapFrame.lua",
