@@ -26,6 +26,11 @@ I do it"; behavior lives in `specs/`.
 - [client-dbc-patch.md](development/client-dbc-patch.md) — build, verify, install, and roll back a
   whole-file client DBC MPQ patch.
 
+### Tools
+
+- [azeroth-world-editor.md](tools/azeroth-world-editor.md) — 3D world editor: connect, move an existing
+  NPC or gameobject, export the SQL patch, roll back.
+
 ### Operation
 
 - [start-stop.md](operation/start-stop.md) — start, stop, restart, signals.

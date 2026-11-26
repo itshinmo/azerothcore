@@ -7,6 +7,28 @@ answered, record the answer in an ADR or spec and remove the entry.
 > ([ADR-013](ADR-013-server-and-client-before-website.md)). Website-dependent questions below are
 > deferred to Phase 3, not dropped. The production provider is a Phase 4 decision.
 
+## Shop policy: are XP, reputation and profession boosts allowed?
+
+**Question:** [specs/shop.md](../specs/shop.md) and [ADR-006](ADR-006-shop-policy.md) list XP boosts,
+reputation boosts and profession boosts as allowed products. The new
+[game-designer role](../.ai/agents/game-designer.md) treats any progression rate as never-sell,
+because it converts time into money and undercuts the realm's own pacing decisions
+([ADR-012](ADR-012-progression-rates.md): 2x for everyone, no per-account override).
+
+Options:
+
+1. Keep the accepted policy: boosts are allowed. Then the game-designer's never-sell list must be
+   narrowed to match, and the role argues against boosts case by case instead of banning them.
+2. Tighten the policy: no progression-rate products at all. Then ADR-006 and `specs/shop.md` are
+   superseded by a new ADR, and the revenue path is convenience-only (trainer summon, teleports,
+   bank access, cosmetic effects).
+3. Allow only time-saving services that change no rate (option 2) plus cosmetic-only boosts that
+   expire (for example a cosmetic aura), with XP strictly excluded.
+
+**Blocks:** every shop product decision, and the game-designer's sign-off criteria.
+**Owner:** human.
+**Record:** a new ADR superseding ADR-006's product list, plus `specs/shop.md`.
+
 ## Shop delivery trust model
 
 **Question:** How does the website grant a purchase on the server?
