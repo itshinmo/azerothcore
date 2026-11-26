@@ -1,0 +1,9 @@
+## Interface: 30300
+## Title: World Map Pins
+## Notes: World bosses and custom services on the world map.
+## Author: project client patch
+## Version: 1.0.0
+## X-Category: Map
+## LoadOnDemand: 0
+
+WorldMapPins.lua

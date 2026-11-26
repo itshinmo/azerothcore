@@ -114,7 +114,7 @@ The client already loads code we did not ship: stock `Wow.exe` imports four func
 ## References
 
 - [ADR-027](ADR-027-client-patch-pipeline.md) — the MPQ-only rule this ADR narrows
-- [ADR-032](ADR-032-map-poi-layer.md) — current map/UI patch
+- [ADR-037](ADR-037-world-map-pins.md) — current map/UI patch
 - [specs/client-patch.md](../specs/client-patch.md)
 - [.ai/memories/working/white-humanoid-models.md](../.ai/memories/working/white-humanoid-models.md)
 - ClassicAPI, backport of 4.3.4 `PlayerModel`/`DressUpModel` methods (`SetUpModel` dressing step)

@@ -1,11 +1,19 @@
 # ADR-032 — Map POI layer: baked addon, stock icons, red PvP overlay
 
-- Status: accepted
+- Status: withdrawn (2026-11-27) — superseded by [ADR-037](ADR-037-world-map-pins.md)
 - Date: 2026-11-23
 - Related: [ADR-027](ADR-027-client-patch-pipeline.md),
   [ADR-020](ADR-020-collections-transmog-stack.md),
   [ADR-023](ADR-023-cross-faction-social-layer.md),
   [ADR-028](ADR-028-objective-engine-board-chronicle.md)
+
+## Withdrawal
+
+The layer grew from 24 hand-written markers to 1,128 stock NPC markers. The owner rejected it on
+2026-11-27: wrong and noisy data, missing hover tooltips, and a scope that duplicated Questie. The
+`ServerMapPOI` addon, generator, snapshot, Questie harvest and Outlaw protocol were deleted. Only
+world bosses and custom services survive, under [ADR-037](ADR-037-world-map-pins.md). The text below
+is kept as history.
 
 ## Context
 
@@ -186,7 +194,7 @@ coincidence and zone-relative pins landed on the continent texture.
 
 - [ADR-027](ADR-027-client-patch-pipeline.md)
 - [specs/client-patch.md](../specs/client-patch.md)
-- [data/client-patches/map-poi/README.md](../data/client-patches/map-poi/README.md)
+- [data/client-patches/map-pins/README.md](../data/client-patches/map-pins/README.md) (replacement)
 - [runbook/tools/mcp-servers.md](../runbook/tools/mcp-servers.md)
 - [runbook/audits/2026-11-26-playtest-round-2.md](../runbook/audits/2026-11-26-playtest-round-2.md)
 - `data/sql/custom/db_world/collections_npc_spawns.sql`

@@ -39,7 +39,7 @@ quests), Dwarf Shaman (no totem quest chain), Human/Undead Hunter (no Taming the
 
 ## Contract
 
-`specs/client-patch.md`, `tools/client-patch/`, and ADR-027 are unmerged work on `feat/map-poi`.
+`specs/client-patch.md`, `tools/client-patch/`, and ADR-027 are merged on `local-server-setup`.
 This directory uses the agreed layout (`build.py`, `dist/patch-V.MPQ`, `manifest.json`, README) and
-schema 1 manifest fields. `build.py` writes the manifest itself because the tool is not in this
-branch; switch to `client_patch.py manifest` after the merge.
+schema 1 manifest fields. `build.py` still writes the manifest itself; switch to
+`client_patch.py manifest` in a follow-up.

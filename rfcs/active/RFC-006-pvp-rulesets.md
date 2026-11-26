@@ -742,10 +742,12 @@ configuration; it is the contract the implementing slice must provide.
 The server contract is not the visual contract. Stock carrier spells, chat and `.pledge status` are
 the v1 surface. A client patch is required later for:
 
-- **Map POI layer:** the live Outlaw marker. The future contract is zone-scoped, one position update
-  at most every 5 seconds per Outlaw, hidden in instances, BGs, arenas, duels and sanctuaries. The
-  server registry in section 11 is the data source; the map layer is client data. There is no v1
-  broadcast with no consumer.
+- **Map pins (not implemented):** the live Outlaw marker. The general POI layer and its `SMPOI`
+  Outlaw protocol were withdrawn on 2026-11-27 (ADR-032 → ADR-037); only world bosses and custom
+  services ship. A future Outlaw marker needs a new decision, a new client contract and a fresh
+  map layer; the old zone-scoped 5-second contract is retained here only as the server-side design
+  input. The server registry in section 11 is the data source; the map layer is client data. There
+  is no v1 broadcast with no consumer.
 - **Unit/status visual:** mode and Outlaw state on the unit frame, a visible debuff, correct icons
   and tooltips. Stock carriers show the wrong tooltip and cannot show the remaining time properly.
 - **Mode/status display:** a dedicated panel for the current mode, contract and Outlaw timer.

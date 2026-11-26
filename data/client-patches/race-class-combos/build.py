@@ -11,7 +11,7 @@ The patch is a proposal artifact. It is not installed on the live client.
     python3 build.py --client-data ~/Games/wotlk-clean/Data
     python3 build.py --check
 
-Layout follows the client-patch contract (unmerged, branch feat/map-poi): build.py,
+Layout follows the client-patch contract: build.py,
 dist/patch-V.MPQ, manifest.json, README.md, LEDGER.md.
 
 Record sizes are taken from the DBC headers and checked against the physical layout:

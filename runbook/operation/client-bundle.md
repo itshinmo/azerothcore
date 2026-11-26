@@ -17,7 +17,7 @@ and [ADR-020](../../decisions/ADR-020-collections-transmog-stack.md).
 | patch-S.MPQ | Project Reforged v1.5.8 | **removed 2026-11-21 (owner)** — caused client performance issues in Orgrimmar; all other Reforged parts stay |
 | patch-X.MPQ | project item data (client-patch branch) | active — the only `DBFilesClient\Item.dbc` carrier; SHA256 `9ddd80c9fda95647c393a00fb2c0d2db706185b59c05364ce00d3899e95c1d50` |
 | patch-Y.MPQ | project white-model restore (client-patch branch) | active — stock goblin male model, skins and 32 animations; SHA256 `b236c1c35d2714a0e6423e87a934256fbace13168951d2c5144b0ca30016f524` |
-| patch-Z.MPQ | project map/UI (client-patch branch) | active — `ServerMapPOI` addon, `WorldMapFrame.lua` canary and `Cooldown.lua` nil guard; SHA256 `a3ffc8d6c22f5bc29b5e4e4e9dee8189b31a0727b244692d4cb5ca4de7c2f7d5` |
+| patch-Z.MPQ | project map/UI (client-patch branch) | active — `WorldMapPins` addon, `WorldMapFrame.lua` canary and `Cooldown.lua` nil guard; SHA256 `c4088d412e9722cafec75d0ec79ed56fe2c5f581a017f34b2f3ff2c8b1c3c643` |
 | Transmog addon | `modules/mod-transmog-plus/addon/Transmog` | active — in-game transmog UI + collections |
 | Journal addon | `modules/mod-forever-journal/addon/Journal` | active — the Collections journal (Mounts, Pets, Toys, Appearances) |
 | GM Helper | `tools/gm-addon/` | active — testing addon |
@@ -29,7 +29,7 @@ Project patch family, separate from the vendor bundle:
 |---------|-------|-------|--------|
 | `patch-X.MPQ` | `data/client-patches/item-data/` | installed in `~/Games/wotlk-clean/Data` | `9ddd80c9fda95647c393a00fb2c0d2db706185b59c05364ce00d3899e95c1d50` |
 | `patch-Y.MPQ` | `data/client-patches/white-boss-models/` | installed in `~/Games/wotlk-clean/Data` | `b236c1c35d2714a0e6423e87a934256fbace13168951d2c5144b0ca30016f524` |
-| `patch-Z.MPQ` | `data/client-patches/map-poi/` | installed in `~/Games/wotlk-clean/Data` | `a3ffc8d6c22f5bc29b5e4e4e9dee8189b31a0727b244692d4cb5ca4de7c2f7d5` |
+| `patch-Z.MPQ` | `data/client-patches/map-pins/` | installed in `~/Games/wotlk-clean/Data` | `c4088d412e9722cafec75d0ec79ed56fe2c5f581a017f34b2f3ff2c8b1c3c643` |
 | `patch-V.MPQ` | `data/client-patches/race-class-combos/` | **proposal, not installed** | `50e4477b93678272ad35089bfbbd6c8fa7f884c98d1d3171491b29da49d4731c` |
 
 X = item data, Y = white models, Z = map/UI; X < Y < Z, all after Reforged `patch-U`. `patch-V`,
@@ -107,9 +107,9 @@ Current project patches:
   `DBFilesClient\Item.dbc` with custom item rows for the world treasures. Only X carries Item.dbc.
 - [white-boss-models](../../data/client-patches/white-boss-models/README.md) — `patch-Y.MPQ`: stock
   goblin male model over the Ascension HD replacement, fixing white Journal previews.
-- [map-poi](../../data/client-patches/map-poi/README.md) — `patch-Z.MPQ`: baked `ServerMapPOI`
-  world-map layer (Warpweaver, PvP vendors, world-boss skulls, red PvP overlay, Outlaw protocol)
-  plus a FrameXML load-order canary. No DBC change.
+- [map-pins](../../data/client-patches/map-pins/README.md) — `patch-Z.MPQ`: `WorldMapPins`
+  world-map layer (7 world bosses, 10 Warpweavers, 15 Call Boards) plus a FrameXML load-order
+  canary. No DBC change.
 - [race-class-combos](../../data/client-patches/race-class-combos/README.md) — `patch-V.MPQ`
   **proposal only**: whole-file `CharBaseInfo.dbc` and `CharStartOutfit.dbc`. Do not install until
   the owner approves the target list and the carrier.
@@ -124,9 +124,9 @@ Procedure: [client-patch.md](client-patch.md).
 - In-world: HD models and gear, Reforged spell VFX, GM Helper tabs, Transmog/Journal windows, FPS
   in the expected range; capital guards offer "The transmogrifier" with a minimap marker — in
   Dalaran, ask the Violet Citadel teleport-service NPCs (the city has no guards).
-- Project patches (when installed): `patch-Z.MPQ` canary line at login and `ServerMapPOI` markers on
+- Project patches (when installed): `patch-Z.MPQ` canary line at login and `WorldMapPins` pins on
   the world map; `patch-X.MPQ` makes custom item IDs render an icon instead of the red question mark.
-  Test steps: [map-poi README](../../data/client-patches/map-poi/README.md),
+  Test steps: [map-pins README](../../data/client-patches/map-pins/README.md),
   [item-data README](../../data/client-patches/item-data/README.md).
 
 ## References

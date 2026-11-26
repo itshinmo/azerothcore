@@ -9,7 +9,7 @@ from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / "tools" / "client-patch"))
-sys.path.insert(0, str(ROOT / "data" / "client-patches" / "map-poi"))
+sys.path.insert(0, str(ROOT / "data" / "client-patches" / "map-pins"))
 
 import build  # noqa: E402
 

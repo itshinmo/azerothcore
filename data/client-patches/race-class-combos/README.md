@@ -55,7 +55,7 @@ The builder pins both source archives and DBCs, rewrites the whole tables, packs
 fixed file times, listfile and attributes, then extracts both entries back and compares hashes.
 `--check` compares the archive and entries with `manifest.json`.
 
-With the client-patch tool from `feat/map-poi`:
+With the client-patch tool:
 
 ```bash
 python3 tools/client-patch/client_patch.py verify \
@@ -90,10 +90,9 @@ sha256 = 50e4477b93678272ad35089bfbbd6c8fa7f884c98d1d3171491b29da49d4731c
 ## Load order
 
 `patch-V` is a base alphabetic patch: it loads after `patch-U` and before `patch-X/Y/Z` on the English
-client. `patch-X` carries only `Item.dbc`; `patch-Y` carries goblin models; neither carries these
-DBCs. `patch-Z` is not installed. The client-patch family is defined by ADR-027 on the unmerged
-`feat/map-poi` branch; `patch-V` is a character-creation DBC carrier proposed by this artifact and
-needs the client-patch owner's approval.
+client. `patch-X` carries only `Item.dbc`; `patch-Y` carries goblin models; `patch-Z` carries the
+map pins; none carries these DBCs. The client-patch family is defined by ADR-027; `patch-V` is a
+character-creation DBC carrier proposed by this artifact and needs the client-patch owner's approval.
 
 ## Merge reconciliation
 

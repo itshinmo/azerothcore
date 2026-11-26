@@ -74,19 +74,18 @@ If a candidate is confirmed, add its stock file set from `common-2.MPQ`: the mod
 
 ## Client-patch contract
 
-`specs/client-patch.md` and `tools/client-patch/` are unmerged work on `feat/map-poi`. This patch
+`specs/client-patch.md` and `tools/client-patch/` are merged on `local-server-setup`. This patch
 already uses the agreed layout (`build.py`, `dist/patch-Y.MPQ`, `manifest.json`), the schema 1
-manifest fields, and passes that branch's verifier:
+manifest fields, and passes the verifier:
 
 ```text
 $ python3 tools/client-patch/client_patch.py verify dist/patch-Y.MPQ --manifest manifest.json
 dist/patch-Y.MPQ: 36 files, ok
 ```
 
-Recorded exception: `build.py` writes the manifest itself because the tool is not on this branch.
-When `feat/map-poi` merges, switch the builder to `client_patch.py manifest` and remove the duplicate
-writer. `data/client-patches/README.md` in this tree carries this patch's index row; merge it with
-the map branch index rather than replacing it.
+Recorded exception: `build.py` writes the manifest itself instead of importing `tools/client-patch/`.
+Switching it to `client_patch.py manifest` and removing the duplicate writer is a follow-up.
+`data/client-patches/README.md` carries this patch's index row.
 
 ## Rules for the next batch
 
