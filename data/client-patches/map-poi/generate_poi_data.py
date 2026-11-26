@@ -65,23 +65,40 @@ DALARAN_MAP_ID = 571
 DALARAN_DUNGEON_MAP_ID = 27
 
 # Hand-placed markers that no world table can generate: the capital Warpweaver spawns (one per
-# city, creature entry 910012) and the outdoor bosses. Coordinates are a snapshot like the rest.
+# city, creature entry 910012), the outdoor bosses, and the 15 call boards placed by
+# data/sql/custom/db_world/call_boards.sql. Coordinates are real spawn positions: the first two
+# groups come from the harvest, the boards from AWE area overview plus acore-data terrain.
 STATIC_POIS = [
-    (1519, -8829.3, 598.9, "warpweaver", "Warpweaver", "Transmogrifier"),
-    (1537, -4959.6, -1021.3, "warpweaver", "Warpweaver", "Transmogrifier"),
-    (1657, 9926.8, 2319.0, "warpweaver", "Warpweaver", "Transmogrifier"),
-    (3557, -3931.7, -11625.6, "warpweaver", "Warpweaver", "Transmogrifier"),
-    (1637, 1894.1, -4324.3, "warpweaver", "Warpweaver", "Transmogrifier"),
-    (1497, 1581.6, 190.5, "warpweaver", "Warpweaver", "Transmogrifier"),
-    (1638, -1244.6, -60.6, "warpweaver", "Warpweaver", "Transmogrifier"),
-    (3487, 9870.2, -7442.9, "warpweaver", "Warpweaver", "Transmogrifier"),
-    (3703, -2006.6, 5371.1, "warpweaver", "Warpweaver", "Transmogrifier"),
-    (4395, 5842.8, 721.8, "warpweaver", "Warpweaver", "Transmogrifier"),
-    (3483, 943.5, 2269.8, "boss", "Doom Lord Kazzak", "Outdoor raid boss"),
-    (3520, -3563.3, 233.9, "boss", "Doomwalker", "Outdoor raid boss"),
+    (1519, -8829.3, 598.9, "warpweaver", "Warpweaver", "Transmogrifier", "neutral"),
+    (1537, -4959.6, -1021.3, "warpweaver", "Warpweaver", "Transmogrifier", "neutral"),
+    (1657, 9926.8, 2319.0, "warpweaver", "Warpweaver", "Transmogrifier", "neutral"),
+    (3557, -3931.7, -11625.6, "warpweaver", "Warpweaver", "Transmogrifier", "neutral"),
+    (1637, 1894.1, -4324.3, "warpweaver", "Warpweaver", "Transmogrifier", "neutral"),
+    (1497, 1581.6, 190.5, "warpweaver", "Warpweaver", "Transmogrifier", "neutral"),
+    (1638, -1244.6, -60.6, "warpweaver", "Warpweaver", "Transmogrifier", "neutral"),
+    (3487, 9870.2, -7442.9, "warpweaver", "Warpweaver", "Transmogrifier", "neutral"),
+    (3703, -2006.6, 5371.1, "warpweaver", "Warpweaver", "Transmogrifier", "neutral"),
+    (4395, 5842.8, 721.8, "warpweaver", "Warpweaver", "Transmogrifier", "neutral"),
+    (3483, 943.5, 2269.8, "boss", "Doom Lord Kazzak", "Outdoor raid boss", "neutral"),
+    (3520, -3563.3, 233.9, "boss", "Doomwalker", "Outdoor raid boss", "neutral"),
+    (1519, -8863.883407, 669.521069, "callboard", "Call Board", "Alliance call board", "alliance"),
+    (1537, -4839.809440, -862.526259, "callboard", "Call Board", "Alliance call board", "alliance"),
+    (1657, 10125.787802, 2230.085151, "callboard", "Call Board", "Alliance call board", "alliance"),
+    (3557, -3751.869951, -11696.123140, "callboard", "Call Board", "Alliance call board", "alliance"),
+    (1637, 1629.452468, -4435.918796, "callboard", "Call Board", "Horde call board", "horde"),
+    (1497, 1629.701764, 223.504511, "callboard", "Call Board", "Horde call board", "horde"),
+    (1638, -1294.820848, 40.128255, "callboard", "Call Board", "Horde call board", "horde"),
+    (3487, 9569.866650, -7226.669362, "callboard", "Call Board", "Horde call board", "horde"),
+    (3703, -2180.831174, 5404.332052, "callboard", "Call Board", "Neutral call board", "neutral"),
+    (4395, 5850.769034, 637.283083, "callboard", "Call Board", "Neutral call board", "neutral"),
+    (33, -14460.265250, 490.256881, "callboard", "Call Board", "Neutral call board", "neutral"),
+    (440, -7162.411254, -3837.072506, "callboard", "Call Board", "Neutral call board", "neutral"),
+    (618, 6699.864284, -4670.207065, "callboard", "Call Board", "Neutral call board", "neutral"),
+    (3523, 3064.123887, 3696.471751, "callboard", "Call Board", "Neutral call board", "neutral"),
+    (17, -1044.339607, -3664.874299, "callboard", "Call Board", "Neutral call board", "neutral"),
 ]
 
-# Zones that get the translucent red PvP overlay. The owner's list is the five contested open-world
+# Zones that get the translucent red PvP overlay. The owner's list is the six contested open-world
 # zones; the two stock battlegrounds stay on the list as well so their maps keep the highlight they
 # had before the layer was expanded.
 RED_ZONES = {
@@ -446,9 +463,9 @@ def generate(client: Path) -> tuple[str, dict]:
     # worse than shipping none. See the README for the follow-up.
 
     # Hand-placed markers: Warpweavers and the outdoor bosses, which no world table can generate.
-    for zone, world_x, world_y, kind, label, note in STATIC_POIS:
+    for zone, world_x, world_y, kind, label, note, faction in STATIC_POIS:
         if zone in bounds:
-            add(zone, world_x, world_y, kind, label, note, "neutral")
+            add(zone, world_x, world_y, kind, label, note, faction)
 
     # Deduplicate exact duplicates (several spawns can share a position, e.g. stacked innkeepers).
     seen = set()

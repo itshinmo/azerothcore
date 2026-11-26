@@ -173,6 +173,11 @@ assert(seenKinds.portal, "the layer must draw portals")
 assert(seenKinds.battlemaster, "the layer must draw battlemasters")
 assert(seenKinds.warpweaver, "the layer must draw the capital Warpweavers")
 assert(seenKinds.boss, "the layer must draw the outdoor world bosses")
+local callboards = 0
+for _, poi in ipairs(ns.POIs) do
+    if poi.kind == "callboard" then callboards = callboards + 1 end
+end
+assert(callboards == 15, "the layer must draw all 15 call boards")
 assert(ns.TransportRoutes == nil, "ships are not drawn in this slice; remove the stale fixture")
 
 -- Stacked markers must not hide each other. Emissaries share one coordinate, so the refresh

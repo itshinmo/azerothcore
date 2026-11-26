@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 import struct
 import sys
 import unittest
@@ -97,6 +98,52 @@ class PoiGeneratorTests(unittest.TestCase):
     def test_transport_dock_defaults_to_neutral(self):
         _, faction = generate_poi_data.transport_dock("Somewhere and Elsewhere")
         self.assertEqual(faction, "neutral")
+
+    def test_static_pois_carry_a_known_faction(self):
+        allowed = {"alliance", "horde", "neutral"}
+        self.assertEqual(len(generate_poi_data.STATIC_POIS), 27)
+        for entry in generate_poi_data.STATIC_POIS:
+            self.assertEqual(len(entry), 7)
+            self.assertIn(entry[6], allowed)
+        boards = [entry for entry in generate_poi_data.STATIC_POIS if entry[3] == "callboard"]
+        self.assertEqual(len(boards), 15)
+        self.assertEqual({entry[6] for entry in boards}, allowed)
+        self.assertEqual(len({entry[0] for entry in boards}), 15)
+
+    def test_call_board_static_pois_match_the_sql(self):
+        sql = (ROOT / "data" / "sql" / "custom" / "db_world" / "call_boards.sql").read_text(
+            encoding="utf-8"
+        )
+        rows = {}
+        pattern = re.compile(
+            r"^\((\d+), 930101, (\d+), (\d+), (\d+), 1, 1, (-?[\d.]+), (-?[\d.]+),",
+            re.MULTILINE,
+        )
+        for match in pattern.finditer(sql):
+            _guid, _map, zone_id, _area, x, y = match.groups()
+            rows[int(zone_id)] = (round(float(x), 6), round(float(y), 6))
+        self.assertEqual(len(rows), 15)
+        static = {
+            entry[0]: (round(entry[1], 6), round(entry[2], 6))
+            for entry in generate_poi_data.STATIC_POIS
+            if entry[3] == "callboard"
+        }
+        self.assertEqual(static, rows)
+
+    def test_call_board_factions_match_the_capitals(self):
+        expected = {
+            1519: "alliance", 1537: "alliance", 1657: "alliance", 3557: "alliance",
+            1637: "horde", 1497: "horde", 1638: "horde", 3487: "horde",
+            3703: "neutral", 4395: "neutral", 33: "neutral", 440: "neutral",
+            618: "neutral", 3523: "neutral", 17: "neutral",
+        }
+        boards = {
+            entry[0]: entry[6]
+            for entry in generate_poi_data.STATIC_POIS
+            if entry[3] == "callboard"
+        }
+        for zone, faction in expected.items():
+            self.assertEqual(boards.get(zone), faction, f"zone {zone}")
 
 
 if __name__ == "__main__":
