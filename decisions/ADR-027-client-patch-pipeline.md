@@ -2,6 +2,8 @@
 
 - Status: accepted
 - Date: 2026-11-23
+- [ADR-036](ADR-036-client-dll-patches.md) (proposed) would permit one reviewed `DivxDecoder.dll`
+  proxy outside the MPQ family. Until it is accepted, this ADR stands unamended.
 - Related: [ADR-002](ADR-002-custom-content-isolation-and-ids.md),
   [ADR-013](ADR-013-server-and-client-before-website.md),
   [ADR-020](ADR-020-collections-transmog-stack.md),

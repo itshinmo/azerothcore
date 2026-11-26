@@ -24,7 +24,11 @@ load after Reforged `patch-U`; V < X < Y < Z.
   second carrier of either file is a build error.
 - Whole-file replacement only. Resolve the source with `client_patch.py which` and rebuild after a
   bundle update.
-- No exe or DLL content. No partial DBC. No vendor asset without a license, source, and hash.
+- No exe or DLL content in an MPQ. No partial DBC. No vendor asset without a license, source, and hash.
+- One artifact lives outside the MPQ family: the `DivxDecoder.dll` proxy proposed by
+  [ADR-036](../../decisions/ADR-036-client-dll-patches.md). It is built from tracked source under
+  `tools/client-dll/white-model-hook/`, is not part of any project archive, and its hash belongs in
+  this ledger once the ADR is accepted and the artifact ships.
 - Client artifacts are binary: `*.MPQ`, `*.mpq`, `*.dbc`, `*.DBC`, `*.blp`, `*.m2`, `*.skin`,
   `*.anim` are marked binary in `.gitattributes`. Verify `git hash-object --path=<path> <file>`
   equals `--no-filters` before committing an archive or DBC.

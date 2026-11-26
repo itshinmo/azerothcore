@@ -1,0 +1,3 @@
+# Built artifacts: reproduce with build.sh, never commit the DLL.
+dist/
+__pycache__/

@@ -2,8 +2,12 @@
 
 ## Purpose
 
-Define how the project builds, verifies, installs, and rolls back a client-side MPQ patch for the
+Define how the project builds, verifies, installs, and rolls back a client-side patch for the
 supported 3.3.5a client. The pipeline is data-only and reproducible from the repository.
+
+One artifact sits outside the MPQ family: the `DivxDecoder.dll` proxy authorized by
+[ADR-036](../decisions/ADR-036-client-dll-patches.md). It is not packed into a project archive and it
+is not a general executable-patch mechanism; see Security.
 
 ## Scope
 
@@ -167,6 +171,10 @@ custom rows from `items.json`, sorted by ID.
 
 - No secrets, credentials, player data, or internal hostnames in patches, manifests, or docs.
 - No executable content in an MPQ: no exe, DLL, or code; data and Lua/XML only.
+- **One exception, outside MPQ:** the `DivxDecoder.dll` proxy authorized by
+  [ADR-036](../decisions/ADR-036-client-dll-patches.md). It is not packed in a project archive; it
+  sits beside the executable, is built from tracked source, and is pinned by hash in the launcher
+  manifest. No second executable artifact is permitted without its own ADR.
 - No vendor assets without a license, source, and hash.
 - Client patches do not grant items, change RBAC, or bypass server checks.
 - Agents never write to the live client; the owner installs and tests.

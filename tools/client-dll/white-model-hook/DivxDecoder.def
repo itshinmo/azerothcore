@@ -1,0 +1,12 @@
+; DivxDecoder proxy export table.
+;
+; The four exports stock Wow.exe imports are forwarders. The loader resolves them against
+; DivxDecoder_orig.dll before any game code runs, so forwarding can never be null even when the
+; white-model detour is disabled or fails.
+;
+; Name mapping: the original file is renamed to DivxDecoder_orig.dll next to the executable.
+EXPORTS
+    InitializeDivxDecoder=DivxDecoder_orig.InitializeDivxDecoder
+    UnInitializeDivxDecoder=DivxDecoder_orig.UnInitializeDivxDecoder
+    DivxDecode=DivxDecoder_orig.DivxDecode
+    SetOutputFormat=DivxDecoder_orig.SetOutputFormat
