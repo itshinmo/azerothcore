@@ -12,7 +12,7 @@ PvpRulesets.Enable = 0
 # The bonus is outdoor-only and is not applied in instances, battlegrounds, arenas,
 # battlefields, sanctuaries or no-PvP areas.
 PvpRulesets.WarMode.XpBonusPercent = 10
-PvpRulesets.HighRisk.XpBonusPercent = 15
+PvpRulesets.HighRisk.XpBonusPercent = 20
 
 # Persisted cooldown for every accepted pledge change, in minutes.
 PvpRulesets.ToggleCooldownMinutes = 5

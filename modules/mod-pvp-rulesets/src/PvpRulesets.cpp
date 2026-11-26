@@ -149,7 +149,7 @@ namespace
 
     std::atomic<bool> ConfigEnabled{false};
     std::atomic<uint32> WarModeXpPercent{10};
-    std::atomic<uint32> HighRiskXpPercent{15};
+    std::atomic<uint32> HighRiskXpPercent{20};
     std::atomic<uint32> ToggleCooldownMinutes{5};
     std::atomic<bool> TableReady{false};
     std::atomic<bool> RuntimeEnabled{false};
@@ -582,7 +582,7 @@ namespace
             bool const wasEnabled = ConfigEnabled.load();
             ConfigEnabled.store(sConfigMgr->GetOption<bool>("PvpRulesets.Enable", false));
             WarModeXpPercent.store(sConfigMgr->GetOption<uint32>("PvpRulesets.WarMode.XpBonusPercent", 10));
-            HighRiskXpPercent.store(sConfigMgr->GetOption<uint32>("PvpRulesets.HighRisk.XpBonusPercent", 15));
+            HighRiskXpPercent.store(sConfigMgr->GetOption<uint32>("PvpRulesets.HighRisk.XpBonusPercent", 20));
             ToggleCooldownMinutes.store(sConfigMgr->GetOption<uint32>("PvpRulesets.ToggleCooldownMinutes", 5));
             RecomputeRuntimeEnabled();
 

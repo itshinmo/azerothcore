@@ -15,7 +15,7 @@ Implements slice 1 of [RFC-006](../../rfcs/active/RFC-006-pvp-rulesets.md) and
 - War Mode and High Risk keep a persistent PvP flag, re-asserted at login, on zone change,
   on resurrection and after an unexpected core clear.
 - PvE sets no mode flag. The native `/pvp` opt-in stays available.
-- Outdoor XP: War Mode +10%, High Risk +15%. No bonus in instances, battlegrounds, arenas,
+- Outdoor XP: War Mode +10%, High Risk +20%. No bonus in instances, battlegrounds, arenas,
   battlefields, no-PvP areas or sanctuaries.
 
 Not in this slice: the High Risk death chest, mercenary contract, Outlaw timer, guard and

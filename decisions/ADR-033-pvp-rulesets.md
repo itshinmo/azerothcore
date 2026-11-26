@@ -38,7 +38,8 @@ Acceptance of this ADR does not start implementation; the Phase 2 gate still app
 4. **War Mode.** Persistent PvP flag, standard world PvP, no loot or gold loss, **+10% XP**.
    The flag is re-asserted on login, zone change, resurrection, and any unexpected clear. The
    client `/pvp` toggle is refused in War, High Risk and while Outlaw.
-5. **High Risk.** War Mode plus **+15% XP** and a death cost. On death by a player, the lost **10%
+5. **High Risk.** War Mode plus **+20% XP** (owner decision 2026-11-26; the original text said
+   +15%, and the code default and shipped config now say 20) and a death cost. On death by a player, the lost **10%
    of carried gold** (cap 100g) goes into **one runtime chest** at the death position. The killer
    has first claim for a grace period; if the killer does not claim it, the victim can claim the
    remaining gold for a recovery period. **V1 is gold-only:** no item moves. The stock loot window
