@@ -1,6 +1,6 @@
 ---
 description: Current project status, last verified commit, known issues, open decisions, and next tasks. Read after overview on any task.
-last-verified: 2026-11-22 (23bf75546; bot rig paused; manual verification is the current content check)
+last-verified: 2026-11-26 (abc3e0aee; map POI second pass, call boards, Cooldown and MCPs; owner playtest pending)
 ---
 
 # Status
@@ -19,6 +19,42 @@ last-verified: 2026-11-22 (23bf75546; bot rig paused; manual verification is the
 - Website work has not started and is not part of the current phase. Custom content and shop work
   remain out of scope until the base game is done.
 - Branch: `local-server-setup` is the integration branch. Confirm with `git status`.
+
+## Session record — 2026-11-26 (map POI second pass, call boards, Cooldown, MCPs)
+
+- **Map render fixed.** `GetCurrentMapZone()` is a zone index, 0 on the continent map. The addon
+  compared it to `poi.zone` as if it were an area id, so a few small ids matched by coincidence and
+  zone-relative pins landed on the continent texture. Static pins now require `mapZone > 0` and
+  `poi.zone == GetCurrentMapAreaID()`; the red overlay and Outlaw exact-zone mode use the same gate.
+  The offline test simulates the player's zone as the area id on the continent map and fails on the
+  old code.
+- **Icons.** 12 px stock tracking glyphs replace the 18 px square ability icons; meeting stones use
+  Questie's MIT `mstone.blp`; call boards use a stock scroll. `mstone.blp` is credited with SHA256 in
+  the map README. The only non-stock art.
+- **15 call boards live.** Gameobject entry `930101`, spawn GUIDs `5714521-5714535`, both in the ID
+  registry with ADR-028 + ADR-032. Positions, facing and floor heights from AWE `area_overview` and
+  acore-data `terrain position`; SQL re-applicable; `CUSTOM` count 10 and all 15 spawns verified.
+  Type-2 questgivers with no quest; the objectives engine attaches the menu later.
+- **Goldshire is authentic.** 3.3.5 has no Goldshire flight point (Cataclysm addition). Elwynn keeps
+  Innkeeper Farley and the arena battlemaster; no custom flight point.
+- **Questie double pins accepted.** The native layer owns every kind; Questie users can disable its
+  townsfolk POIs. The branded Questie build later resolves the overlap. No suppression code.
+- **Cooldown.** `patch-Z` carries a nil-safe whole-file `Cooldown.lua`; fixes the `WatchFrame` error.
+- **MCPs.** `acore-data` (stdio, read-only SQL, 13 tools) and AWE's built-in MCP (localhost HTTP,
+  bearer token, project-only writes) are project-local in `opencode.json`, kept out of git because
+  of the AWE token. Runbook: `runbook/tools/mcp-servers.md`; AWE runbook updated. The SOAP admin MCP
+  was rejected: 28 write tools, bypasses RBAC/audit.
+- **Branches.** `fix/map-poi-render` `d59209284`, `feat/call-boards` `721cb25e1`, `fix/cooldown-nil`
+  `b5ec96d97`; merges `41260b3fc`, `9627f565f`, `40f940d61`; final build `abc3e0aee`. Patch-Z
+  `a3ffc8d6...`, 63,175 bytes, six files. Worktrees and branches deleted after the docs merge.
+- **Verification.** 49 client-patch tests, addon test 583 markers, build/check/verify, SQL lint,
+  docs check, server restart. Four `pending_db_world` revisions remain pending; they were pending
+  before this batch. Backup: `var/backups/manual/20261126-231310/acore.sql`, sha256
+  `a4f7dca99ea7b2cda2f32128f9079e896351b7e1f30d61dcae7c7b93ab8b5bbe`.
+- **Open.** Owner playtest `runbook/audits/2026-11-26-playtest-round-2.md`; Silvermoon/Everlook board
+  ground is the vmap floor but visually unverified; Questie doubles; FrameXML migration, branded
+  Questie and other addon patches deferred; ships, continent pins and a custom Goldshire flight
+  point deferred.
 
 ## Session record — 2026-11-26 (dungeon XP split, auto-learn removed)
 

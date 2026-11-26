@@ -4,7 +4,8 @@
 - Date: 2026-11-23
 - Related: [ADR-027](ADR-027-client-patch-pipeline.md),
   [ADR-020](ADR-020-collections-transmog-stack.md),
-  [ADR-023](ADR-023-cross-faction-social-layer.md)
+  [ADR-023](ADR-023-cross-faction-social-layer.md),
+  [ADR-028](ADR-028-objective-engine-board-chronicle.md)
 
 ## Context
 
@@ -36,9 +37,9 @@ Possible client-side routes:
    - two stock outdoor bosses as skull examples (Doom Lord Kazzak, Doomwalker).
    Positions are a snapshot of `acore_world.creature`; the Warpweaver rows come from the live table
    and are recorded with the snapshot date. Regenerate after a spawn move.
-3. **Stock icons only.** Warpweaver: `INV_Misc_Map_01`. Vendors: `INV_Misc_Coin_01`. Boss:
-   `UI-RaidTargetingIcon_8` (skull). Cache: `INV_Misc_Bag_10`. No custom BLP and no new texture
-   assets in v1.
+3. **Stock icons only in v1.** Warpweaver: `INV_Misc_Map_01`. Vendors: `INV_Misc_Coin_01`. Boss:
+   `UI-RaidTargetingIcon_8` (skull). Cache: `INV_Misc_Bag_10`. No custom BLP or new texture assets
+   in v1. The second pass adds one MIT-licensed meeting-stone texture; see its revision below.
 4. **Draw only while the map is open.** The addon hooks `WorldMapFrame_Update`,
    `WorldMapFrame_OnShow`, and `WorldMapFrame_OnHide`. It creates one button per POI and reuses it.
    It never registers an `OnUpdate` handler and never loops over the POI list per frame. Icon
@@ -134,13 +135,60 @@ the kinds a player actually needs to find, so the layer now generates from a rea
 - **Red zones:** the six contested open-world zones the owner named (Silithus, Eastern
   Plaguelands, Hellfire Peninsula, Nagrand, Wintergrasp, Zangarmarsh) plus the two stock
   battlegrounds that had the overlay before.
-- **Icons:** still stock client textures only. A custom BLP set is deferred until the owner approves
-  concept art, per the art-direction rule.
+- **Icons:** stock client textures only in that revision. A custom BLP set was deferred until the
+  owner approved concept art; the second pass adds one MIT-licensed meeting-stone texture.
+
+## Revision 2026-11-26 (second pass) — render correctness, Questie pins, call boards, Cooldown
+
+The 2026-11-26 build passed the offline checks but failed the owner's in-client test: zone pins
+appeared in the ocean on the continent map, Elwynn showed almost nothing, and the icons were 18 px
+squares. The root cause was an API mismatch, not the projection. `GetCurrentMapZone()` returns a
+zone **index**, not an area id; it is `0` on the continent map. The addon compared that index to
+`poi.zone` as well as to `GetCurrentMapAreaID()`, so a handful of small area ids matched by
+coincidence and zone-relative pins landed on the continent texture.
+
+- **Render rule.** Static pins draw only when a zone map is open: `GetCurrentMapZone() > 0` and
+  `poi.zone == GetCurrentMapAreaID()`. The continent map, cosmic map and any map with no matching
+  zone draw none. The red overlay and the Outlaw zone mode use the same guard; an outlaw on the
+  continent uses the coarse continent coordinates, never zone coordinates.
+- **Icons.** The 18 px ability icons are replaced by the stock tracking glyphs Questie uses
+  (`Interface\Minimap\Tracking\FlightMaster`, `Innkeeper`, `Battlemaster`) at 12 px. Meeting stones
+  use Questie's `Icons/mstone.blp` (MIT, from Shagu's pfQuest; SHA256
+  `847bb9d2a81e4f356b87c0ae014ce7aa0e8613597b062ff07242b4021b6ec8fc`), credited in the README.
+  Call boards use a stock scroll icon. Faction tint is unchanged. This is the only non-stock art.
+- **Call boards.** Fifteen boards use the stock Wanted Board model: eight faction capitals,
+  Shattrath, Dalaran, and the five neutral hubs (Booty Bay, Gadgetzan, Everlook, Area 52, Ratchet).
+  Gameobject entry `930101`, spawn GUIDs `5714521-5714535`, tracked SQL in
+  `data/sql/custom/db_world/call_boards.sql`. The positions and floor heights came from AWE's
+  `area_overview` and `acore-data`'s `terrain position`, not guesses. The boards are type-2
+  questgivers with no quest; the objectives engine
+  ([ADR-028](ADR-028-objective-engine-board-chronicle.md)) attaches the menu in a later slice.
+- **Goldshire.** 3.3.5 has no Goldshire flight point; it was added in Cataclysm (4.0.3a). The empty
+  Elwynn flight-master set is authentic, not a bug. Elwynn keeps Innkeeper Farley and the arena
+  battlemaster. No custom flight point is added.
+- **Questie overlap.** The native layer still owns every kind. A player running upstream Questie
+  sees its flight master, innkeeper and meeting-stone pins as well, because Questie draws them by
+  default. Double pins are accepted; the player can disable Questie's townsfolk POIs. No suppression
+  code is added. The future branded Questie build can disable its map pins and keep the full quest
+  database, which is the Ascension/Epoch model.
+- **Cooldown.** `patch-Z` now carries a whole-file `Interface\FrameXML\Cooldown.lua` from
+  `Data/enUS/locale-enUS.MPQ` with `CooldownFrame_SetTimer` made nil-safe. `WatchFrame.lua` passes
+  nil on this Ascension client and the stock comparison raised a Lua error. No other line changed.
+- **Carrier.** The baked addon stays for this slice. FrameXML migration, the branded Questie build,
+  and the other addon patches are a separate session. The end state is still all client work
+  patched; the addon is temporary.
+- **Transport and continent pins** remain deferred. Ships and zeppelins still have no reliable dock
+  coordinates; continent-level pins need a second projection and are not in this slice.
+- **Counts.** 583 markers: 155 flight masters, 124 innkeepers, 187 battlemasters, 47 meeting stones,
+  43 portals, 10 Warpweavers, 2 bosses, 15 call boards.
 
 ## References
 
 - [ADR-027](ADR-027-client-patch-pipeline.md)
 - [specs/client-patch.md](../specs/client-patch.md)
 - [data/client-patches/map-poi/README.md](../data/client-patches/map-poi/README.md)
+- [runbook/tools/mcp-servers.md](../runbook/tools/mcp-servers.md)
+- [runbook/audits/2026-11-26-playtest-round-2.md](../runbook/audits/2026-11-26-playtest-round-2.md)
 - `data/sql/custom/db_world/collections_npc_spawns.sql`
 - `data/sql/custom/db_world/collections_guard_directions.sql`
+- `data/sql/custom/db_world/call_boards.sql`

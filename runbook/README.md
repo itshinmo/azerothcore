@@ -30,6 +30,8 @@ I do it"; behavior lives in `specs/`.
 
 - [azeroth-world-editor.md](tools/azeroth-world-editor.md) — 3D world editor: connect, move an existing
   NPC or gameobject, export the SQL patch, roll back.
+- [mcp-servers.md](tools/mcp-servers.md) — acore-data and AWE MCP: install, token, read-only rules,
+  placement workflow.
 
 ### Operation
 
