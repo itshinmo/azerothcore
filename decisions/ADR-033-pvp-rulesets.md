@@ -95,9 +95,10 @@ Acceptance of this ADR does not start implementation; the Phase 2 gate still app
     `.pledge status` show the Outlaws in the same zone on demand. On each own-faction kill the
     server sends one map-scoped chat alert to the same continent naming killer, victim, zone and
     subzone; every own-faction kill sends one map-scoped chat alert on the continent open-world map,
-    with no cooldown or suppression. The map POI feed (zone-scoped, 5 seconds) is deferred to the
-    client patch because v1 has no consumer. Players outside the zone see the alert and must travel
-    to the zone for the future marker.
+    with no cooldown or suppression. The map POI feed (zone-scoped, 5 seconds) was withdrawn with
+    the general layer on 2026-11-27 (ADR-032 → ADR-037). V1 has no consumer; a future Outlaw marker
+    needs a new decision and client contract. Players outside the zone see the alert and must travel
+    to the zone for that future marker.
 12. **Architecture.** Tracked module `modules/mod-pvp-rulesets`, custom characters and world SQL,
     event-driven script hooks, no per-tick player scans, no per-kill database writes except one small
     update of the Outlaw deadline. Four narrow core seams, all approved: an NPC/gameobject
@@ -112,9 +113,10 @@ Acceptance of this ADR does not start implementation; the Phase 2 gate still app
 13. **No purchased power.** Modes are free. No shop item, gold cost, stat or gear advantage, and no
     purchasable reward or XP. The chest moves existing property; it does not generate a reward.
 14. **Client-patch follow-up.** Stock carrier spells, chat and `.pledge status` ship first. A client
-    patch is required later for the map POI layer (the live Outlaw marker) and the unit/status
-    visual (mode and Outlaw display, icons, tooltips). Commands and chat are not a substitute for
-    the visual layer.
+    patch is required later for the Outlaw map marker (not implemented) and the unit/status visual
+    (mode and Outlaw display, icons, tooltips). The old general POI layer and its Outlaw protocol
+    were withdrawn on 2026-11-27 (ADR-032 → ADR-037); the Outlaw marker needs a new decision.
+    Commands and chat are not a substitute for the visual layer.
 15. **Out of scope.** Item loss in the chest until an exact-snapshot design exists; War Mode
     materials, Bloodforged, Marks of War, Hidden Caches; the broker NPC content; cross-realm play;
     rated PvP changes.

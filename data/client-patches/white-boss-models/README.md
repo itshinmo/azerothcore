@@ -1,6 +1,6 @@
 # White boss models — stock goblin male overlay (`patch-Y.MPQ`)
 
-Status: built, conforms to the client-patch contract (unmerged, `feat/map-poi`), installed on the
+Status: built, conforms to the client-patch contract (merged in `local-server-setup`), installed on the
 owner's client and awaiting the in-game pass.
 
 The Journal dungeon/raid cards render some bosses white/untextured. Gilnid (creature 1763) was the
@@ -134,7 +134,7 @@ record the collision in the ledger and stop; do not merge them silently.
 
 ## Contract and layout
 
-This directory follows `specs/client-patch.md` (unmerged, branch `feat/map-poi`, ADR-027):
+This directory follows `specs/client-patch.md` (ADR-027):
 
 ```text
 data/client-patches/white-boss-models/
@@ -152,17 +152,16 @@ $ python3 tools/client-patch/client_patch.py verify dist/patch-Y.MPQ --manifest 
 dist/patch-Y.MPQ: 36 files, ok
 ```
 
-Exception to record while the contract is unmerged: `build.py` writes the manifest itself instead of
-importing `tools/client-patch/`, because that tool is not in this branch. Once `feat/map-poi` merges,
-switch the builder to `client_patch.py manifest` and delete the duplicate writer. The artifact layout
-and manifest fields already match, so nothing else changes.
+This builder still writes the manifest itself instead of importing `tools/client-patch/`. Switching
+it to `client_patch.py manifest` is a follow-up; the artifact layout and manifest fields already
+match, so nothing else changes.
 
 ## Build and verify
 
 ```bash
 python3 data/client-patches/white-boss-models/build.py
 python3 data/client-patches/white-boss-models/build.py --check
-# Requires the client-patch tool from feat/map-poi; skip this command on a branch without it.
+# Requires the merged client-patch tool.
 python3 tools/client-patch/client_patch.py verify \
     data/client-patches/white-boss-models/dist/patch-Y.MPQ \
     --manifest data/client-patches/white-boss-models/manifest.json

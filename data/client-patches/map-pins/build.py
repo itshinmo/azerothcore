@@ -1,20 +1,20 @@
 #!/usr/bin/env python3
-"""Build data/client-patches/map-poi/dist/patch-Z.MPQ.
+"""Build data/client-patches/map-pins/dist/patch-Z.MPQ.
 
 The patch contains:
 
-* Interface\\AddOns\\ServerMapPOI\\* (the baked map layer)
+* Interface\\AddOns\\WorldMapPins\\* (world boss and custom-service pins)
 * Interface\\FrameXML\\WorldMapFrame.lua (canary, copied whole from the
   highest-priority source below patch-Z and extended with a login message)
 * Interface\\FrameXML\\Cooldown.lua (whole-file copy, CooldownFrame_SetTimer nil-safe)
 
-No DBC is shipped. Re-run after a client bundle update or a spawn move.
+No DBC is shipped. Pins are static data in WorldMapPins.lua.
 
 Usage::
 
-    python3 data/client-patches/map-poi/build.py
-    python3 data/client-patches/map-poi/build.py --check
-    python3 data/client-patches/map-poi/build.py --client ~/Games/wotlk-clean
+    python3 data/client-patches/map-pins/build.py
+    python3 data/client-patches/map-pins/build.py --check
+    python3 data/client-patches/map-pins/build.py --client ~/Games/wotlk-clean
 """
 
 from __future__ import annotations
@@ -31,23 +31,21 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[3]
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT / "tools" / "client-patch"))
-sys.path.insert(0, str(HERE))
 
 import mpq  # noqa: E402
-import generate_poi_data  # noqa: E402
 
 DEFAULT_CLIENT = os.environ.get("WOW_CLIENT", os.path.expanduser("~/Games/wotlk-clean"))
 LOCALE = "enUS"
 ARCHIVE_PATH = "Interface\\FrameXML\\WorldMapFrame.lua"
-ADDON_PATH = "Interface\\AddOns\\ServerMapPOI"
+ADDON_PATH = "Interface\\AddOns\\WorldMapPins"
 DEFAULT_OUT = HERE / "dist" / "patch-Z.MPQ"
 DEFAULT_MANIFEST = HERE / "manifest.json"
 BUILD_DIR = HERE / "build"
-ADDON_SOURCE_PREFIX = "data/client-patches/map-poi/src/ServerMapPOI/"
-CANARY_SOURCE = "data/client-patches/map-poi/src/canary_framexml.lua"
+ADDON_SOURCE_PREFIX = "data/client-patches/map-pins/src/WorldMapPins/"
+CANARY_SOURCE = "data/client-patches/map-pins/src/canary_framexml.lua"
 COOLDOWN_PATH = "Interface\\FrameXML\\Cooldown.lua"
 COOLDOWN_MARKER = b"-- patch-Z: CooldownFrame_SetTimer is nil-safe."
-FIXED_MTIME = datetime.datetime(2026, 11, 23, tzinfo=datetime.timezone.utc).timestamp()
+FIXED_MTIME = datetime.datetime(2026, 11, 27, tzinfo=datetime.timezone.utc).timestamp()
 
 
 def rel(path: Path) -> str:
@@ -154,16 +152,8 @@ def build(args) -> int:
             shutil.rmtree(folder)
         folder.mkdir(parents=True)
 
-    # 1. Regenerate the baked POI tables from the client DBCs unless asked not to.
-    gen_metadata = None
-    data_lua = HERE / "src" / "ServerMapPOI" / "Data.lua"
-    if not args.no_regenerate:
-        text, gen_metadata = generate_poi_data.generate(client)
-        data_lua.write_text(text, encoding="utf-8")
-        print(f"generated {rel(data_lua)}")
-
-    # 2. Copy the addon.
-    addon_src = HERE / "src" / "ServerMapPOI"
+    # 1. Copy the addon.
+    addon_src = HERE / "src" / "WorldMapPins"
     addon_dst = root_dir / ADDON_PATH.replace("\\", "/")
     shutil.copytree(addon_src, addon_dst)
     for path in addon_dst.rglob("*"):
@@ -172,7 +162,7 @@ def build(args) -> int:
         if path.is_file():
             check_lua(path)
 
-    # 3. Canary: whole-file copy of the highest-priority source plus our block.
+    # 2. Canary: whole-file copy of the highest-priority source plus our block.
     source_archive, which = canary_source(data_dir)
     with mpq.Archive(source_archive) as archive:
         original = archive.read_file(ARCHIVE_PATH)
@@ -192,7 +182,7 @@ def build(args) -> int:
     framedump.parent.mkdir(parents=True, exist_ok=True)
     framedump.write_bytes(output)
 
-    # 4. Cooldown: whole-file copy with the nil guard added.
+    # 3. Cooldown: whole-file copy with the nil guard added.
     cooldown_archive, cooldown_which = cooldown_source(data_dir)
     with mpq.Archive(cooldown_archive) as archive:
         cooldown_original = archive.read_file(COOLDOWN_PATH)
@@ -203,7 +193,7 @@ def build(args) -> int:
     cooldown_path.write_bytes(cooldown_output)
     check_lua(cooldown_path)
 
-    # 5. Pack. MPQ v1, listfile, attributes, zlib, like the other client patches.
+    # 4. Pack. MPQ v1, listfile, attributes, zlib, like the other client patches.
     files = sorted(
         (path, path.relative_to(root_dir).as_posix().replace("/", "\\"))
         for path in root_dir.rglob("*")
@@ -214,7 +204,7 @@ def build(args) -> int:
         os.utime(path, (FIXED_MTIME, FIXED_MTIME))
     dbc = [name for _, name in files if name.lower().startswith("dbfilesclient\\")]
     if dbc:
-        raise SystemExit(f"map-poi must not ship DBC files: {dbc}")
+        raise SystemExit(f"map-pins must not ship DBC files: {dbc}")
     if out.exists():
         out.unlink()
     out.parent.mkdir(parents=True, exist_ok=True)
@@ -222,7 +212,7 @@ def build(args) -> int:
         for path, name in files:
             archive.add_file(path, name)
 
-    # 6. Verify what the client will read, not what we intended to write.
+    # 5. Verify what the client will read, not what we intended to write.
     failures = []
     with mpq.Archive(out) as archive:
         info = archive.inspect()
@@ -243,7 +233,7 @@ def build(args) -> int:
             print(f"error: {failure}", file=sys.stderr)
         return 1
 
-    # 7. Manifest. The archive hash is recorded after packing; a rebuild changes it.
+    # 6. Manifest. The archive hash is recorded after packing; a rebuild changes it.
     with mpq.Archive(out) as archive:
         info = archive.inspect()
         entries = [
@@ -260,7 +250,7 @@ def build(args) -> int:
     addon_prefix = ADDON_PATH + "\\"
     for path, name in files:
         if name.startswith(addon_prefix):
-            source = "data/client-patches/map-poi/src/ServerMapPOI/" + name[len(addon_prefix):].replace("\\", "/")
+            source = ADDON_SOURCE_PREFIX + name[len(addon_prefix):].replace("\\", "/")
         elif name == ARCHIVE_PATH:
             source = f"canary: {rel_client(source_archive, client)}"
         elif name == COOLDOWN_PATH:
@@ -316,12 +306,6 @@ def build(args) -> int:
         "sources": sources,
         "entries": entries,
     }
-    if gen_metadata:
-        manifest["poi_sources"] = {
-            "generated": gen_metadata["generated"],
-            "world_map_area": gen_metadata["world_map_area"],
-            "dungeon_map": gen_metadata["dungeon_map"],
-        }
     manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
     print(f"wrote {out}")
@@ -411,7 +395,6 @@ def main() -> int:
     parser.add_argument("--client", default=DEFAULT_CLIENT, help="client root containing Data/")
     parser.add_argument("--out", default=str(DEFAULT_OUT))
     parser.add_argument("--manifest", default=str(DEFAULT_MANIFEST))
-    parser.add_argument("--no-regenerate", action="store_true", help="use the committed Data.lua")
     parser.add_argument("--check", action="store_true", help="verify the built patch against the manifest")
     return build(parser.parse_args())
 

@@ -17,6 +17,18 @@ They are project-local on purpose. A global server would load its tools into eve
 project. The only file that holds the connection is `opencode.json` in the repository root, and it is
 kept out of git because it holds the AWE token.
 
+## Parallel worktrees
+
+`opencode.json` is project-root config. A fresh worktree starts without it, so both MCPs disappear
+from the session. Copy it before the first prompt in the new worktree:
+
+```sh
+cp /path/to/main-checkout/opencode.json /path/to/worktree/opencode.json
+```
+
+The copy is covered by the shared `.git/info/exclude`; never commit it. Reload the session if the
+tool catalog does not refresh.
+
 ## Prerequisites
 
 - OpenCode V2 with the project config at `opencode.json` (or `.opencode/opencode.json`).

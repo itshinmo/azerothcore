@@ -30,8 +30,8 @@ class PathTests(unittest.TestCase):
             "Interface\\FrameXML\\WorldMapFrame.lua",
         )
         self.assertEqual(
-            mpq.normalize_archive_path("Interface//AddOns/./ServerMapPOI/"),
-            "Interface\\AddOns\\ServerMapPOI",
+            mpq.normalize_archive_path("Interface//AddOns/./WorldMapPins/"),
+            "Interface\\AddOns\\WorldMapPins",
         )
 
     def test_normalize_rejects_unsafe_paths(self):
@@ -43,9 +43,9 @@ class PathTests(unittest.TestCase):
     def test_safe_destination_stays_below_root(self):
         with tempfile.TemporaryDirectory() as folder:
             root = Path(folder)
-            target = mpq.safe_destination(root, "Interface\\AddOns\\ServerMapPOI\\A.lua")
+            target = mpq.safe_destination(root, "Interface\\AddOns\\WorldMapPins\\A.lua")
             self.assertEqual(
-                target, (root / "Interface" / "AddOns" / "ServerMapPOI" / "A.lua").resolve()
+                target, (root / "Interface" / "AddOns" / "WorldMapPins" / "A.lua").resolve()
             )
             with self.assertRaises(ValueError):
                 mpq.safe_destination(root, "..\\escape.txt")
@@ -128,9 +128,9 @@ class ArchiveTests(unittest.TestCase):
 
     def test_pack_read_round_trip(self):
         files = {
-            "Interface\\AddOns\\ServerMapPOI\\ServerMapPOI.toc": b"## Interface: 30300\n",
+            "Interface\\AddOns\\WorldMapPins\\WorldMapPins.toc": b"## Interface: 30300\n",
             "Interface\\FrameXML\\WorldMapFrame.lua": b"-- canary\n",
-            "Interface\\AddOns\\ServerMapPOI\\Empty.lua": b"",
+            "Interface\\AddOns\\WorldMapPins\\Empty.lua": b"",
             "Interface\\Icons\\blob.bin": bytes(range(256)) * 501,
         }
         with tempfile.TemporaryDirectory() as folder:
@@ -151,14 +151,14 @@ class ArchiveTests(unittest.TestCase):
                     self.assertTrue(result.ok, f"{name}: flags {result.flags:#x}")
                 self.assertIsNotNone(archive.attributes())
                 self.assertIn(
-                    "Interface\\AddOns\\ServerMapPOI\\ServerMapPOI.toc",
+                    "Interface\\AddOns\\WorldMapPins\\WorldMapPins.toc",
                     archive.listfile(),
                 )
 
     def test_extract_all_is_safe(self):
         files = {
-            "Interface\\AddOns\\ServerMapPOI\\A.lua": b"A",
-            "Interface\\AddOns\\ServerMapPOI\\nested\\B.lua": b"B",
+            "Interface\\AddOns\\WorldMapPins\\A.lua": b"A",
+            "Interface\\AddOns\\WorldMapPins\\nested\\B.lua": b"B",
         }
         with tempfile.TemporaryDirectory() as folder:
             folder_path = Path(folder)
@@ -170,7 +170,7 @@ class ArchiveTests(unittest.TestCase):
                 for target in targets:
                     self.assertTrue(target.is_file())
                     self.assertTrue(target.resolve().is_relative_to(out.resolve()))
-                self.assertEqual((out / "Interface" / "AddOns" / "ServerMapPOI" / "A.lua").read_bytes(), b"A")
+                self.assertEqual((out / "Interface" / "AddOns" / "WorldMapPins" / "A.lua").read_bytes(), b"A")
 
     def test_which_prefers_base_alphabetic_patch(self):
         with tempfile.TemporaryDirectory() as folder:

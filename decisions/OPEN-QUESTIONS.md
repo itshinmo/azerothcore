@@ -148,7 +148,7 @@ letter needs that owner's approval.
 **Owner:** client-patch owner (repo owner).
 **Record:** [ADR-035](ADR-035-race-class-combos.md),
 [RFC-007](../rfcs/active/RFC-007-race-class-combos.md), and
-`feat/map-poi:specs/client-patch.md` (unmerged). No decision yet.
+`specs/client-patch.md`. No decision yet.
 ## Mythic+ dungeon ceiling
 
 **Question:** Is item level 232 the right top of the five-player ladder?

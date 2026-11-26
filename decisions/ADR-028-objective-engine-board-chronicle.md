@@ -11,8 +11,8 @@ long-term progression currency all need one engine: one definition of a task, on
 reset rule and one place to add future task types. Building the board and the chronicle as separate
 systems would duplicate task selection, progress accounting and persistence.
 
-Numbering: ADR-027 is allocated on the client-patch branch
-(`feat-map-poi`, `ADR-027-client-patch-pipeline.md`) and will be merged; do not create a duplicate
+Numbering: ADR-027 is allocated and merged
+(`ADR-027-client-patch-pipeline.md`); do not create a duplicate
 027 row. This slice uses ADR-028 through ADR-030.
 
 The first slice must be small enough to review and test with the owner, not a full feature slate.

@@ -1,6 +1,6 @@
 ---
 description: Current project status, last verified commit, known issues, open decisions, and next tasks. Read after overview on any task.
-last-verified: 2026-11-26 (abc3e0aee; map POI second pass, call boards, Cooldown and MCPs; owner playtest pending)
+last-verified: 2026-11-27 (feat/map-pins; map layer replaced with bosses and custom services; owner playtest pending)
 ---
 
 # Status
@@ -19,6 +19,39 @@ last-verified: 2026-11-26 (abc3e0aee; map POI second pass, call boards, Cooldown
 - Website work has not started and is not part of the current phase. Custom content and shop work
   remain out of scope until the base game is done.
 - Branch: `local-server-setup` is the integration branch. Confirm with `git status`.
+
+## Session record — 2026-11-27 (map layer replaced: bosses and custom services only)
+
+- **ADR-032 withdrawn, ADR-037 accepted.** The owner rejected the 1,128-marker stock POI layer:
+  wrong data, noise, no hover tooltips, duplicated Questie. The whole `map-poi` directory, Questie
+  harvest, snapshot, meeting-stone texture, Outlaw protocol and generator were deleted.
+- **New layer.** `data/client-patches/map-pins/`, addon `WorldMapPins`, 32 static pins: 7 outdoor
+  world bosses (Azuregos, Lethon, Taerar, Emeriss, Ysondre, Doom Lord Kazzak, Doomwalker), 10
+  Warpweavers (entry `910012`) and 15 Call Boards (entry `930101`). No WotLK pin: all four Wrath
+  world bosses are inside Vault of Archavon; the owner excluded it.
+- **Scope rule.** Pins only for custom content the project adds, plus the approved world-boss
+  exception. Flight masters, innkeepers, battlemasters, meeting stones and portals stay out;
+  Questie owns them.
+- **Hover.** 24x24 buttons at `WORLDMAP_POI_FRAMELEVEL + 50` (150), above the client landmark layer
+  (91) and quest POIs (100), `EnableMouse(true)`. Three-line tooltip: name, kind, place. Click
+  forwards to `WorldMapButton_OnClick` so the stock map ping still fires.
+- **Continent fix.** `GetCurrentMapContinent()` follows `WorldMapArea`'s area-id-0 file order:
+  1 Kalimdor, 2 Eastern Kingdoms, 3 Outland, 4 Northrend. The pins had 1/2 swapped, so EK pins
+  drew on Kalimdor and vice versa; Outland was right, which matched the screenshots. The data now
+  stores the client order.
+- **Transmog icon.** Warpweaver uses `Interface\Icons\INV_NetherPortal`, a dark void portal, not
+  the generic chest icon.
+- **Data.** Zone and continent fractions baked from the spawn coordinates with the 3.3.5 rotated
+  axes; Silvermoon and the Exodar use `WorldMapArea.DisplayMapID` (Eastern Kingdoms, Kalimdor), not
+  `MapID` 530.
+- **Patch-Z.** `data/client-patches/map-pins/dist/patch-Z.MPQ`, sha256
+  `c4088d412e9722cafec75d0ec79ed56fe2c5f581a017f34b2f3ff2c8b1c3c643`, 27,923 bytes, 4 files (addon
+  TOC + Lua, FrameXML canary, Cooldown nil guard).
+- **Verification.** 36 client-patch Python tests, Lua addon test (32 pins, tooltips, exact
+  positions, frame level, zone/continent counts), build + `--check`. Call boards stay in the world
+  DB; `call_boards.sql` and the ID registry are unchanged.
+- **Open.** Owner in-client test: tooltips, pin positions, counts (EK 11, Kalimdor 14, Outland 5,
+  Northrend 2) and the Dalaran micro-map.
 
 ## Session record — 2026-11-26 (map POI second pass, call boards, Cooldown, MCPs)
 

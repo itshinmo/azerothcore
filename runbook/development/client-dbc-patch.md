@@ -17,8 +17,8 @@ executable, DLLs, or vendor archives. It is data-only and reversible by deleting
 - Python 3;
 - the effective source archive resolved with `client_patch.py which`.
 
-Branch status: the tooling and ADR-027 are on `feat/map-poi`, not merged in this branch. Treat this
-runbook as the recipe for that pipeline; do not create a competing tool in this branch. If the
+Branch status: the tooling and ADR-027 are merged into `local-server-setup`. This runbook is the
+recipe for that pipeline; do not create a competing tool. If the
 tooling is not available, use StormLib directly for list/read/pack; the DBC rewrite steps below are
 unchanged.
 
@@ -174,5 +174,5 @@ the backup and restart. No registry state remains.
 
 - [client bundle](../operation/client-bundle.md)
 - [content pipeline](../../specs/content-pipeline.md)
-- `feat/map-poi`: `decisions/ADR-027-client-patch-pipeline.md` (parallel branch, not merged here)
+- [ADR-027](../../decisions/ADR-027-client-patch-pipeline.md)
 - [RFC-007](../../rfcs/active/RFC-007-race-class-combos.md)

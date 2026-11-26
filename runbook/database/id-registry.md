@@ -65,9 +65,9 @@ the same change.
 | 901021–901100 | Item entries | world treasures batches 2–5 | reserved 80-item block | ADR-031 | 2026-11-23 |
 | 930001–930020 | Gameobject entries + loot tables | world treasures batch 1 | 20 type-3 chest templates and their one-row loot tables | ADR-031 | 2026-11-23 |
 | 930021–930100 | Gameobject entries + loot tables | world treasures batches 2–5 | reserved 80-chest block | ADR-031 | 2026-11-23 |
-| 930101 | Gameobject entry | call boards | 15 type-2 Wanted Board copies in `call_boards.sql`; no quest or loot | ADR-028 + ADR-032 | 2026-11-26 |
+| 930101 | Gameobject entry | call boards | 15 type-2 Wanted Board copies in `call_boards.sql`; no quest or loot | ADR-028 + ADR-037 | 2026-11-26 |
 | 5714501–5714520 | Gameobject spawn GUIDs | world treasures batch 1 | spawn block above the global `gameobject` maximum at authoring time | ADR-031 | 2026-11-23 |
-| 5714521–5714535 | Gameobject spawn GUIDs | call boards | 15 spawn GUIDs above the global `gameobject` maximum at authoring time | ADR-028 + ADR-032 | 2026-11-26 |
+| 5714521–5714535 | Gameobject spawn GUIDs | call boards | 15 spawn GUIDs above the global `gameobject` maximum at authoring time | ADR-028 + ADR-037 | 2026-11-26 |
 | 950400–950407 | Misc (DBC rows) | combo starting outfits | `CharStartOutfit.dbc` rows for the batch-1 pairs (4 pairs × 2 genders), shipped in the client patch and the server `DataDir`; reserved, not yet used | ADR-035 | 2026-11-23 |
 | 950410–950413 | Misc (DBC rows) | combo weapon skills | `skillraceclassinfo_dbc` rows for Blood Elf Warrior swords/axes/2H axes/daggers; reserved, not yet used | ADR-035 | 2026-11-23 |
 | 910013 | Creature entry | Mythic Plus | start/guidance NPC template; two spawns: 5400020 Orgrimmar and 5400021 Ragefire Chasm entrance (`zz_mythic_plus.sql`) | mod-mythic-plus (RFC-004) | 2026-11-23 |

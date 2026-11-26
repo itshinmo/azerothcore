@@ -8,7 +8,7 @@
   [ADR-013](ADR-013-server-and-client-before-website.md),
   [ADR-020](ADR-020-collections-transmog-stack.md),
   [ADR-026](ADR-026-transmog-npc-only-and-preview.md),
-  [ADR-032](ADR-032-map-poi-layer.md)
+  [ADR-037](ADR-037-world-map-pins.md)
 
 ## Context
 
@@ -38,7 +38,8 @@ launcher, break its hash checks, and be impossible to rebuild from the repositor
      `data/client-patches/white-boss-models/manifest.json`; archive SHA256
      `b236c1c35d2714a0e6423e87a934256fbace13168951d2c5144b0ca30016f524`, 616,530 bytes. This
      branch cross-references it and does **not** rebuild or overwrite Y.
-   - `patch-Z.MPQ` — map/UI (the map POI layer and its FrameXML canary).
+   - `patch-Z.MPQ` — map/UI (the `WorldMapPins` addon, its FrameXML canary and the `Cooldown.lua`
+     nil guard).
    X, Y and Z each load after Reforged `patch-U`; alphabetically X < Y < Z. Only X carries Item.dbc,
    so there is no whole-file DBC conflict: Z is the highest-priority map/UI archive, and X wins
    Item.dbc because no higher archive carries it. Y is a model-file patch from its own branch; do

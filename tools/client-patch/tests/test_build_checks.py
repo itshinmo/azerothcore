@@ -12,7 +12,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
 ITEM_BUILD = ROOT / "data" / "client-patches" / "item-data" / "build.py"
-MAP_BUILD = ROOT / "data" / "client-patches" / "map-poi" / "build.py"
+MAP_BUILD = ROOT / "data" / "client-patches" / "map-pins" / "build.py"
 ITEMS = ROOT / "data" / "client-patches" / "item-data" / "items.json"
 
 
@@ -39,7 +39,7 @@ class BuildCheckTests(unittest.TestCase):
             root = Path(folder)
             addon = root / module.ADDON_SOURCE_PREFIX
             addon.mkdir(parents=True)
-            source = addon / "ServerMapPOI.lua"
+            source = addon / "WorldMapPins.lua"
             source.write_text("-- edited\n", encoding="utf-8")
             canary = root / module.CANARY_SOURCE
             canary.parent.mkdir(parents=True, exist_ok=True)
@@ -47,7 +47,7 @@ class BuildCheckTests(unittest.TestCase):
             expected = {
                 "sources": [
                     {
-                        "source": module.ADDON_SOURCE_PREFIX + "ServerMapPOI.lua",
+                        "source": module.ADDON_SOURCE_PREFIX + "WorldMapPins.lua",
                         "sha256": "0" * 64,
                     }
                 ],

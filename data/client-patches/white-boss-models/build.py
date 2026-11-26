@@ -7,7 +7,7 @@ slots, so the goblin bake only reaches part of the model and the rest draws whit
 and its three skins in common-2.MPQ are intact, so this patch overlays the stock model, skins and
 the 32 external animations the stock client ships for it.
 
-Layout follows specs/client-patch.md (unmerged, branch feat/map-poi): build.py, dist/patch-Y.MPQ,
+Layout follows specs/client-patch.md: build.py, dist/patch-Y.MPQ,
 manifest.json in the contract schema, README.md, and this script's pinned inputs.
 
     python3 build.py --client-data ~/Games/wotlk-clean/Data

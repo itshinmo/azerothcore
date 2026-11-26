@@ -4,7 +4,7 @@ Build, verify, install, and roll back the project client-patch family (`patch-X/
 supported 3.3.5a English client. Contract: [specs/client-patch.md](../../specs/client-patch.md).
 Decisions:
 [ADR-027](../../decisions/ADR-027-client-patch-pipeline.md),
-[ADR-032](../../decisions/ADR-032-map-poi-layer.md).
+[ADR-037](../../decisions/ADR-037-world-map-pins.md).
 
 ## When to use
 
@@ -26,7 +26,7 @@ Check:
 
 ```bash
 python3 -c 'import sys; sys.path.insert(0,"tools/client-patch"); import mpq; print(mpq.stormlib_path())'
-python3 tools/client-patch/client_patch.py inspect data/client-patches/map-poi/dist/patch-Z.MPQ
+python3 tools/client-patch/client_patch.py inspect data/client-patches/map-pins/dist/patch-Z.MPQ
 python3 tools/client-patch/client_patch.py inspect data/client-patches/item-data/dist/patch-X.MPQ
 ```
 
@@ -79,12 +79,12 @@ source from the same client.
 6. Record the source archive, source SHA256, output SHA256, install steps, test steps, and rollback
    in the feature README. Add the patch to `data/client-patches/README.md`.
 
-The map POI feature has a build script that does the source resolution, canary append, pack, and
+The map-pins feature has a build script that does the source resolution, canary append, pack, and
 manifest in one step:
 
 ```bash
-python3 data/client-patches/map-poi/build.py
-python3 data/client-patches/map-poi/build.py --check
+python3 data/client-patches/map-pins/build.py
+python3 data/client-patches/map-pins/build.py --check
 ```
 
 The item-data feature builds `patch-X.MPQ` with only `DBFilesClient\Item.dbc`:
@@ -119,39 +119,39 @@ The owner installs; agents do not write to the live client.
 
 ```bash
 # client closed
-cp data/client-patches/map-poi/dist/patch-Z.MPQ ~/Games/wotlk-clean/Data/patch-Z.MPQ
+cp data/client-patches/map-pins/dist/patch-Z.MPQ ~/Games/wotlk-clean/Data/patch-Z.MPQ
 cp data/client-patches/item-data/dist/patch-X.MPQ ~/Games/wotlk-clean/Data/patch-X.MPQ
 ```
 
 Then, with the client started:
 
 1. The login chat shows the canary line from `Interface\FrameXML\WorldMapFrame.lua`.
-2. The login chat shows the `ServerMapPOI` load line.
+2. The login chat shows the `WorldMapPins` load line with the pin count.
 3. Trigger a quest-item cooldown or the Call of Water path; no `Cooldown.lua` error.
-4. Open the world map. Static markers appear only on their zones.
-5. Hover a marker: the tooltip shows its label. Click it: chat echoes the label.
-6. Check the red overlay on the selected PvP zones.
-7. `/reload`, reopen the map; no Lua error dialog and no `Interface\AddOns\ServerMapPOI` error.
-8. Close the map; markers are hidden, no map work continues.
-9. Item data: a server `item_template` row is required. Grant a custom item, for example
+4. Open the world map in Stormwind. The Warpweaver and Call Board pins sit on their exact spots.
+5. Hover each pin: the tooltip shows name, kind and place. Click a pin: the stock map ping fires.
+6. Zone maps draw only their own pins: Duskwood shows Taerar, Westfall shows none.
+7. Dalaran city micro-map: Warpweaver and Call Board on their spots.
+8. Continent maps draw only that continent: Eastern Kingdoms 11, Kalimdor 14, Outland 5,
+   Northrend 2.
+9. `/reload`, reopen the map; no Lua error dialog and no `Interface\AddOns\WorldMapPins` error.
+10. Close the map; pins are hidden, no map work continues.
+11. Item data: a server `item_template` row is required. Grant a custom item, for example
    `.additem 901001`, and inspect the bag icon and tooltip. The icon must render; a red question
    mark means the Item.dbc row or its DisplayInfoID is missing.
-10. Server: restart with matching data. Copy `data/client-patches/item-data/dist/Item.dbc` to
+12. Server: restart with matching data. Copy `data/client-patches/item-data/dist/Item.dbc` to
     `<server>/DataDir/dbc/Item.dbc` (owner only; back up first), or apply the same rows through the
     `item_dbc` table. Do not half-apply. The server loads Item.dbc through `sItemStore`. Compare the
    server file first: any server-only custom rows (for example `2050641`) must be in `items.json`
    and rebuilt, or the replacement loses them.
-10. `/reload` and repeat. No client error dialog.
 
-Outlaw markers are a client visual contract only; no PvP server module ships. Test the contract
-offline with the fixture:
+The pin and tooltip logic has an offline test:
 
 ```bash
-luajit data/client-patches/map-poi/tests/test_addon.lua
+luajit data/client-patches/map-pins/tests/test_addon.lua
 ```
 
-The wire format, server throttling rules, and the chat line are in
-[data/client-patches/map-poi/README.md](../../data/client-patches/map-poi/README.md#outlaw-marker-protocol).
+Pin data and sources are in [data/client-patches/map-pins/README.md](../../data/client-patches/map-pins/README.md).
 
 Prove load order after install:
 
@@ -189,19 +189,19 @@ DB write.
 | `which` skips an archive | Archive is encrypted or corrupt | Expected for some vendor patches; use the source it reports. |
 | Canary absent in game | `patch-Z` did not load; a lower archive won | Re-run `which`; confirm the client is English; check the file name case. |
 | Addon load line absent | MPQ addon did not load or is disabled | Check the addon list; re-verify the TOC and the `Interface\AddOns` path. |
-| Markers on the wrong spot | Spawn moved or map convention mismatch | Regenerate `Data.lua`; compare a known NPC in game; rebuild. |
-| Dalaran markers wrong | Micro-map percentages are approximate | Adjust `DALARAN_MAP` in `generate_poi_data.py`; rebuild. |
+| Markers on the wrong spot | Spawn moved or map convention mismatch | Edit the matching row in `data/client-patches/map-pins/src/WorldMapPins/WorldMapPins.lua`; compare a known NPC in game; rebuild. |
+| Dalaran markers wrong | WorldMapArea has zero bounds for Dalaran | Recompute the pair from `DungeonMap.dbc` row 27 (map 571); rebuild. |
 | Lua error at login | FrameXML source changed under a new bundle | Rebuild from the new highest-priority source; do not reuse the old patch. |
 | `verify` fails after a rebuild | Expected: a rebuild changes the archive hash | Regenerate the manifest and commit both. |
 | Custom item shows a red `?` | Item.dbc row missing, DisplayInfoID missing, or `patch-X` not loaded | Run `item_dbc.py inspect --archive ... --ids <id>`; confirm `which Item.dbc` is `patch-X`; check ItemDisplayInfo.dbc. |
 | `Item.dbc` header rejected | Not 8 fields / 32-byte rows | Use the client's 3.3.5a Item.dbc, not a Cataclysm or later table. |
 | Item.dbc conflict | `patch-Y` or `patch-Z` also carries Item.dbc | Remove the other carrier; X must be the only one. |
-| Outlaw marker absent | No PvP server module sends `SMPOI` messages | Expected in v1; use the offline fixture, not the live client. |
+| Pin tooltip absent | Pin sits below the client quest POI layer or has the mouse disabled | Keep the frame level at `WORLDMAP_POI_FRAMELEVEL + 50` and `EnableMouse(true)`. |
 
 ## References
 
 - [specs/client-patch.md](../../specs/client-patch.md)
 - [ADR-027](../../decisions/ADR-027-client-patch-pipeline.md)
-- [ADR-032](../../decisions/ADR-032-map-poi-layer.md)
+- [ADR-037](../../decisions/ADR-037-world-map-pins.md)
 - [client-bundle.md](client-bundle.md)
 - `tools/client-patch/README.md`

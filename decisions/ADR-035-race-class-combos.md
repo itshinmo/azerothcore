@@ -46,7 +46,7 @@ druid form models, and there is no Ascension undead paladin charger wiring.
    skills, and the class quest chain exist or are filled by the batch. Pairs that fail the gate stay
    out regardless of the target list.
 5. **Client patch carrier.** Character-creation DBCs have no slot in the `patch-X/Y/Z` family defined
-   by the client-patch branch's ADR-027; that branch is not merged here. RFC-007 proposes a new
+   by ADR-027. RFC-007 proposes a new
    late-loading `patch-V` carrying `CharBaseInfo.dbc` and, because the creation preview may read it,
    `CharStartOutfit.dbc`. The client-patch owner must approve the carrier before the patch ships.
 6. **Whole-file DBC replacement.** Both DBCs ship whole, based on their effective installed source.
@@ -108,4 +108,4 @@ druid form models, and there is no Ascension undead paladin charger wiring.
 - [runbook/operation/client-bundle.md](../runbook/operation/client-bundle.md)
 - [decisions/ADR-002](ADR-002-custom-content-isolation-and-ids.md)
 - [decisions/ADR-013](ADR-013-server-and-client-before-website.md)
-- `feat/map-poi`: `decisions/ADR-027-client-patch-pipeline.md` (parallel branch, not merged here)
+- [decisions/ADR-027](ADR-027-client-patch-pipeline.md): client-patch pipeline

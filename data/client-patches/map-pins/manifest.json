@@ -1,35 +1,21 @@
 {
   "archive": "patch-Z.MPQ",
-  "built_at": "2026-11-26T19:47:07+00:00",
+  "built_at": "2026-11-26T22:20:06+00:00",
   "compression": "zlib",
   "dbc_files": 0,
   "entries": [
     {
-      "compressed_size": 31349,
-      "path": "Interface\\AddOns\\ServerMapPOI\\Data.lua",
-      "sha256": "9d0345983512b599fc73b580a54e9d84356310be4559bef8cc9c887e4666fc82",
-      "size": 155175,
+      "compressed_size": 4170,
+      "path": "Interface\\AddOns\\WorldMapPins\\WorldMapPins.lua",
+      "sha256": "ee8eb7fc2919e5cea8754d79a834a4cc9a005a0592233b32ffc1725846f448c1",
+      "size": 12774,
       "verify_flags": 80
     },
     {
-      "compressed_size": 1292,
-      "path": "Interface\\AddOns\\ServerMapPOI\\mstone.blp",
-      "sha256": "847bb9d2a81e4f356b87c0ae014ce7aa0e8613597b062ff07242b4021b6ec8fc",
-      "size": 2564,
-      "verify_flags": 80
-    },
-    {
-      "compressed_size": 6657,
-      "path": "Interface\\AddOns\\ServerMapPOI\\ServerMapPOI.lua",
-      "sha256": "b757dc184d7702c6a5ceac59e8ea811af6994423cffaaa859534bb6ac35255d1",
-      "size": 18457,
-      "verify_flags": 80
-    },
-    {
-      "compressed_size": 197,
-      "path": "Interface\\AddOns\\ServerMapPOI\\ServerMapPOI.toc",
-      "sha256": "3eeb797f8a66d3501d29db6acf42bd182916f1a8facf9e26deebc21a4de2a90f",
-      "size": 237,
+      "compressed_size": 176,
+      "path": "Interface\\AddOns\\WorldMapPins\\WorldMapPins.toc",
+      "sha256": "74cb0ea17c21838c80a804908932c4b7a8fc85fd383bfe6b892ad92db418c11c",
+      "size": 212,
       "verify_flags": 80
     },
     {
@@ -75,40 +61,19 @@
       "Data/enUS/patch-enUS-3.MPQ"
     ]
   },
-  "poi_sources": {
-    "dungeon_map": {
-      "archive": "Data/patch-M.mpq",
-      "sha256": "34beae04678c69cf536946217106d3e935d65d833dc86c59d120e8f335e756e9"
-    },
-    "generated": "2026-11-26",
-    "world_map_area": {
-      "archive": "Data/patch-M.mpq",
-      "sha256": "c7361fae70d2f3136e98b8d19f86a594b3592a6ec3351e184eafb350db7d6503"
-    }
-  },
   "schema": 1,
-  "sha256": "a3ffc8d6c22f5bc29b5e4e4e9dee8189b31a0727b244692d4cb5ca4de7c2f7d5",
-  "size": 63175,
+  "sha256": "c4088d412e9722cafec75d0ec79ed56fe2c5f581a017f34b2f3ff2c8b1c3c643",
+  "size": 27923,
   "sources": [
     {
-      "path": "Interface\\AddOns\\ServerMapPOI\\Data.lua",
-      "sha256": "9d0345983512b599fc73b580a54e9d84356310be4559bef8cc9c887e4666fc82",
-      "source": "data/client-patches/map-poi/src/ServerMapPOI/Data.lua"
+      "path": "Interface\\AddOns\\WorldMapPins\\WorldMapPins.lua",
+      "sha256": "ee8eb7fc2919e5cea8754d79a834a4cc9a005a0592233b32ffc1725846f448c1",
+      "source": "data/client-patches/map-pins/src/WorldMapPins/WorldMapPins.lua"
     },
     {
-      "path": "Interface\\AddOns\\ServerMapPOI\\ServerMapPOI.lua",
-      "sha256": "b757dc184d7702c6a5ceac59e8ea811af6994423cffaaa859534bb6ac35255d1",
-      "source": "data/client-patches/map-poi/src/ServerMapPOI/ServerMapPOI.lua"
-    },
-    {
-      "path": "Interface\\AddOns\\ServerMapPOI\\ServerMapPOI.toc",
-      "sha256": "3eeb797f8a66d3501d29db6acf42bd182916f1a8facf9e26deebc21a4de2a90f",
-      "source": "data/client-patches/map-poi/src/ServerMapPOI/ServerMapPOI.toc"
-    },
-    {
-      "path": "Interface\\AddOns\\ServerMapPOI\\mstone.blp",
-      "sha256": "847bb9d2a81e4f356b87c0ae014ce7aa0e8613597b062ff07242b4021b6ec8fc",
-      "source": "data/client-patches/map-poi/src/ServerMapPOI/mstone.blp"
+      "path": "Interface\\AddOns\\WorldMapPins\\WorldMapPins.toc",
+      "sha256": "74cb0ea17c21838c80a804908932c4b7a8fc85fd383bfe6b892ad92db418c11c",
+      "source": "data/client-patches/map-pins/src/WorldMapPins/WorldMapPins.toc"
     },
     {
       "path": "Interface\\FrameXML\\Cooldown.lua",

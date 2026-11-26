@@ -5,7 +5,7 @@ mark in the bag even when the server has the item. This patch supplies the 8 fie
 ID, Class, SubClass, SoundOverrideSubclass, Material, DisplayInfoID, InventoryType, SheatheType.
 
 Pipeline: [ADR-027](../../../decisions/ADR-027-client-patch-pipeline.md). The map/UI sibling is
-[ADR-032](../../../decisions/ADR-032-map-poi-layer.md). Contract:
+[ADR-037](../../../decisions/ADR-037-world-map-pins.md). Contract:
 [specs/client-patch.md](../../../specs/client-patch.md).
 
 ## Contents

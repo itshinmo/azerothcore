@@ -1,5 +1,10 @@
 # Playtest — 2026-11-26, round 2
 
+> **Superseded 2026-11-27.** The general map POI layer described here was withdrawn
+> ([ADR-032](../../decisions/ADR-032-map-poi-layer.md) → [ADR-037](../../decisions/ADR-037-world-map-pins.md)).
+> The client patch is now `map-pins`; only the Call Board and world-boss checks remain valid, and
+> the counts below are stale. This file is kept as a record.
+
 Server from `/Users/gasman/wow/azerothcore`; client from `~/Games/wotlk-clean`. Report each step as
 PASS, FAIL, or FAIL + what you saw. For a Lua error, send the first error block only.
 

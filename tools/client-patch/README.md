@@ -66,8 +66,8 @@ Archive tests skip cleanly when StormLib is absent; path-safety and load-order t
 
 Worked examples:
 
-- `data/client-patches/map-poi/build.py` — regenerates `Data.lua`, appends the FrameXML canary,
-  packs `patch-Z`, verifies, writes the manifest.
+- `data/client-patches/map-pins/build.py` — appends the FrameXML canary, packs `patch-Z` with the
+  `WorldMapPins` addon and the Cooldown nil guard, verifies, writes the manifest.
 - `data/client-patches/item-data/build.py` — validates `items.json` against the frozen world-treasure
   sources, upserts Item.dbc rows, checks display IDs, packs `patch-X` with only Item.dbc, verifies,
   writes the manifest.

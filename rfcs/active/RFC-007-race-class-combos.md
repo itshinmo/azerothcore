@@ -357,7 +357,7 @@ Measured with the client-patch tool:
 - `CharStartOutfit.dbc`: winner `patch-enUS-2.MPQ`; chain locale-enUS → patch-enUS → patch-enUS-2.
 - `SkillTiers.dbc`: winner `locale-enUS.MPQ`, 26 rows, no id 0.
 
-ADR-027 (parallel `feat/map-poi` branch, not merged here) records the English order: locale
+ADR-027 records the English order: locale
 non-patch, locale numeric patches, locale alphabetic patches, base non-patch, base numeric patches,
 base alphabetic patches. The measured project tail low to high is:
 
@@ -375,7 +375,7 @@ Reforged archive.
 The installed Reforged set is exactly `patch-B`, `patch-C`, `patch-D`, `patch-E`, `patch-G`,
 `patch-I`, `patch-M`, `patch-N`, `patch-P`, `patch-U` (ten archives; `patch-S` was removed). The
 installed `patch-X` carries only `DBFilesClient\Item.dbc` (1 file), `patch-Y` carries only goblin
-male model files (36 files), and `patch-Z` carries the `ServerMapPOI` addon and a `WorldMapFrame.lua`
+male model files (36 files), and `patch-Z` carries the `WorldMapPins` addon and a `WorldMapFrame.lua`
 override; none carries `CharBaseInfo.dbc` or `CharStartOutfit.dbc`.
 
 Fallback: if a client shape puts the locale chain last (the Russian/Chinese shape in ADR-027), or if a
@@ -383,9 +383,8 @@ later project archive wins, move the DBC to the highest-priority locale alphabet
 example `patch-enUS-Z.mpq`) or into that winning archive. Verify with `client_patch.py which` before
 shipping. Never ship two carriers of the same DBC.
 
-The project family is not merged in this branch. The RFC cites ADR-027 as an external reference and
-proposes `patch-V` as the character-creation DBC carrier; the client-patch owner must approve that
-carrier.
+The project family is defined by ADR-027. The RFC proposes `patch-V` as the character-creation DBC
+carrier; the client-patch owner must approve that carrier.
 
 ## Server data plan
 

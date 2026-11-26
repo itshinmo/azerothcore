@@ -32,7 +32,7 @@ The project uses a three-archive family, split by data domain rather than one le
 |---------|--------|-----|
 | `Data/patch-X.MPQ` | item data | the **only** carrier of `DBFilesClient\Item.dbc` |
 | `Data/patch-Y.MPQ` | white dungeon/raid preview models, owned by `fix-journal-white-models` (batch 1: stock goblin male) | none |
-| `Data/patch-Z.MPQ` | map/UI (`ServerMapPOI`) + `Cooldown.lua` nil guard | none |
+| `Data/patch-Z.MPQ` | map/UI (`WorldMapPins`) + `Cooldown.lua` nil guard | none |
 
 - Each archive is MPQ v1, zlib, `(listfile)` and `(attributes)` present.
 - `.gitattributes` marks `*.MPQ`, `*.mpq`, `*.dbc`, `*.blp`, `*.m2`, `*.skin` and `*.anim` binary;
@@ -92,7 +92,7 @@ custom rows from `items.json`, sorted by ID.
 - Item.dbc is validated as 8 fields per row, 32 bytes per row, IDs sorted, and every custom
   `DisplayInfoID` present in the client's ItemDisplayInfo.dbc (read-only check). A missing display is
   the red-question-mark failure.
-- The map-POI `patch-Z` changes **zero** DBC files (`"dbc_files": 0`). The item-data `patch-X`
+- The map-pins `patch-Z` changes **zero** DBC files (`"dbc_files": 0`). The item-data `patch-X`
   changes exactly one (`"dbc_files": 1`) and carries no other file.
 
 ### Manifest
@@ -104,14 +104,13 @@ custom rows from `items.json`, sorted by ID.
 | `schema` | Manifest format, currently `1`. |
 | `archive`, `sha256`, `size`, `format`, `compression` | The built archive. |
 | `built_at` | UTC build time. A rebuild changes the manifest timestamp; unchanged sources rebuild the archive byte-identically. |
-| `dbc_files` | Number of DBCs replaced: `0` for map-poi, `1` for item-data. |
+| `dbc_files` | Number of DBCs replaced: `0` for map-pins, `1` for item-data. |
 | `dbc` | DBC source/output hashes, row counts, fields, record size, added/updated IDs. |
 | `items` | Item.dbc custom rows written (item-data only). |
 | `items_sha256` | SHA256 of the item source JSON (item-data only). |
 | `server_dbc` | Server-side copy path, SHA256 and row count (item-data only). |
 | `server_dbc_input` | Server DataDir Item.dbc hash, rows, server-only IDs, conflicts when `--server-dbc` was used. |
 | `load_order` | Client, locale, order, project family, canary/source archive and hashes, expected winner, source chain. |
-| `poi_sources` | Generated POI input DBC archive and SHA256, snapshot date (map-poi only). |
 | `sources` | Each packed path, its repository source or canary source, and SHA256. |
 | `entries` | Each packed path, sizes, SHA256, and StormLib verify flags. |
 
@@ -190,7 +189,7 @@ custom rows from `items.json`, sorted by ID.
 ## References
 
 - [ADR-027](../decisions/ADR-027-client-patch-pipeline.md)
-- [ADR-032](../decisions/ADR-032-map-poi-layer.md)
+- [ADR-037](../decisions/ADR-037-world-map-pins.md)
 - [runbook/operation/client-patch.md](../runbook/operation/client-patch.md)
 - [runbook/operation/client-bundle.md](../runbook/operation/client-bundle.md)
 - [content-pipeline.md](content-pipeline.md)
