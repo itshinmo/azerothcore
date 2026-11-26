@@ -93,6 +93,27 @@ namespace PvpRulesets
             && !context.inSanctuary;
     }
 
+    namespace
+    {
+        PledgeArea const* FindPledgeArea(uint32 areaId)
+        {
+            for (PledgeArea const& area : PLEDGE_AREAS)
+                if (area.AreaId == areaId)
+                    return &area;
+
+            return nullptr;
+        }
+    }
+
+    bool IsPledgeAreaAllowed(uint32 areaId, PledgeFaction playerFaction)
+    {
+        if (playerFaction != PledgeFaction::Alliance && playerFaction != PledgeFaction::Horde)
+            return false;
+
+        PledgeArea const* area = FindPledgeArea(areaId);
+        return area && (area->Faction == PledgeFaction::Any || area->Faction == playerFaction);
+    }
+
     ToggleResult EvaluateToggle(ToggleContext const& context)
     {
         if (!context.enabled)
@@ -111,8 +132,17 @@ namespace PvpRulesets
             return ToggleResult::InArena;
         if (context.inBattlefield)
             return ToggleResult::InBattlefield;
-        if (!context.inCapital)
-            return ToggleResult::NotInCapital;
+
+        // A sub-area has its own AreaTable row (Stormwind Harbor 4411, The Underbelly 4560,
+        // Krasus' Landing 4564, ...), so only the listed city rows themselves pass.
+        PledgeArea const* pledgeArea = FindPledgeArea(context.areaId);
+        if (!pledgeArea)
+            return ToggleResult::NotInPledgeArea;
+        if (context.faction != PledgeFaction::Alliance && context.faction != PledgeFaction::Horde)
+            return ToggleResult::WrongFaction;
+        if (pledgeArea->Faction != PledgeFaction::Any && pledgeArea->Faction != context.faction)
+            return ToggleResult::WrongFaction;
+
         if (context.cooldownRemainingSeconds > 0)
             return ToggleResult::Cooldown;
         return ToggleResult::Ok;
@@ -138,8 +168,11 @@ namespace PvpRulesets
                 return "You cannot change your pledge in an arena.";
             case ToggleResult::InBattlefield:
                 return "You cannot change your pledge in a battlefield.";
-            case ToggleResult::NotInCapital:
-                return "You must be in a capital city to change your pledge.";
+            case ToggleResult::NotInPledgeArea:
+                return "You can only change your pledge in a capital city (Stormwind, Ironforge, Darnassus, "
+                       "The Exodar, Orgrimmar, Undercity, Thunder Bluff, Silvermoon, Shattrath or Dalaran).";
+            case ToggleResult::WrongFaction:
+                return "You can only change your pledge in a capital city of your own faction.";
             case ToggleResult::Cooldown:
                 return "You must wait before changing your pledge again.";
             case ToggleResult::Ok:

@@ -7,8 +7,11 @@ Implements slice 1 of [RFC-006](../../rfcs/active/RFC-006-pvp-rulesets.md) and
 ## Slice 1 scope
 
 - `.pledge pve|warmode|highrisk` and `.pledge status`, server-authoritative.
-- Guards: alive, out of combat, in a capital city (`AREA_FLAG_CAPITAL`), not in an
-  instance/battleground/arena/battlefield, 5-minute persisted cooldown.
+- Guards: alive, out of combat, in one of ten listed capital cities
+  (`PLEDGE_AREAS` in `src/PvpRulesets.h`, faction-checked), not in an
+  instance/battleground/arena/battlefield, 5-minute persisted cooldown. The stock
+  `AREA_FLAG_CAPITAL` flag is not used: it covers 35 AreaTable rows, including Stormwind Harbor,
+  Acherus: The Ebon Hold and every Dalaran sub-area.
 - War Mode and High Risk keep a persistent PvP flag, re-asserted at login, on zone change,
   on resurrection and after an unexpected core clear.
 - PvE sets no mode flag. The native `/pvp` opt-in stays available.
@@ -71,8 +74,9 @@ corrupt the map or block the other.
 ## Tests
 
 `modules/mod-pvp-rulesets/test/PvpRulesetsTest.cpp` covers mode parsing and names, the
-pledge guard order, the cooldown math and the outdoor XP gate. The module `.cmake` registers
-the test with the core `unit_tests` target; run `make test`.
+pledge guard order, the ten-area pledge allow-list (faction capitals, neutral hubs, wrong
+faction and capital-flagged sub-areas), the cooldown math and the outdoor XP gate. The module
+`.cmake` registers the test with the core `unit_tests` target; run `make test`.
 
 ## Rollback
 

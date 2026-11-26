@@ -18,6 +18,7 @@
 
 #include "Define.h"
 
+#include <array>
 #include <optional>
 #include <string_view>
 
@@ -56,6 +57,51 @@ namespace PvpRulesets
 
     bool IsOutdoorXpEligible(OutdoorXpContext const& context);
 
+    // Pledge area allow-list (ADR-033 revision 2026-11-26). This is a game-design decision,
+    // not a tuning knob, so it stays a code constant and is not configurable: the stock
+    // `AREA_FLAG_CAPITAL` flag covers 35 rows, including Stormwind Harbor (4411), Acherus:
+    // The Ebon Hold (4281), every Dalaran sub-area and The Forlorn Cavern (4679), so the flag
+    // cannot be used as the gate.
+    // Ids are `AreaTableEntry::ID` rows; the area's `team` column (AREATEAM_*) must be
+    // neutral or match the player's faction.
+    //
+    // `Player::GetAreaId()` reports the most specific area, not the zone: standing in
+    // Darnassus' Cenarion Enclave reports the sub-area, not 1657, and Dalaran has 20
+    // sub-areas. The command path therefore passes the *zone* (`GetZoneId()`), which the core
+    // resolves from the sub-area's parent in `WorldObject::ProcessPositionDataChanged`. Passing
+    // the area id instead would refuse a pledge in most of Darnassus and all of Dalaran.
+    // Consequence: a pledge is allowed in Stormwind Harbor too, because its zone is 1519. That
+    // is accepted: the harbour is a normal part of the city a player walks around in.
+    enum class PledgeFaction : uint8
+    {
+        Alliance = 0,
+        Horde,
+        Any,
+    };
+
+    struct PledgeArea
+    {
+        uint32 AreaId;
+        PledgeFaction Faction;
+    };
+
+    inline constexpr std::array<PledgeArea, 10> PLEDGE_AREAS = {{
+        { 1519, PledgeFaction::Alliance }, // Stormwind City
+        { 1537, PledgeFaction::Alliance }, // Ironforge
+        { 1657, PledgeFaction::Alliance }, // Darnassus
+        { 3557, PledgeFaction::Alliance }, // The Exodar
+        { 1637, PledgeFaction::Horde },    // Orgrimmar
+        { 1497, PledgeFaction::Horde },    // Undercity
+        { 1638, PledgeFaction::Horde },    // Thunder Bluff
+        { 3487, PledgeFaction::Horde },    // Silvermoon City
+        { 3703, PledgeFaction::Any },      // Shattrath City
+        { 4395, PledgeFaction::Any },      // Dalaran
+    }};
+
+    // The player faction must be Alliance or Horde; `Any` is an area requirement only.
+    // An area whose list entry is `Any` accepts both factions.
+    bool IsPledgeAreaAllowed(uint32 areaId, PledgeFaction playerFaction);
+
     // Pledge guards (RFC-006 section 3), evaluated in this fixed order.
     enum class ToggleResult : uint8
     {
@@ -68,7 +114,8 @@ namespace PvpRulesets
         InBattleground,
         InArena,
         InBattlefield,
-        NotInCapital,
+        NotInPledgeArea,
+        WrongFaction,
         Cooldown,
     };
 
@@ -82,7 +129,8 @@ namespace PvpRulesets
         bool inBattleground = false;
         bool inArena = false;
         bool inBattlefield = false;
-        bool inCapital = false;
+        uint32 areaId = 0; // `Player::GetAreaId()`, not the parent zone
+        PledgeFaction faction = PledgeFaction::Alliance;
         int64 cooldownRemainingSeconds = 0;
     };
 

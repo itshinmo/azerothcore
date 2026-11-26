@@ -16,3 +16,14 @@ PvpRulesets.HighRisk.XpBonusPercent = 15
 
 # Persisted cooldown for every accepted pledge change, in minutes.
 PvpRulesets.ToggleCooldownMinutes = 5
+
+# Pledge location is NOT configurable. `.pledge` works only in these ten capital cities,
+# matching the player's faction:
+#   Alliance: 1519 Stormwind City, 1537 Ironforge, 1657 Darnassus, 3557 The Exodar
+#   Horde:    1637 Orgrimmar, 1497 Undercity, 1638 Thunder Bluff, 3487 Silvermoon City
+#   Both:     3703 Shattrath City, 4395 Dalaran
+# The stock AREA_FLAG_CAPITAL flag covers 35 AreaTable rows (Stormwind Harbor, Acherus:
+# The Ebon Hold, every Dalaran sub-area, The Forlorn Cavern, ...), so it is not used. The
+# list is a game-design decision, not a tuning knob: it lives in
+# src/PvpRulesets.h (`PLEDGE_AREAS`), is checked against the player's faction, and the
+# unit tests pin it. There is deliberately no config option for it.

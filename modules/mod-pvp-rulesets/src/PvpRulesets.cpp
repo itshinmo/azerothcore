@@ -174,10 +174,19 @@ namespace
         return sAreaTableStore.LookupEntry(areaId);
     }
 
-    bool IsCapitalZone(uint32 zoneId)
+    PvpRulesets::PledgeFaction PlayerPledgeFaction(Player* player)
     {
-        AreaTableEntry const* zone = LookupArea(zoneId);
-        return zone && (zone->flags & AREA_FLAG_CAPITAL);
+        switch (player->GetTeamId())
+        {
+            case TEAM_ALLIANCE:
+                return PvpRulesets::PledgeFaction::Alliance;
+            case TEAM_HORDE:
+                return PvpRulesets::PledgeFaction::Horde;
+            default:
+                // Not one of the two playable factions: the pure gate refuses it, and
+                // IsPledgeAreaAllowed() would refuse `Any` as a player faction too.
+                return PvpRulesets::PledgeFaction::Any;
+        }
     }
 
     bool IsBattlefieldZone(uint32 zoneId)
@@ -427,7 +436,9 @@ namespace
             context.inBattleground = player->InBattleground();
             context.inArena = player->InArena();
             context.inBattlefield = IsBattlefieldZone(player->GetZoneId());
-            context.inCapital = IsCapitalZone(player->GetZoneId());
+            // Area, not zone: sub-areas carry their own row and must be refused separately.
+            context.areaId = player->GetZoneId();
+            context.faction = PlayerPledgeFaction(player);
             context.cooldownRemainingSeconds = PvpRulesets::CooldownRemainingSeconds(
                 now, state.LastToggle, ToggleCooldownSeconds());
 
