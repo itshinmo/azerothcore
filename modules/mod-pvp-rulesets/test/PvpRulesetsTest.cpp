@@ -111,7 +111,8 @@ TEST(PvpRulesetsToggleTest, AcceptsAliveOutOfCombatCapital)
     ToggleContext context;
     context.enabled = true;
     context.alive = true;
-    context.inCapital = true;
+    context.areaId = 1519;
+    context.faction = PledgeFaction::Alliance;
 
     EXPECT_EQ(EvaluateToggle(context), ToggleResult::Ok);
 }
@@ -150,9 +151,9 @@ TEST(PvpRulesetsToggleTest, GuardsInFixedOrder)
     EXPECT_EQ(EvaluateToggle(context), ToggleResult::InBattlefield);
 
     context.inBattlefield = false;
-    EXPECT_EQ(EvaluateToggle(context), ToggleResult::NotInCapital);
+    EXPECT_EQ(EvaluateToggle(context), ToggleResult::NotInPledgeArea);
 
-    context.inCapital = true;
+    context.areaId = 1519;
     context.cooldownRemainingSeconds = 1;
     EXPECT_EQ(EvaluateToggle(context), ToggleResult::Cooldown);
 
@@ -160,15 +161,15 @@ TEST(PvpRulesetsToggleTest, GuardsInFixedOrder)
     EXPECT_EQ(EvaluateToggle(context), ToggleResult::Ok);
 }
 
-TEST(PvpRulesetsToggleTest, CapitalAndCooldownAreBothRequired)
+TEST(PvpRulesetsToggleTest, AreaAndCooldownAreBothRequired)
 {
     ToggleContext context;
     context.enabled = true;
     context.alive = true;
-    context.inCapital = false;
+    context.areaId = 0;
     context.cooldownRemainingSeconds = 300;
 
-    EXPECT_EQ(EvaluateToggle(context), ToggleResult::NotInCapital);
+    EXPECT_EQ(EvaluateToggle(context), ToggleResult::NotInPledgeArea);
 }
 
 TEST(PvpRulesetsToggleTest, EveryRefusalHasAMessage)
@@ -176,12 +177,111 @@ TEST(PvpRulesetsToggleTest, EveryRefusalHasAMessage)
     for (ToggleResult result : { ToggleResult::Disabled, ToggleResult::GameMaster,
              ToggleResult::Dead, ToggleResult::InCombat, ToggleResult::InInstance,
              ToggleResult::InBattleground, ToggleResult::InArena, ToggleResult::InBattlefield,
-             ToggleResult::NotInCapital, ToggleResult::Cooldown })
+             ToggleResult::NotInPledgeArea, ToggleResult::WrongFaction, ToggleResult::Cooldown })
     {
         EXPECT_STRNE(ToggleRefusalMessage(result), "");
     }
 
     EXPECT_STREQ(ToggleRefusalMessage(ToggleResult::Ok), "");
+}
+
+TEST(PvpRulesetsPledgeAreaTest, AllowsEveryFactionCapitalForItsFaction)
+{
+    EXPECT_TRUE(IsPledgeAreaAllowed(1519, PledgeFaction::Alliance)); // Stormwind City
+    EXPECT_TRUE(IsPledgeAreaAllowed(1537, PledgeFaction::Alliance)); // Ironforge
+    EXPECT_TRUE(IsPledgeAreaAllowed(1657, PledgeFaction::Alliance)); // Darnassus
+    EXPECT_TRUE(IsPledgeAreaAllowed(3557, PledgeFaction::Alliance)); // The Exodar
+    EXPECT_TRUE(IsPledgeAreaAllowed(1637, PledgeFaction::Horde));    // Orgrimmar
+    EXPECT_TRUE(IsPledgeAreaAllowed(1497, PledgeFaction::Horde));    // Undercity
+    EXPECT_TRUE(IsPledgeAreaAllowed(1638, PledgeFaction::Horde));    // Thunder Bluff
+    EXPECT_TRUE(IsPledgeAreaAllowed(3487, PledgeFaction::Horde));    // Silvermoon City
+}
+
+TEST(PvpRulesetsPledgeAreaTest, AllowsNeutralHubsForBothFactions)
+{
+    for (uint32 areaId : { 3703u, 4395u }) // Shattrath City, Dalaran
+    {
+        EXPECT_TRUE(IsPledgeAreaAllowed(areaId, PledgeFaction::Alliance));
+        EXPECT_TRUE(IsPledgeAreaAllowed(areaId, PledgeFaction::Horde));
+    }
+}
+
+TEST(PvpRulesetsPledgeAreaTest, RefusesTheOtherFactionsCapitals)
+{
+    EXPECT_FALSE(IsPledgeAreaAllowed(1519, PledgeFaction::Horde));
+    EXPECT_FALSE(IsPledgeAreaAllowed(1537, PledgeFaction::Horde));
+    EXPECT_FALSE(IsPledgeAreaAllowed(1657, PledgeFaction::Horde));
+    EXPECT_FALSE(IsPledgeAreaAllowed(3557, PledgeFaction::Horde));
+
+    EXPECT_FALSE(IsPledgeAreaAllowed(1637, PledgeFaction::Alliance));
+    EXPECT_FALSE(IsPledgeAreaAllowed(1497, PledgeFaction::Alliance));
+    EXPECT_FALSE(IsPledgeAreaAllowed(1638, PledgeFaction::Alliance));
+    EXPECT_FALSE(IsPledgeAreaAllowed(3487, PledgeFaction::Alliance));
+}
+
+TEST(PvpRulesetsPledgeAreaTest, RefusesCapitalFlaggedSubAreasAndOtherAreas)
+{
+    // The gate receives the player's ZONE, not the most specific area, so these sub-area ids must
+    // never be passed by the command path. They are still refused if one is passed by mistake:
+    // the allow-list is an exact test, not a prefix or a flag check.
+    //
+    // Why this matters: GetAreaId() reports the sub-area, and Darnassus has 5 of them while
+    // Dalaran has 20, so an area-id gate would refuse a pledge in most of those two cities.
+    // Every one of these carries AREA_FLAG_CAPITAL in the stock AreaTable.dbc.
+    EXPECT_FALSE(IsPledgeAreaAllowed(4411, PledgeFaction::Alliance)); // Stormwind Harbor
+    EXPECT_FALSE(IsPledgeAreaAllowed(4281, PledgeFaction::Alliance)); // Acherus: The Ebon Hold
+    EXPECT_FALSE(IsPledgeAreaAllowed(4560, PledgeFaction::Alliance)); // The Underbelly
+    EXPECT_FALSE(IsPledgeAreaAllowed(4564, PledgeFaction::Alliance)); // Krasus' Landing
+    EXPECT_FALSE(IsPledgeAreaAllowed(4564, PledgeFaction::Horde));
+    EXPECT_FALSE(IsPledgeAreaAllowed(4619, PledgeFaction::Horde));    // The Violet Citadel
+    EXPECT_FALSE(IsPledgeAreaAllowed(4620, PledgeFaction::Horde));    // Magus Commerce Exchange
+    EXPECT_FALSE(IsPledgeAreaAllowed(4679, PledgeFaction::Alliance)); // The Forlorn Cavern
+    EXPECT_FALSE(IsPledgeAreaAllowed(3704, PledgeFaction::Horde));    // The Shepherd's Gate
+    EXPECT_FALSE(IsPledgeAreaAllowed(1617, PledgeFaction::Alliance)); // Valley of Heroes
+    EXPECT_FALSE(IsPledgeAreaAllowed(0, PledgeFaction::Alliance));
+    EXPECT_FALSE(IsPledgeAreaAllowed(12, PledgeFaction::Horde)); // Elwynn Forest
+}
+
+TEST(PvpRulesetsPledgeAreaTest, NeutralFactionPlayerIsRefused)
+{
+    EXPECT_FALSE(IsPledgeAreaAllowed(1519, PledgeFaction::Any));
+    EXPECT_FALSE(IsPledgeAreaAllowed(3703, PledgeFaction::Any));
+}
+
+TEST(PvpRulesetsToggleTest, NonPlayableFactionIsRefusedEvenInANeutralHub)
+{
+    ToggleContext context;
+    context.enabled = true;
+    context.alive = true;
+    context.areaId = 4395; // Dalaran
+    context.faction = PledgeFaction::Any;
+
+    EXPECT_EQ(EvaluateToggle(context), ToggleResult::WrongFaction);
+}
+
+TEST(PvpRulesetsPledgeAreaTest, ListHoldsExactlyTheOwnerApprovedTenAreas)
+{
+    ASSERT_EQ(PLEDGE_AREAS.size(), 10u);
+
+    for (PledgeArea const& area : PLEDGE_AREAS)
+    {
+        EXPECT_NE(area.AreaId, 0u);
+        EXPECT_TRUE(area.Faction == PledgeFaction::Alliance || area.Faction == PledgeFaction::Horde
+            || area.Faction == PledgeFaction::Any);
+    }
+}
+
+TEST(PvpRulesetsToggleTest, RefusesWrongFactionCapitalWithItsOwnReason)
+{
+    ToggleContext context;
+    context.enabled = true;
+    context.alive = true;
+    context.areaId = 1519; // Stormwind City
+    context.faction = PledgeFaction::Horde;
+
+    EXPECT_EQ(EvaluateToggle(context), ToggleResult::WrongFaction);
+    EXPECT_STREQ(ToggleRefusalMessage(ToggleResult::WrongFaction),
+        "You can only change your pledge in a capital city of your own faction.");
 }
 
 TEST(PvpRulesetsCooldownTest, RemainingSeconds)

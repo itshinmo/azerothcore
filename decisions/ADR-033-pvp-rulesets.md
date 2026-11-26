@@ -162,6 +162,66 @@ None. The owner resolved the last two on 2026-11-23. The remaining gates are ver
 
 These are recorded in the RFC-006 test plan, not as open design questions.
 
+## Revision 2026-11-26 — the pledge is allowed in ten listed capitals, faction-checked
+
+This revision replaces decision 2's location gate only. Nothing else in the ADR changes.
+
+**Owner decision.** `.pledge` is allowed **only** in these ten areas, and only when the area
+faction is neutral or matches the player's faction:
+
+| Faction | Areas |
+|---------|-------|
+| Alliance | 1519 Stormwind City, 1537 Ironforge, 1657 Darnassus, 3557 The Exodar |
+| Horde | 1637 Orgrimmar, 1497 Undercity, 1638 Thunder Bluff, 3487 Silvermoon City |
+| Both | 3703 Shattrath City, 4395 Dalaran |
+
+Everything else is refused.
+
+**Measured fact that forced the change.** The stock `AreaTable.dbc` carries
+`AREA_FLAG_CAPITAL` (0x100) on **35 rows**, not on the eight faction capitals. They include
+4411 Stormwind Harbor, 4281 Acherus: The Ebon Hold, 3704 The Shepherd's Gate, 4679 The Forlorn
+Cavern, and nineteen Dalaran rows (4560 The Underbelly, 4564 Krasus' Landing, 4567 The Violet
+Hold, 4601 Dalaran Island, 4613 Dalaran City, 4616 Sunreaver's Sanctuary, 4619 The Violet
+Citadel, 4620 Magus Commerce Exchange, 4739 Runeweaver Square, 4740 The Silver Enclave, …).
+The flag alone therefore accepted a pledge almost anywhere in Dalaran and inside Ebon Hold.
+
+The old gate also never read the player's faction, so a Horde character could pledge in
+Stormwind. The area's AreaTable `team` column is 2 for Alliance cities, 4 for Horde cities and
+6 for Shattrath and Dalaran, so the list and the faction check are two separate conditions.
+
+**Implementation.** `PLEDGE_AREAS` in `modules/mod-pvp-rulesets/src/PvpRulesets.h` is the single
+auditable list of `{ area id, faction }`; `IsPledgeAreaAllowed()` and `EvaluateToggle()` in
+`PvpRulesetsLogic.cpp` apply it, with separate refusal results for "not a pledge city" and
+"wrong faction". The check uses `Player::GetAreaId()`, not the parent zone: a sub-area reports
+its own id (Stormwind Harbor is 4411 inside zone 1519), so a listed city means the city row
+itself and not its sub-zones. The list is a code constant, not a config option: it is a
+game-design decision, not a tuning knob. Every other guard (out of combat, alive, not in an
+instance/BG/arena/battlefield, not while Outlaw, not in GM mode, the persisted cooldown) is
+unchanged. Unit tests pin all ten ids, both neutral hubs, the wrong-faction case and eight
+capital-flagged sub-areas.
+
+This closes the "per-capital `AREA_FLAG_CAPITAL` … checks" and "Shattrath/Dalaran capital status"
+verification gates listed under Open decisions. The per-capital guard DBC flag check stays open.
+
+### Area versus zone, and the accepted residue
+
+`Player::GetAreaId()` returns the **most specific** area, not the zone: standing in Darnassus'
+Cenarion Enclave returns the sub-area, and Dalaran has 20 sub-areas. Gating on that id would
+refuse a pledge in most of Darnassus and all of Dalaran, so the command path passes
+`Player::GetZoneId()` instead, which the core resolves from the sub-area's parent in
+`WorldObject::ProcessPositionDataChanged`. Verified in the source, not observed in game: the
+in-game check is still owed.
+
+Consequence accepted with it: Stormwind Harbor has zone 1519, so a pledge is allowed there. The
+harbour is a normal part of the city a player walks through, so this is intended.
+
+**Accepted residue — quest turn-in XP.** The owner chose not to add a per-quest mode snapshot. A
+player can therefore take a completed quest, pledge High Risk inside a capital, and turn it in for
+the mode bonus. The window is small: the pledge has a 5-minute cooldown, the mode change needs a
+capital, and the bonus is a percentage of one quest's XP rather than a repeatable loop. It is
+recorded here as a known, owner-accepted residue to be revisited when quest XP is next touched, not
+as a closed hole. Do not describe the ten-city gate as closing it.
+
 ## References
 
 - [RFC-006](../rfcs/active/RFC-006-pvp-rulesets.md)

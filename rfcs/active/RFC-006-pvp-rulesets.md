@@ -87,7 +87,11 @@ Outlaw --timer expiry----------------> cleared (the only exit in v1)
 - `.pledge` is a player command gated by an RBAC permission in the project range, granted to the
   Player Commands role. The `command` row and the permission row ship in the implementing slice; the
   command index is regenerated in the same change.
-- **Capital** means the current zone's `AreaTableEntry::flags & AREA_FLAG_CAPITAL`.
+- **Capital** means one of ten named areas, checked with `Player::GetAreaId()` and the player's
+  faction (revised 2026-11-26, see [ADR-033](../../decisions/ADR-033-pvp-rulesets.md)): Stormwind,
+  Ironforge, Darnassus, The Exodar, Orgrimmar, Undercity, Thunder Bluff, Silvermoon, plus Shattrath
+  and Dalaran for both factions. `AREA_FLAG_CAPITAL` is **not** used: 35 rows carry it, including
+  Stormwind Harbor, Acherus and every Dalaran sub-area.
   **Unverified:** Shattrath and Dalaran are expected to carry the flag, but that DBC fact is not
   verified. Check `AreaTable.dbc` at implementation. If a city lacks the flag, `.pledge` does not
   work there; do not special-case the name.
