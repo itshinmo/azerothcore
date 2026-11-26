@@ -6,6 +6,7 @@ The patch contains:
 * Interface\\AddOns\\ServerMapPOI\\* (the baked map layer)
 * Interface\\FrameXML\\WorldMapFrame.lua (canary, copied whole from the
   highest-priority source below patch-Z and extended with a login message)
+* Interface\\FrameXML\\Cooldown.lua (whole-file copy, CooldownFrame_SetTimer nil-safe)
 
 No DBC is shipped. Re-run after a client bundle update or a spawn move.
 
@@ -44,6 +45,8 @@ DEFAULT_MANIFEST = HERE / "manifest.json"
 BUILD_DIR = HERE / "build"
 ADDON_SOURCE_PREFIX = "data/client-patches/map-poi/src/ServerMapPOI/"
 CANARY_SOURCE = "data/client-patches/map-poi/src/canary_framexml.lua"
+COOLDOWN_PATH = "Interface\\FrameXML\\Cooldown.lua"
+COOLDOWN_MARKER = b"-- patch-Z: CooldownFrame_SetTimer is nil-safe."
 FIXED_MTIME = datetime.datetime(2026, 11, 23, tzinfo=datetime.timezone.utc).timestamp()
 
 
@@ -92,6 +95,43 @@ def canary_source(data_dir: Path) -> tuple[Path, mpq.WhichResult]:
             "or pass a client root without the project patch"
         )
     return candidates[-1], result
+
+
+def cooldown_source(data_dir: Path) -> tuple[Path, mpq.WhichResult]:
+    """The highest Cooldown.lua source below patch-Z. Our own output is never a source."""
+    result = mpq.find_highest(data_dir, COOLDOWN_PATH, locale=LOCALE, order="english")
+    if not result.winner:
+        raise SystemExit(f"cannot find {COOLDOWN_PATH} in {data_dir}")
+    candidates = [path for path in result.sources if path.name.lower() != "patch-z.mpq"]
+    if not candidates:
+        raise SystemExit(
+            f"{COOLDOWN_PATH} only exists in patch-Z; install a clean client bundle "
+            "or pass a client root without the project patch"
+        )
+    return candidates[-1], result
+
+
+def patch_cooldown(original: bytes) -> bytes:
+    """Make CooldownFrame_SetTimer tolerate nil without changing any other behaviour.
+
+    WatchFrame.lua passes nil start/duration/enable on some Ascension clients and the stock
+    function compares them with numbers, raising a Lua error. Whole-file copy, one condition.
+    """
+    if COOLDOWN_MARKER in original:
+        raise SystemExit("Cooldown.lua already contains the patch-Z nil guard")
+    needle = b"if ( start > 0 and duration > 0 and enable > 0) then"
+    replacement = (
+        b"if ( start and duration and enable and start > 0 and duration > 0 and enable > 0) then"
+    )
+    if original.count(needle) != 1:
+        raise SystemExit(
+            "Cooldown.lua must contain exactly one CooldownFrame_SetTimer condition; "
+            "inspect before patching"
+        )
+    output = original.replace(needle, replacement)
+    if not output.endswith(b"\n"):
+        output += b"\n"
+    return COOLDOWN_MARKER + b"\n" + output
 
 
 def build(args) -> int:
@@ -152,7 +192,18 @@ def build(args) -> int:
     framedump.parent.mkdir(parents=True, exist_ok=True)
     framedump.write_bytes(output)
 
-    # 4. Pack. MPQ v1, listfile, attributes, zlib, like the other client patches.
+    # 4. Cooldown: whole-file copy with the nil guard added.
+    cooldown_archive, cooldown_which = cooldown_source(data_dir)
+    with mpq.Archive(cooldown_archive) as archive:
+        cooldown_original = archive.read_file(COOLDOWN_PATH)
+        cooldown_original_hash = mpq.sha256_bytes(cooldown_original)
+    cooldown_output = patch_cooldown(cooldown_original)
+    cooldown_path = root_dir / COOLDOWN_PATH.replace("\\", "/")
+    cooldown_path.parent.mkdir(parents=True, exist_ok=True)
+    cooldown_path.write_bytes(cooldown_output)
+    check_lua(cooldown_path)
+
+    # 5. Pack. MPQ v1, listfile, attributes, zlib, like the other client patches.
     files = sorted(
         (path, path.relative_to(root_dir).as_posix().replace("/", "\\"))
         for path in root_dir.rglob("*")
@@ -171,7 +222,7 @@ def build(args) -> int:
         for path, name in files:
             archive.add_file(path, name)
 
-    # 5. Verify what the client will read, not what we intended to write.
+    # 6. Verify what the client will read, not what we intended to write.
     failures = []
     with mpq.Archive(out) as archive:
         info = archive.inspect()
@@ -192,7 +243,7 @@ def build(args) -> int:
             print(f"error: {failure}", file=sys.stderr)
         return 1
 
-    # 6. Manifest. The archive hash is recorded after packing; a rebuild changes it.
+    # 7. Manifest. The archive hash is recorded after packing; a rebuild changes it.
     with mpq.Archive(out) as archive:
         info = archive.inspect()
         entries = [
@@ -212,6 +263,8 @@ def build(args) -> int:
             source = "data/client-patches/map-poi/src/ServerMapPOI/" + name[len(addon_prefix):].replace("\\", "/")
         elif name == ARCHIVE_PATH:
             source = f"canary: {rel_client(source_archive, client)}"
+        elif name == COOLDOWN_PATH:
+            source = f"cooldown: {rel_client(cooldown_archive, client)}"
         else:
             source = rel(path)
         sources.append(
@@ -239,6 +292,19 @@ def build(args) -> int:
             "canary_source_sha256": original_hash,
             "canary_output_sha256": mpq.sha256_file(framedump),
             "canary_block_sha256": mpq.sha256_bytes(canary),
+            "cooldown_path": COOLDOWN_PATH,
+            "cooldown_source_archive": rel_client(cooldown_archive, client),
+            "cooldown_source_sha256": cooldown_original_hash,
+            "cooldown_output_sha256": mpq.sha256_file(cooldown_path),
+            "cooldown_block_sha256": mpq.sha256_bytes(COOLDOWN_MARKER + b"\n"),
+            "cooldown_sources_low_to_high": [
+                rel_client(path, client)
+                for path in cooldown_which.sources
+                if path.name.lower() != "patch-z.mpq"
+            ],
+            "cooldown_skipped_unreadable": [
+                rel_client(path, client) for path in cooldown_which.skipped
+            ],
             "expected_winner": "Data/patch-Z.MPQ",
             "source_sources_low_to_high": [
                 rel_client(path, client)
@@ -262,6 +328,7 @@ def build(args) -> int:
     print(f"  sha256: {info['sha256']}")
     print(f"  files:  {len(entries)}")
     print(f"  canary: {ARCHIVE_PATH} from {source_archive}")
+    print(f"  cooldown: {COOLDOWN_PATH} from {cooldown_archive}")
     print(f"wrote {manifest_path}")
     print()
     print("Install (client closed):")
