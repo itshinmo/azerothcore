@@ -53,6 +53,9 @@
 
 ## Tests and verification
 
+**Superseded 2026-11-26 for the auto-learn items (T3 rows 1-3): the module no longer exists, so
+those checks cannot be run.** The skill-related rows still describe stock trainer behaviour.
+
 - `make build` compiles the module into the worldserver; no SQL, no config schema changes.
 - Unit tests: none — the module is a thin loop over core-owned data and the core-owned
   availability filter; the meaningful checks are behavioral (T3 below).
@@ -94,15 +97,17 @@ reward in `data/sql/base/db_world/quest_template.sql` (RewardItem1, amount 1):
 
 - **Earth Totem (5175)** — three parallel `Call of Earth` chains, all reward 5175, all shaman
   class mask 64:
-  - Tauren: 1516 -> 1517 -> 1518; started and ended by Canaga Earthcaller (5887), with the
-    Minor Manifestation of Earth (5891) as the middle giver. Both creatures spawn.
-  - Orc/Troll: 1519 -> 1520 -> 1521; started and ended by Seer Ravenfeather (5888), with the
-    Minor Manifestation of Earth (5891) in the middle. Both creatures spawn.
-  - Draenei: 9449 -> 9450 -> 9451; starter Spirit of the Vale (17087), ender Firmanvaar
-    (17089), both spawned once.
+  - Orc/Troll (mask 130): 1516 -> 1517 -> 1518; started and ended by Canaga Earthcaller
+    (5887), Valley of Trials, with the Minor Manifestation of Earth (5891) as the middle
+    giver. Both creatures spawn.
+  - Tauren (mask 32): 1519 -> 1520 -> 1521; started and ended by Seer Ravenfeather (5888),
+    Camp Narache, with the Minor Manifestation of Earth (5891) in the middle. Both spawn.
+  - Draenei (mask 1101): 9449 -> 9450 -> 9451. 9449 starts at Firmanvaar (17089) and ends at
+    Spirit of the Vale (17087); 9450 and 9451 start at 17087, and 9451 ends at 17089. Both
+    spawned once. (An earlier draft had the start and end reversed; corrected 2026-11-26.)
 - **Fire Totem (5176)** — two paths:
   - Horde: 1524 -> 1525 -> 1526 -> 1527; starter Brazier of the Dormant Flame gameobject
-    (61934, two spawns), ender Kranal Fiss (5907, spawned once). Breadcrumbs 1522/1523 from
+    (61934, one spawn), ender Kranal Fiss (5907, spawned once). Breadcrumbs 1522/1523 from
     Searn Firewarder (5892) and Beram Skychaser (3032).
   - Draenei: 9461 (from Tuluun, 17212) -> 9555 (from Prophet Velen, 17468; ends at Farseer
     Nobundo, 17204). Breadcrumbs 9462-9468 lead in; every creature spawns once.
@@ -120,15 +125,29 @@ reward in `data/sql/base/db_world/quest_template.sql` (RewardItem1, amount 1):
   - Draenei: 9547 -> 9552 -> 9553 -> 9554; starter Farseer Javad (23127), ender Farseer Nobundo
     (17204), both spawned once.
 
+The arrows follow `PrevQuestID` in `quest_template_addon` (chain order top-down), not
+`RewardNextQuest`: quest 220 has `RewardNextQuest = 0` and is linked only through
+`PrevQuestID`. That is why the water chain reads longer than its reward-next links.
+
 All four totems are obtainable: **no blocker.** Notes from the audit:
 
 - Every quest in the set carries `AllowableClasses = 64` (shaman) in `quest_template_addon`, and
   none is disabled in `disables.sql`.
 - The summoned-creature steps are intended, not data gaps: the water manifestation exists only
   as a SmartAI summon from the brazier, and the fire turn-in is at a spawned gameobject.
-- The quest chains are the only source for Fire and Water: `npc_vendor` has rows for Earth
-  Totem (5175) and Air Totem (5178) only. Since all four chains are intact and shaman-only, no
-  shaman is left without a way to get any totem.
+- **No totem is vendor-sold.** `npc_vendor` has no row for item 5175, 5176, 5177 or 5178. The
+  `5175` and `5178` entries that turned up in an earlier pass are creature entries in
+  `creature_template` (Gearcutter Cogspinner, Soolie Berryfizz), not items, so the earlier claim
+  that Earth and Air were also purchasable was wrong (corrected 2026-11-26). All four totems are
+  quest-only, so every chain above must work for its race. They are intact and shaman-only.
+
+**Grandfathering.** The module only ever added things: `learnSpell` and `AddItem`, never a marker,
+config row or database row. Removing it therefore cannot invalidate a saved character. A character
+keeps every spell and totem it already has and simply pays for the next rank at the trainer, which
+is the intended effect. The one sharp edge: a shaman who deletes a totem item cannot re-earn it,
+because the four chains are non-repeatable and shaman-only, and no vendor sells any of the four. A
+replacement grant is deliberately not added; if that edge bites in play, it belongs in the future
+shop convenience rather than in this module.
 
 Unaffected by this revision: dual spec at level 30 free (clause 2) and auto flight paths staying
 dropped (clause 3). No SQL is added or changed; the stock quests and trainer data carry the

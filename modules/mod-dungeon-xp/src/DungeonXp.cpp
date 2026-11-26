@@ -22,6 +22,7 @@
 #include "DBCStores.h"
 #include "DungeonXpMath.h"
 #include "Map.h"
+#include "ObjectMgr.h"
 #include "Player.h"
 #include "PlayerScript.h"
 #include "QuestDef.h"
@@ -87,18 +88,43 @@ namespace
         return mapEntry->IsDungeon() && (IncludeRaids || !mapEntry->IsRaid());
     }
 
-    // Boss classification shared with mod-objectives: a dungeon encounter creature, plus a
-    // world boss that happens to stand inside an instance. mod-objectives asks
-    // `killed->GetMap()->IsDungeon() && (killed->IsDungeonBoss() || killed->isWorldBoss())`
-    // for its objective credit; the two modules must agree or a kill pays one rate and
-    // counts as another.
-    bool IsBossKill(Unit* victim)
+    // Is this creature the credit target of an encounter that is credited by a spell cast?
+    //
+    // `instance_encounters` has two credit types: 0 credits the encounter when a creature dies and
+    // the core turns that into CREATURE_FLAG_EXTRA_DUNGEON_BOSS; 1 credits it when a spell is cast,
+    // and the core only marks the spell. A cast-credited final boss therefore carries no boss flag,
+    // which is why `IsDungeonBoss()` alone is not enough. The lists are small and looked up once per
+    // qualifying kill, inside an instance only.
+    bool IsCastCreditedEncounterTarget(Creature const* killed)
     {
-        if (!victim || !victim->IsCreature())
+        Map* map = killed->GetMap();
+        if (!map)
+            return false;
+
+        DungeonEncounterList const* encounters =
+            sObjectMgr->GetDungeonEncounterList(map->GetId(), map->GetDifficulty());
+        if (!encounters)
+            return false;
+
+        for (DungeonEncounter const* encounter : *encounters)
+            if (encounter->creditType == ENCOUNTER_CREDIT_CAST_SPELL
+                && encounter->creditEntry == killed->GetEntry())
+                return true;
+
+        return false;
+    }
+
+    // Boss classification for the XP split. Deliberately a superset of the rule mod-objectives
+    // uses for its boss tasks, which only knows `IsDungeonBoss() || isWorldBoss()`; that rule has
+    // the cast-credit blind spot below. Where they differ, this module pays the boss rate.
+    bool IsBossKill(Unit* victim, bool isDungeonMap)
+    {
+        if (!isDungeonMap || !victim || !victim->IsCreature())
             return false;
 
         Creature* killed = victim->ToCreature();
-        return killed->GetMap()->IsDungeon() && (killed->IsDungeonBoss() || killed->isWorldBoss());
+        return DungeonXp::Math::IsBossKill(isDungeonMap, killed->IsDungeonBoss(),
+            killed->isWorldBoss(), IsCastCreditedEncounterTarget(killed));
     }
 
     class DungeonXpPlayerScript : public PlayerScript
@@ -114,11 +140,16 @@ namespace
         // fires for BG kill XP. A null victim is treated as trash.
         void OnPlayerGiveXP(Player* player, uint32& amount, Unit* victim, uint8 xpSource) override
         {
+            // Note: a factor of 1.0 is possible only when both knobs are set to 1.0, so the
+            // early return below is the no-op gate, not a duplicate of the default path.
             if (amount < 1 || xpSource != PlayerXPSource::XPSOURCE_KILL)
                 return;
 
-            float const factor = DungeonXp::Math::SelectKillFactor(player->GetMap()->IsDungeon(),
-                player->GetMap()->IsRaid(), IncludeRaids, IsBossKill(victim), TrashKillFactor,
+            bool const isDungeon = player->GetMap()->IsDungeon();
+            // Short-circuit: an open-world kill never reaches the encounter lookup.
+            bool const isBoss = isDungeon && IsBossKill(victim, isDungeon);
+            float const factor = DungeonXp::Math::SelectKillFactor(isDungeon,
+                player->GetMap()->IsRaid(), IncludeRaids, isBoss, TrashKillFactor,
                 BossKillFactor);
 
             if (factor >= 1.0f)

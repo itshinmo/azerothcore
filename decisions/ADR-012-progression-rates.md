@@ -169,15 +169,29 @@ the 2026-11-20 depth as the goal of a run.
 
 1. **Trash XP is 10%:** `DungeonXp.TrashKillFactor = 0.10` replaces `DungeonXp.KillFactor`. The
    knob is removed outright, not left dead. Everything in an instance that is not a boss is trash.
-2. **Boss XP stays 33%:** `DungeonXp.BossKillFactor = 0.33`. Boss is the same definition
-   `mod-objectives` already uses for its boss tasks: the map is an instance and
-   `Creature::IsDungeonBoss()` or `Creature::isWorldBoss()` is true. A null victim in the XP hook
-   counts as trash.
+2. **Boss XP stays 33%:** `DungeonXp.BossKillFactor = 0.33`. A kill is a boss when the map is an
+   instance and any of these holds:
+   - `Creature::IsDungeonBoss()` — the core sets `CREATURE_FLAG_EXTRA_DUNGEON_BOSS` from
+     `instance_encounters` rows with `creditType = 0` (credit on kill);
+   - `Creature::isWorldBoss()` — `CREATURE_TYPE_FLAG_BOSS_MOB`;
+   - **the creature is the credit target of an `instance_encounters` row with `creditType = 1`**
+     (credit on cast). The core only marks the spell for those rows, never the creature, so this
+     module looks the creature up in the instance's encounter list. Without it, six real end bosses
+     paid the trash rate: The Prophet Tharon'ja (26632), Mal'Ganis (26533), Sjonnir (27978),
+     Argent Confessor Paletress (34928), Eadric the Pure (35119) and The Black Knight (35451). The
+     data holds 578 kill-credit and 34 cast-credit encounter rows.
+
+   This is deliberately a **superset** of the rule `mod-objectives` uses for its boss tasks, which
+   knows only the first two bullets. The two modules therefore agree on every kill except the
+   cast-credited ones, where objectives does not credit a boss task but this module pays the boss
+   rate. A null victim in the XP hook counts as trash.
 3. **Dungeon quests pay 6x base total:** `DungeonXp.QuestFactor = 3.0` on top of the global
    `Rate.XP.Quest = 2`, so 3 x 2 = 6x base, one-time per character. Ancestral Wisdom and the other
    percentage bonuses stack exactly as before. The quest-factor clamp stays "at least 1".
-4. **Raids follow the same split.** `DungeonXp.IncludeRaids` keeps its meaning: on, raid trash pays
-   10% and raid bosses 33%; off, raid kill XP keeps the world rate.
+4. **Raids follow the same split.** `DungeonXp.IncludeRaids`: on, raid trash pays 10% and raid
+   bosses 33%; off, raid kill XP keeps the world rate. Note the flag also gates the quest bonus for
+   raid-zone quests in the quest path, which is pre-existing behaviour, so setting it to 0 drops
+   raid quest XP as well as raid kill XP.
 5. **Not changed:** the 2x default, the quest detection (ZoneOrSort -> area -> instance map), the
    `XPSOURCE_KILL` / `XPSOURCE_QUEST` filtering, and battleground/arena behavior.
 

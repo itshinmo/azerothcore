@@ -19,11 +19,15 @@ visit pays 6x base on its dungeon quests plus loot, more than a repeat ever did.
 
 Notes:
 
-- Boss or trash? The module reuses mod-objectives' definition so the two agree: a kill is a boss
-  when the map is an instance and `Creature::IsDungeonBoss()` (the core sets
-  `CREATURE_FLAG_EXTRA_DUNGEON_BOSS` from `instance_encounters`) or `Creature::isWorldBoss()`
-  (`CREATURE_TYPE_FLAG_BOSS_MOB`) is true. Everything else in the instance is trash. A null victim
-  in the hook counts as trash.
+- Boss or trash? A kill is a boss when the map is an instance and any of: `IsDungeonBoss()` (the
+  core sets `CREATURE_FLAG_EXTRA_DUNGEON_BOSS` from `instance_encounters` kill-credit rows),
+  `isWorldBoss()` (`CREATURE_TYPE_FLAG_BOSS_MOB`), or the creature is the credit target of a
+  cast-credit `instance_encounters` row. Everything else in the instance is trash; a null victim
+  counts as trash.
+- That third test is a **superset** of the rule mod-objectives uses for its boss tasks, and it
+  exists because the core never flags a cast-credited boss: without it Tharon'ja, Mal'Ganis,
+  Sjonnir and the Trial of the Champion trio paid 10%. The two modules agree everywhere else,
+  including the same blind spot in the other direction (objectives does not credit those bosses).
 - Kill side gates on `Map::IsDungeon()` (instances + raids per MapEntry); battleground kills are
   untouched (their own per-BG rates), outdoor elites/rares keep full rate, and mod-xp-bonus's
   rare-kill bonus is also scaled inside dungeons (rare-rank mobs essentially never spawn there).

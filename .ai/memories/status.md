@@ -35,8 +35,12 @@ last-verified: 2026-11-22 (23bf75546; bot rig paused; manual verification is the
   summon has a transaction to sell. Dual spec at 30 free and dropped auto flight paths unaffected.
   **Shaman consequence:** the module's login grant of Earth/Fire/Water/Air Totem (5175-5178) is
   gone; the stock `Call of Earth/Fire/Water/Air` chains were audited and all four totems are quest
-  rewards with reachable starters and enders, so shamans are not broken. Fire and Water have no
-  vendor fallback (only 5175 and 5178 are sold), so the quests are the route. No SQL added.
+  rewards with reachable starters and enders, so shamans are not broken. **No totem is vendor-sold**
+  — `npc_vendor` has no row for any of the four items — so the quests are the only route for all
+  four. Existing characters keep spells and totems they already had (the module only ever added
+  them, never wrote a marker), so nothing is invalidated on login; a shaman who deleted a totem
+  cannot re-earn it, because the chains are non-repeatable and shaman-only. That grandfathering is
+  recorded in ADR-021. No SQL added.
 
 ## Session record — 2026-11-24 (treasure placement, chest fix, item balance)
 

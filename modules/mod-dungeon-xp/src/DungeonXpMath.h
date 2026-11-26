@@ -32,6 +32,26 @@ namespace DungeonXp::Math
         return std::max(1.0f, factor);
     }
 
+    // Is this kill a boss for the XP split?
+    //
+    // Three ways to qualify, because the core only flags one of them:
+    //   * CREATURE_FLAG_EXTRA_DUNGEON_BOSS (`IsDungeonBoss()`), set from `instance_encounters`
+    //     rows with creditType 0 (credit on kill);
+    //   * CREATURE_TYPE_FLAG_BOSS_MOB (`isWorldBoss()`), the type flag;
+    //   * the creature is the credit target of an `instance_encounters` row with creditType 1
+    //     (credit on cast). Those rows never set the flag, so the final boss of Drak'Tharon
+    //     Keep (The Prophet Tharon'ja), Culling of Stratholme (Mal'Ganis), Halls of Stone
+    //     (Sjonnir) and Trial of the Champion (Paletress, Eadric, Black Knight) would otherwise
+    //     pay the trash rate. The caller supplies that lookup as `creditTargetOfCastEncounter`.
+    constexpr bool IsBossKill(bool isDungeonMap, bool isDungeonBossFlag, bool isWorldBossFlag,
+        bool creditTargetOfCastEncounter)
+    {
+        if (!isDungeonMap)
+            return false;
+
+        return isDungeonBossFlag || isWorldBossFlag || creditTargetOfCastEncounter;
+    }
+
     // The kill multiplier for one victim. Outside an instance map the world rate stays 1.0;
     // raids share the split only when they are included.
     constexpr float SelectKillFactor(bool isDungeonMap, bool isRaidMap, bool includeRaids, bool isBoss,
