@@ -7,12 +7,29 @@ Decision: [ADR-032](../../../decisions/ADR-032-map-poi-layer.md). Pipeline:
 
 ## What it draws
 
-- All ten capital **Warpweaver** spawns (creature entry `910012`): Stormwind, Ironforge, Darnassus,
-  The Exodar, Orgrimmar, Undercity, Thunder Bluff, Silvermoon, Shattrath, Dalaran.
-- **PvP vendors**: honor quartermasters in Stormwind and Orgrimmar, battleground battlemasters in
-  the capitals and Shattrath, and the Dalaran Underbelly arena vendors.
-- **World bosses** as skull examples: Doom Lord Kazzak (Hellfire Peninsula) and Doomwalker
-  (Shadowmoon Valley). The addon exposes `SetWorldBoss` and `SetCrowsCache` for later dynamic data.
+Generated from `poidata/snapshot.json` (a read-only harvest of `acore_world`) plus the client DBCs.
+562 markers over the whole world:
+
+| Kind | Count | Source | Hover text |
+|---|---|---|---|
+| Flight master | 155 | `creature_template.npcflag & 0x2000` | NPC name |
+| Innkeeper | 124 | `npcflag & 0x10000` | NPC name |
+| Battlemaster | 187 | `npcflag & 0x100000`, one per zone+name | NPC name |
+| Meeting stone | 47 | `gameobject_template.type 23` | `Utgarde Keep (68-83)` |
+| Portal | 49 | `gameobject_template.type 22`, name-filtered | destination |
+| Warpweaver | 10 | creature entry `910012` | city |
+| World boss | 2 | Doom Lord Kazzak, Doomwalker | boss name |
+
+Plus 20 **transport routes** (ships and zeppelins) baked from `acore_world.transports`, so hovering a
+boat or zeppelin marker names both ends of the route.
+
+Faction tint: alliance blue, horde red, shared/neutral gold, applied with `SetVertexColor` on one
+stock icon per kind.
+
+Meeting stone level ranges come from `LFGDungeons.dbc`: a stone's `data2` is the dungeon's areaID,
+that area's map is the instance map, and the LFD row for that map carries min/max level.
+
+The addon still exposes `SetWorldBoss`, `SetCrowsCache` and `SetDynamicMapPOI` for later dynamic data.
 - **Outlaw** dynamic marker (client visual contract only; no PvP server module): exact marker in the
   same zone, coarse marker on the same continent, hidden in instances/BGs/arenas, and a kill-feed
   chat line. The wire requires a server-issued session token; without `AUTH`, Outlaw markers stay
@@ -66,9 +83,16 @@ python3 data/client-patches/map-poi/build.py
 python3 data/client-patches/map-poi/build.py --check
 ```
 
-The build regenerates `src/ServerMapPOI/Data.lua` from the client DBCs, copies the addon, appends
-the canary to the highest-priority `WorldMapFrame.lua` below `patch-Z`, packs MPQ v1 with
-listfile/attributes/zlib, verifies every entry, and writes `manifest.json`.
+The build regenerates `src/ServerMapPOI/Data.lua` from the snapshot and the client DBCs, copies the
+addon, appends the canary to the highest-priority `WorldMapFrame.lua` below `patch-Z`, packs MPQ v1
+with listfile/attributes/zlib, verifies every entry, and writes `manifest.json`.
+
+Refresh the spawn data after a move (the only step that needs MySQL; it never writes):
+
+```bash
+python3 data/client-patches/map-poi/harvest_poi_data.py \
+    --user acore --password '****' --out data/client-patches/map-poi/poidata/snapshot.json
+```
 
 Offline addon smoke test (map API mock, no client):
 
@@ -78,10 +102,7 @@ luajit data/client-patches/map-poi/tests/test_addon.lua
 
 Current output:
 
-```text
-dist/patch-Z.MPQ   30,558 bytes   MPQ v1   4 files   0 DBC
-sha256             1aaf23a4140a092bdad1fa0cfa8b270e8d369faef38cff85e7915c9b4b055d3f
-```
+Current output: see `manifest.json`. The archive changes whenever the snapshot or the DBCs change.
 
 A content change changes the archive hash. Unchanged sources rebuild byte-identically because the
 build pins entry times; regenerate the manifest and commit both when the content changes.

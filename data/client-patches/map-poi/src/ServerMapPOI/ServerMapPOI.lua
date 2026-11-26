@@ -26,13 +26,33 @@ local Frame = CreateFrame("Frame")
 ns.Frame = Frame
 _G.ServerMapPOI = Frame
 
+-- Stock client icons only; no custom BLP. Faction tinting is done with SetVertexColor on the one
+-- texture per kind, so alliance and horde share a texture and differ by colour.
 local ICONS = {
-    warpweaver = "Interface\\Icons\\INV_Misc_Map_01",
-    vendor = "Interface\\Icons\\INV_Misc_Coin_01",
-    boss = "Interface\\TargetingFrame\\UI-RaidTargetingIcon_8",
-    cache = "Interface\\Icons\\INV_Misc_Bag_10",
-    outlaw = "Interface\\Icons\\INV_Misc_Bandana_03",
+    flightmaster  = "Interface\\Icons\\Ability_Mount_Gryphon_01",
+    innkeeper     = "Interface\\Icons\\INV_Misc_Food_15",
+    battlemaster  = "Interface\\Icons\\Ability_Warrior_BattleShout",
+    meetingstone  = "Interface\\Icons\\INV_Misc_StoneTablet_01",
+    portal        = "Interface\\Icons\\Spell_Arcane_PortalStormwind",
+    transport     = "Interface\\Icons\\Ability_Mount_Wyvern_01",
+    warpweaver    = "Interface\\Icons\\INV_Misc_Map_01",
+    vendor        = "Interface\\Icons\\INV_Misc_Coin_01",
+    boss          = "Interface\\TargetingFrame\\UI-RaidTargetingIcon_8",
+    cache         = "Interface\\Icons\\INV_Misc_Bag_10",
+    outlaw        = "Interface\\Icons\\INV_Misc_Bandana_03",
 }
+
+-- Faction colours: alliance blue, horde red, shared/neutral gold.
+local FACTION_COLOURS = {
+    alliance = { 0.25, 0.55, 1.00 },
+    horde    = { 1.00, 0.25, 0.25 },
+    neutral  = { 1.00, 0.82, 0.20 },
+}
+
+local function factionColour(poi)
+    local c = FACTION_COLOURS[poi.faction or "neutral"] or FACTION_COLOURS.neutral
+    return c[1], c[2], c[3]
+end
 
 local RED_OVERLAY = "Interface\\Buttons\\WHITE8X8"
 local DYNAMIC_LABELS = { boss = "World boss", cache = "Crow's Cache", outlaw = "Outlaw" }
@@ -76,6 +96,7 @@ local function CreatePin(poi)
     icon:SetHeight(18)
     icon:SetPoint("CENTER", 0, 0)
     icon:SetTexture(ICONS[poi.kind] or ICONS.vendor)
+    icon:SetVertexColor(factionColour(poi))
     pin.icon = icon
     pin.poi = poi
 
@@ -158,6 +179,7 @@ function Frame:GetPins()
         end
         pin.poi = poi
         pin.icon:SetTexture(ICONS[poi.kind] or ICONS.vendor)
+        pin.icon:SetVertexColor(factionColour(poi))
         pins[#pins + 1] = pin
     end
     return pins

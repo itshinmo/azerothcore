@@ -140,20 +140,54 @@ local function visibleCount(zoneId)
     return total
 end
 
-assert(visibleCount(1519) == 3, "Stormwind must show Warpweaver + 2 vendor clusters")
-assert(visibleCount(1637) == 3, "Orgrimmar must show Warpweaver + 2 vendor clusters")
-assert(visibleCount(4395) == 2, "Dalaran must show Warpweaver + arena vendors")
-assert(visibleCount(3483) == 1, "Hellfire must show the Kazzak skull")
-assert(visibleCount(1) == 0, "continent map must show no markers")
+-- Counts are derived from the generated data, so the test states the invariant rather than a
+-- hard-coded number that breaks on every harvest: every POI in a zone is shown, and nothing from
+-- another zone is.
+local function expectedIn(zoneId)
+    local total = 0
+    for _, poi in ipairs(ns.POIs) do
+        if poi.zone == zoneId then
+            total = total + 1
+        end
+    end
+    return total
+end
+
+for _, zoneId in ipairs({ 1519, 1637, 4395, 3483, 3703, 571 }) do
+    assert(visibleCount(zoneId) == expectedIn(zoneId),
+        "zone " .. zoneId .. " must show exactly its own markers")
+end
+assert(expectedIn(1519) > 10, "Stormwind must carry flight masters, innkeepers and battlemasters")
+assert(expectedIn(3483) > 3, "Hellfire must carry its flight masters and Kazzak skull")
+assert(visibleCount(99999) == 0, "an unknown zone must show no markers")
+
+-- Every drawn kind has an icon and a faction colour; an unknown kind would silently fall back.
+local seenKinds = {}
+for _, poi in ipairs(ns.POIs) do
+    seenKinds[poi.kind] = true
+end
+assert(seenKinds.flightmaster, "the layer must draw flight masters")
+assert(seenKinds.innkeeper, "the layer must draw innkeepers")
+assert(seenKinds.meetingstone, "the layer must draw meeting stones")
+assert(seenKinds.portal, "the layer must draw portals")
+assert(seenKinds.battlemaster, "the layer must draw battlemasters")
+assert(#ns.TransportRoutes > 0, "transport routes must be baked")
 
 -- Tooltip and click handlers.
 zone = 1519
 hooks.WorldMapFrame_Update[1]()
-local warp = addon.pins[1]
-warp.scripts.OnEnter(warp)
-assert(WorldMapTooltip.text and WorldMapTooltip.text:find("Warpweaver"), "tooltip label")
-warp.scripts.OnClick(warp)
-assert(messages[#messages]:find("Warpweaver"), "click chat echo")
+-- Pick any shown pin in Stormwind rather than assuming index 1: the marker order follows the
+-- harvested data, not the old hand-written list.
+local shown = nil
+for _, pin in ipairs(addon.pins) do
+    if pin:IsShown() then shown = pin break end
+end
+assert(shown, "Stormwind must have at least one shown pin")
+shown.scripts.OnEnter(shown)
+assert(WorldMapTooltip.text and #WorldMapTooltip.text > 0, "tooltip label must render")
+local label = shown.poi.label
+shown.scripts.OnClick(shown)
+assert(messages[#messages]:find(label, 1, true), "click chat echo must name the marker")
 
 -- Red overlay.
 zone = 4197
