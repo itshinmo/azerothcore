@@ -6,8 +6,8 @@
 -- OnUpdate loop. It is not a substitute for the owner's in-client test.
 
 local root = arg[1] or "data/client-patches/map-poi/src/ServerMapPOI"
-local zone = 1519
 local area = 1519
+local mapZoneIndex = 1
 local continent = 1
 local inInstance = false
 local shown = true
@@ -75,7 +75,7 @@ function CreateFrame()
 end
 
 function GetCurrentMapZone()
-    return zone
+    return mapZoneIndex
 end
 
 function GetCurrentMapAreaID()
@@ -128,8 +128,8 @@ assert(#addon.pins == #ns.POIs, "every static POI must get one reused pin")
 assert(#messages >= 1, "login must print the addon load line")
 
 local function visibleCount(zoneId)
-    zone = zoneId
     area = zoneId
+    mapZoneIndex = 1
     hooks.WorldMapFrame_Update[1]()
     local total = 0
     for _, pin in ipairs(addon.pins) do
@@ -178,7 +178,6 @@ assert(ns.TransportRoutes == nil, "ships are not drawn in this slice; remove the
 -- Stacked markers must not hide each other. Emissaries share one coordinate, so the refresh
 -- spreads only those pins; a pin alone at its coordinate stays exactly centred.
 do
-    zone = 1519
     area = 1519
     hooks.WorldMapFrame_Update[1]()
     local positions = {}
@@ -202,7 +201,6 @@ do
 end
 
 -- Tooltip and click handlers.
-zone = 1519
 hooks.WorldMapFrame_Update[1]()
 -- Pick any shown pin in Stormwind rather than assuming index 1: the marker order follows the
 -- harvested data, not the old hand-written list.
@@ -218,23 +216,35 @@ shown.scripts.OnClick(shown)
 assert(messages[#messages]:find(label, 1, true), "click chat echo must name the marker")
 
 -- Red overlay.
-zone = 4197
 area = 4197
+mapZoneIndex = 1
 hooks.WorldMapFrame_Update[1]()
 assert(addon.overlay:IsShown(), "red overlay on Wintergrasp")
-zone = 0
 area = 4384
 hooks.WorldMapFrame_Update[1]()
-assert(addon.overlay:IsShown(), "red overlay via GetCurrentMapAreaID fallback")
-zone = 1519
+assert(addon.overlay:IsShown(), "red overlay on Strand of the Ancients")
 area = 1519
 hooks.WorldMapFrame_Update[1]()
 assert(not addon.overlay:IsShown(), "no overlay outside selected zones")
 
+-- Continent map: GetCurrentMapZone is 0 and zone-relative pins must not draw, even when the
+-- client still reports the player's current zone as the area id. This is the ocean-pin regression.
+mapZoneIndex = 0
+area = 1519
+hooks.WorldMapFrame_Update[1]()
+for _, pin in ipairs(addon.pins) do
+    assert(not pin:IsShown(), "continent map must not draw zone pins")
+end
+area = 4197
+hooks.WorldMapFrame_Update[1]()
+assert(not addon.overlay:IsShown(), "continent map must not draw a red overlay")
+mapZoneIndex = 1
+area = 1519
+hooks.WorldMapFrame_Update[1]()
+
 -- Dynamic hooks.
 addon:SetWorldBoss(1519, -8829.3, 598.9, "Test boss")
 addon:SetCrowsCache(1519, -8800, 600, "Test cache")
-zone = 1519
 hooks.WorldMapFrame_Update[1]()
 assert(addon.dynamicPins.boss:IsShown(), "dynamic boss pin")
 assert(addon.dynamicPins.cache:IsShown(), "dynamic cache pin")
@@ -242,7 +252,6 @@ addon:ClearDynamicPOI("boss")
 assert(not addon.dynamicPins.boss:IsShown(), "cleared boss pin hidden")
 
 -- Outlaw protocol: one dynamic marker, exact in zone, coarse on the continent map.
-zone = 1519
 area = 1519
 continent = 1
 inInstance = false
@@ -260,18 +269,31 @@ local point = outlawPin.points[#outlawPin.points]
 assert(math.abs(point[4] - fixture.position.mapX * WorldMapButton:GetWidth()) < 0.01, "outlaw exact X")
 assert(math.abs(point[5] + fixture.position.mapY * WorldMapButton:GetHeight()) < 0.01, "outlaw exact Y")
 
-zone = 0
 area = 0
 continent = 1
+mapZoneIndex = 0
 hooks.WorldMapFrame_Update[1]()
 assert(outlawPin:IsShown(), "outlaw coarse marker on the continent map")
 point = outlawPin.points[#outlawPin.points]
 assert(math.abs(point[4] - fixture.position.continentX * WorldMapButton:GetWidth()) < 0.01, "outlaw coarse X")
 assert(math.abs(point[5] + fixture.position.continentY * WorldMapButton:GetHeight()) < 0.01, "outlaw coarse Y")
 
-zone = 1519
+-- The client can report the player's zone as the area id while the continent map is open. The
+-- exact zone mode must still be gated by mapZone, or the outlaw lands at zone coordinates on the
+-- continent texture.
+area = 1519
+mapZoneIndex = 0
+hooks.WorldMapFrame_Update[1]()
+assert(outlawPin:IsShown(), "outlaw still shown on the continent")
+point = outlawPin.points[#outlawPin.points]
+assert(math.abs(point[4] - fixture.position.continentX * WorldMapButton:GetWidth()) < 0.01,
+    "continent X, not zone X")
+assert(math.abs(point[5] + fixture.position.continentY * WorldMapButton:GetHeight()) < 0.01,
+    "continent Y, not zone Y")
+
 area = 1519
 continent = 2
+mapZoneIndex = 1
 hooks.WorldMapFrame_Update[1]()
 assert(not outlawPin:IsShown(), "outlaw hidden on another continent")
 

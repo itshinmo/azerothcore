@@ -1,6 +1,6 @@
 {
   "archive": "patch-Z.MPQ",
-  "built_at": "2026-11-26T16:29:47+00:00",
+  "built_at": "2026-11-26T19:42:06+00:00",
   "compression": "zlib",
   "dbc_files": 0,
   "entries": [
@@ -12,10 +12,17 @@
       "verify_flags": 80
     },
     {
-      "compressed_size": 6498,
+      "compressed_size": 1292,
+      "path": "Interface\\AddOns\\ServerMapPOI\\mstone.blp",
+      "sha256": "847bb9d2a81e4f356b87c0ae014ce7aa0e8613597b062ff07242b4021b6ec8fc",
+      "size": 2564,
+      "verify_flags": 80
+    },
+    {
+      "compressed_size": 6657,
       "path": "Interface\\AddOns\\ServerMapPOI\\ServerMapPOI.lua",
-      "sha256": "6097871500dacda63ef487026271a389374f8fc687cff490daf4408447745878",
-      "size": 17966,
+      "sha256": "b757dc184d7702c6a5ceac59e8ea811af6994423cffaaa859534bb6ac35255d1",
+      "size": 18457,
       "verify_flags": 80
     },
     {
@@ -64,8 +71,8 @@
     }
   },
   "schema": 1,
-  "sha256": "9074eed1c062656c22e74d2039619b0dbf713d6c0d4f0a389f2c89fa9c206b5a",
-  "size": 60902,
+  "sha256": "cab0386b78641f76b8fae473302525f77e09a6a3c094cbc14ccccdac62a8ab5f",
+  "size": 62404,
   "sources": [
     {
       "path": "Interface\\AddOns\\ServerMapPOI\\Data.lua",
@@ -74,13 +81,18 @@
     },
     {
       "path": "Interface\\AddOns\\ServerMapPOI\\ServerMapPOI.lua",
-      "sha256": "6097871500dacda63ef487026271a389374f8fc687cff490daf4408447745878",
+      "sha256": "b757dc184d7702c6a5ceac59e8ea811af6994423cffaaa859534bb6ac35255d1",
       "source": "data/client-patches/map-poi/src/ServerMapPOI/ServerMapPOI.lua"
     },
     {
       "path": "Interface\\AddOns\\ServerMapPOI\\ServerMapPOI.toc",
       "sha256": "3eeb797f8a66d3501d29db6acf42bd182916f1a8facf9e26deebc21a4de2a90f",
       "source": "data/client-patches/map-poi/src/ServerMapPOI/ServerMapPOI.toc"
+    },
+    {
+      "path": "Interface\\AddOns\\ServerMapPOI\\mstone.blp",
+      "sha256": "847bb9d2a81e4f356b87c0ae014ce7aa0e8613597b062ff07242b4021b6ec8fc",
+      "source": "data/client-patches/map-poi/src/ServerMapPOI/mstone.blp"
     },
     {
       "path": "Interface\\FrameXML\\WorldMapFrame.lua",

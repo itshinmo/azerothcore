@@ -5,7 +5,7 @@
 --   * One reused button per POI; icon textures are set once and cached by kind.
 --   * Positions are normalized zone-map coordinates baked from WorldMapArea.dbc
 --     (rotated client convention: screen X follows world Y, screen Y follows world X).
---   * Stock client icons only; no custom BLP.
+--   * Stock client icons, plus Questie's MIT meeting-stone BLP; no other custom art.
 --   * Dynamic hooks exist for world bosses, Crow's Cache and Outlaw positions; no server tick work.
 --
 -- Outlaw wire protocol (client side only; the PvP module is not implemented):
@@ -26,13 +26,14 @@ local Frame = CreateFrame("Frame")
 ns.Frame = Frame
 _G.ServerMapPOI = Frame
 
--- Stock client icons only; no custom BLP. Faction tinting is done with SetVertexColor on the one
--- texture per kind, so alliance and horde share a texture and differ by colour.
+-- Questie-style pins: the stock tracking icons are the same small glyphs Questie draws. Meeting
+-- stones use Questie's MIT-licensed mstone.blp (credited in the README); every other texture is
+-- stock. Faction tinting is SetVertexColor on the one texture per kind.
 local ICONS = {
-    flightmaster  = "Interface\\Icons\\Ability_Mount_Gryphon_01",
-    innkeeper     = "Interface\\Icons\\INV_Misc_Food_15",
-    battlemaster  = "Interface\\Icons\\Ability_Warrior_BattleShout",
-    meetingstone  = "Interface\\Icons\\INV_Misc_StoneTablet_01",
+    flightmaster  = "Interface\\Minimap\\Tracking\\FlightMaster",
+    innkeeper     = "Interface\\Minimap\\Tracking\\Innkeeper",
+    battlemaster  = "Interface\\Minimap\\Tracking\\Battlemaster",
+    meetingstone  = "Interface\\AddOns\\ServerMapPOI\\mstone",
     portal        = "Interface\\Icons\\Spell_Arcane_PortalStormwind",
     transport     = "Interface\\Icons\\Ability_Mount_Wyvern_01",
     warpweaver    = "Interface\\Icons\\INV_Misc_Map_01",
@@ -40,6 +41,7 @@ local ICONS = {
     boss          = "Interface\\TargetingFrame\\UI-RaidTargetingIcon_8",
     cache         = "Interface\\Icons\\INV_Misc_Bag_10",
     outlaw        = "Interface\\Icons\\INV_Misc_Bandana_03",
+    callboard     = "Interface\\Icons\\INV_Scroll_03",
 }
 
 -- Faction colours: alliance blue, horde red, shared/neutral gold.
@@ -55,7 +57,7 @@ local function factionColour(poi)
 end
 
 local RED_OVERLAY = "Interface\\Buttons\\WHITE8X8"
-local DYNAMIC_LABELS = { boss = "World boss", cache = "Crow's Cache", outlaw = "Outlaw" }
+local DYNAMIC_LABELS = { boss = "World boss", cache = "Crow's Cache", outlaw = "Outlaw", callboard = "Call board" }
 
 local OUTLAW_PREFIX = "SMPOI"
 local OUTLAW_PROTOCOL = 2
@@ -86,14 +88,14 @@ end
 
 local function CreatePin(poi)
     local pin = CreateFrame("Button", nil, WorldMapButton)
-    pin:SetWidth(24)
-    pin:SetHeight(24)
+    pin:SetWidth(20)
+    pin:SetHeight(20)
     pin:SetFrameLevel(WorldMapButton:GetFrameLevel() + 2)
     pin:RegisterForClicks("LeftButtonUp")
 
     local icon = pin:CreateTexture(nil, "ARTWORK")
-    icon:SetWidth(18)
-    icon:SetHeight(18)
+    icon:SetWidth(12)
+    icon:SetHeight(12)
     icon:SetPoint("CENTER", 0, 0)
     icon:SetTexture(ICONS[poi.kind] or ICONS.vendor)
     icon:SetVertexColor(factionColour(poi))
@@ -244,7 +246,7 @@ function Frame:ReleaseOutlawPin(id)
     self.outlawPool[#self.outlawPool + 1] = pin
 end
 
-function Frame:RefreshOutlaws(zone, area, continent, inInstance)
+function Frame:RefreshOutlaws(area, continent, inInstance, mapZone)
     local now = GetTime()
     for id, data in pairs(self.outlaws) do
         local pin = self.outlawPins[id]
@@ -263,9 +265,9 @@ function Frame:RefreshOutlaws(zone, area, continent, inInstance)
             and continent
             and data.continent == continent
         then
-            if data.zone == zone or data.zone == area then
+            if mapZone and mapZone > 0 and data.zone == area then
                 mode = "zone"
-            elseif (zone == 0 or zone == -1) and data.continentX and data.continentY then
+            elseif (not mapZone or mapZone <= 0) and data.continentX and data.continentY then
                 mode = "continent"
             end
         end
@@ -299,11 +301,14 @@ function Frame:Refresh()
         self:HideAll()
         return
     end
-    local zone = GetCurrentMapZone()
-    local area = GetCurrentMapAreaID and GetCurrentMapAreaID() or zone
+    -- GetCurrentMapZone returns the zone index, not an area id. It is 0 on a continent map, so a
+    -- zone-relative pin must never draw there: that is the "markers in the ocean" bug.
+    local mapZone = GetCurrentMapZone and GetCurrentMapZone() or 0
+    local area = GetCurrentMapAreaID and GetCurrentMapAreaID() or 0
     local continent = GetCurrentMapContinent and GetCurrentMapContinent() or nil
     local inInstance = IsInInstance and IsInInstance() or false
     local dungeonLevel = GetCurrentMapDungeonLevel and GetCurrentMapDungeonLevel() or 0
+    local onZoneMap = mapZone and mapZone > 0 and area and area > 0
     local pins = self:GetPins()
 
     -- Visibility first, then stack slots. Only pins that actually share a coordinate are spread:
@@ -313,7 +318,7 @@ function Frame:Refresh()
     for index = 1, #pins do
         local pin = pins[index]
         local poi = pin.poi
-        local visible = poi.zone == zone or poi.zone == area
+        local visible = onZoneMap and poi.zone == area
         if visible and poi.dungeonOnly and dungeonLevel <= 0 then
             visible = false
         end
@@ -342,9 +347,9 @@ function Frame:Refresh()
         end
     end
 
-    self:RefreshOutlaws(zone, area, continent, inInstance)
+    self:RefreshOutlaws(area, continent, inInstance, mapZone)
 
-    if ns.RedZones and (ns.RedZones[zone] or ns.RedZones[area]) then
+    if onZoneMap and ns.RedZones and ns.RedZones[area] then
         if not self.overlay then
             self.overlay = WorldMapButton:CreateTexture(nil, "OVERLAY")
             self.overlay:SetTexture(RED_OVERLAY)
