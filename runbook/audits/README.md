@@ -45,3 +45,4 @@ through the strict gate or left open with an owner.
 |------|-------|--------|
 | 2026-11-12 | foundation: agent layer, dev tooling, test realm, backups, fork CI | [2026-11-12-foundation.md](2026-11-12-foundation.md) |
 | 2026-11-14 | content audit baseline and the Baron Longshore `ScriptName` fix | [2026-11-14-content-audit.md](2026-11-14-content-audit.md) |
+| 2026-11-26 | playtest: map POI render, call boards, Cooldown | [2026-11-26-playtest-round-2.md](2026-11-26-playtest-round-2.md) |

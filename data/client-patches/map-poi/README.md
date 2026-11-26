@@ -7,8 +7,8 @@ Decision: [ADR-032](../../../decisions/ADR-032-map-poi-layer.md). Pipeline:
 
 ## What it draws
 
-Generated from `poidata/snapshot.json` (a read-only harvest of `acore_world`) plus the client DBCs.
-568 markers over the whole world:
+Generated from `poidata/snapshot.json` (a read-only harvest of `acore_world`), the client DBCs, and a
+short static list for the hand-placed content. 583 markers over the whole world:
 
 | Kind | Count | Source | Hover text |
 |---|---|---|---|
@@ -19,6 +19,11 @@ Generated from `poidata/snapshot.json` (a read-only harvest of `acore_world`) pl
 | Portal | 43 | `gameobject_template.type 22`, name-filtered, instance maps dropped | destination |
 | Warpweaver | 10 | creature entry `910012` | city |
 | World boss | 2 | Doom Lord Kazzak, Doomwalker | boss name |
+| Call board | 15 | `data/sql/custom/db_world/call_boards.sql`; AWE/acore-data placement | faction call board |
+
+The 15 call boards are world-database rows, not client rows: the patch only draws their markers. They
+are stock Wanted Board objects (entry `930101`, spawn GUIDs `5714521-5714535`) near the innkeepers;
+the objectives engine attaches their menu in a later slice.
 
 Ships and zeppelins are **not drawn in this slice**. Their dock coordinates cannot be derived from
 the tables: `transports` stores only a route name, and `TransportAnimation.dbc` is keyed by a
@@ -29,8 +34,22 @@ the zeppelin towers, which carry the route in their name) or from an in-game pas
 Faction tint: alliance blue, horde red, shared/neutral gold, applied with `SetVertexColor` on one
 stock icon per kind.
 
-Meeting stone level ranges come from `LFGDungeons.dbc`: a stone's `data2` is the dungeon's areaID,
-that area's map is the instance map, and the LFD row for that map carries min/max level.
+Meeting stone level ranges come from `LFGDungeons.dbc`, keyed by the dungeon's own area name: a
+stone's `data2` is the dungeon areaID and the area's name is the dungeon name. Keying by map
+collapsed the four Hellfire Citadel wings and let holiday bosses (Coren Direbrew, Headless Horseman,
+Crown Chemical Co.) win the name.
+
+The map layer draws only on zone maps. On the continent map `GetCurrentMapZone()` is 0, and every
+static pin is hidden; a zone-relative coordinate drawn over the continent texture is the
+"markers in the ocean" bug. The red overlay and the Outlaw exact-zone mode use the same guard.
+
+Goldshire has no flight master in 3.3.5: the flight point was added in Cataclysm (4.0.3a). Elwynn
+shows Innkeeper Farley and the arena battlemaster; that is authentic, not a missing marker.
+
+A player running upstream Questie sees its flight master, innkeeper and meeting-stone pins as well,
+because Questie draws them by default. Double pins are accepted; the player can disable Questie's
+townfolk POIs. The native layer adds no suppression code. The future branded Questie build is where
+the overlap is resolved.
 
 The addon still exposes `SetWorldBoss`, `SetCrowsCache` and `SetDynamicMapPOI` for later dynamic data.
 - **Outlaw** dynamic marker (client visual contract only; no PvP server module): exact marker in the
@@ -42,11 +61,14 @@ The addon still exposes `SetWorldBoss`, `SetCrowsCache` and `SetDynamicMapPOI` f
 - **Canary**: a login message from the overridden `Interface\FrameXML\WorldMapFrame.lua` proves
   `Data/patch-Z.MPQ` wins the load order.
 
-Icons are stock client textures (`INV_Misc_Map_01`, `INV_Misc_Coin_01`, `UI-RaidTargetingIcon_8`,
-`INV_Misc_Bag_10`, `INV_Misc_Bandana_03` for Outlaw); no custom BLP.
+Icons are the stock tracking glyphs Questie uses (`Interface\Minimap\Tracking\FlightMaster`,
+`Innkeeper`, `Battlemaster`) at 12 px. Meeting stones use Questie's `Icons/mstone.blp` (MIT, from
+Shagu's pfQuest; SHA256 `847bb9d2a81e4f356b87c0ae014ce7aa0e8613597b062ff07242b4021b6ec8fc`); call
+boards use a stock scroll icon. No other custom BLP.
 
-License: the packed files are the stock 3.3.5a client assets from the owner's own licensed install.
-The addon Lua and static data are project-authored.
+License: the packed files are the stock 3.3.5a client assets from the owner's own licensed install,
+except `mstone.blp`, which is Questie's MIT-licensed icon (see above). The addon Lua and static data
+are project-authored.
 
 ## Contents
 
@@ -55,7 +77,9 @@ The addon Lua and static data are project-authored.
 | `Interface\AddOns\ServerMapPOI\ServerMapPOI.toc` | Addon manifest. |
 | `Interface\AddOns\ServerMapPOI\ServerMapPOI.lua` | Map hooks, pins, tooltip, red overlay, dynamic hooks, Outlaw protocol. |
 | `Interface\AddOns\ServerMapPOI\Data.lua` | Generated zone bounds, POI positions, red-zone list. |
+| `Interface\AddOns\ServerMapPOI\mstone.blp` | Questie MIT meeting-stone icon. |
 | `Interface\FrameXML\WorldMapFrame.lua` | Whole-file copy of the highest-priority source plus the login canary. |
+| `Interface\FrameXML\Cooldown.lua` | Whole-file copy with the nil-safe `CooldownFrame_SetTimer`. |
 
 ## Sources and hashes
 
@@ -67,6 +91,11 @@ Recorded in `manifest.json`; the build re-resolves them.
 | Canary source file | `Interface\FrameXML\WorldMapFrame.lua` |
 | Canary source SHA256 | `e05b75b212cdda98f86beef35eb024aa1ff416a7164d08873c49b7ae1f3105c8` |
 | Canary output SHA256 | `8bac9f7dccf659fff5891d22b0a5fd401f3495bb70a10a0ce980f1095bda7fe1` |
+| Cooldown source archive | `Data/enUS/locale-enUS.MPQ` |
+| Cooldown source file | `Interface\FrameXML\Cooldown.lua` |
+| Cooldown source SHA256 | `7b93af66d6f5bb0aaaed35202a376c5e2a75df0daea8e0c6c117ab2bfbde77b5` |
+| Cooldown output SHA256 | `c118ae3225f735e18b07191beb73d432359cfd63b7e2637e83daac5a98724a52` |
+| Archive SHA256 | `a3ffc8d6c22f5bc29b5e4e4e9dee8189b31a0727b244692d4cb5ca4de7c2f7d5` (63,175 bytes, 6 files) |
 | `WorldMapArea.dbc` source | `Data/patch-M.mpq` |
 | `WorldMapArea.dbc` SHA256 | `c7361fae70d2f3136e98b8d19f86a594b3592a6ec3351e184eafb350db7d6503` |
 | `DungeonMap.dbc` source | `Data/patch-M.mpq` |
@@ -103,9 +132,8 @@ Offline addon smoke test (map API mock, no client):
 luajit data/client-patches/map-poi/tests/test_addon.lua
 ```
 
-Current output:
-
-Current output: see `manifest.json`. The archive changes whenever the snapshot or the DBCs change.
+Current output: 583 markers; the archive hash and every source hash are in `manifest.json`. The
+archive changes whenever the snapshot, the DBCs, the addon, or the Cooldown source changes.
 
 A content change changes the archive hash. Unchanged sources rebuild byte-identically because the
 build pins entry times; regenerate the manifest and commit both when the content changes.
@@ -131,26 +159,26 @@ The winner must be `Data/patch-Z.MPQ` after install.
 
 1. Start the client and log in. Expect two chat lines:
    - `[client-patch] patch-Z.MPQ canary active: WorldMapFrame.lua loaded from patch-Z.`
-   - `ServerMapPOI loaded from patch-Z.MPQ (24 static markers, Outlaw protocol v2 token required).`
+   - `ServerMapPOI loaded from patch-Z.MPQ (583 static markers, Outlaw protocol v2 token required).`
    A missing first line means the patch lost the load order; a missing second line means the MPQ
    addon did not load or is disabled.
-2. Open the map in Stormwind (or `/run SetMapZoom(0, 1519)`). Expect the Warpweaver marker near
-   `64.7, 72.0`, PvP honor vendors near `75.0, 67.3`, and battlemasters near `82.7, 34.0`.
-3. Repeat in Ironforge, Darnassus, The Exodar, Orgrimmar, Undercity, Thunder Bluff, Silvermoon, and
-   Shattrath. Positions are in `Data.lua` as percentages.
-4. Dalaran: the Warpweaver marker is near `39.8, 40.5` (Simply Enchanting, beside Enchanter
-   Nalthanis) and the arena vendors near `58.4, 58.0`. The arena-vendor pair is still the only
-   imported approximation.
-5. Hellfire Peninsula: a skull at Doom Lord Kazzak. Shadowmoon Valley: a skull at Doomwalker.
-6. Wintergrasp, Strand of the Ancients, and Isle of Conquest: the map gets a translucent red overlay.
-7. Hover each marker: tooltip shows the label and note. Click: chat echoes the label.
-8. Close the map. Markers are hidden; no map work continues. Reopen; markers are back.
-9. `/reload`. No Lua error dialog; both login lines repeat.
-10. Outlaw markers need a server module and are not shipped. The client contract is tested offline:
-    `luajit data/client-patches/map-poi/tests/test_addon.lua` runs the fake position, same-zone
-    exact marker, same-continent coarse marker, other-continent hide, instance hide, kill line, and
-    clear.
-11. Roll back and restart: both lines disappear and the map returns to stock.
+2. Stormwind zone map: 23 pins (flight master, innkeeper, battlemasters, meeting stone, two portals,
+   Warpweaver, call board). The icons are 12 px tracking glyphs, not squares.
+3. Check the other capitals and Shattrath. Alliance pins tint blue, horde red, shared gold; no marker
+   from another zone.
+4. Dalaran shows its innkeepers, flight master, portals, Warpweaver and call board.
+5. Hellfire Peninsula: a skull at Doom Lord Kazzak. Shadowmoon Valley: Doomwalker.
+6. Call boards: one in each faction capital, Shattrath, Dalaran, Booty Bay, Gadgetzan, Everlook,
+   Area 52 and Ratchet. Hover the board and the POI; the board is inert until the objectives slice.
+7. Red overlay on Wintergrasp, Strand of the Ancients and Isle of Conquest.
+8. Continent map: no static pins anywhere on the continent texture.
+9. Elwynn: Innkeeper Farley and the arena battlemaster; no flight master (3.3.5 has none).
+10. Hover and click a pin; close and reopen the map; `/reload`; no Lua error.
+11. Cooldown: track a quest item or trigger the Call of Water path; no `Cooldown.lua` error.
+12. Outlaw markers need a server module and are not shipped. The offline test covers the contract.
+13. Roll back and restart: both chat lines disappear and the map returns to stock.
+
+Full checklist: [2026-11-26-playtest-round-2.md](../../../runbook/audits/2026-11-26-playtest-round-2.md).
 
 ## Outlaw marker protocol
 
@@ -175,7 +203,8 @@ Fields:
 - `killer`, `victim`: character names, no tabs.
 - `continent`: the client's `GetCurrentMapContinent()` value (1 Eastern Kingdoms, 2 Kalimdor,
   3 Outland, 4 Northrend).
-- `zone`: the client's `GetCurrentMapZone()` value (AreaTable ID, for example 1519 Stormwind City).
+- `zone`: the AreaTable zone id (for example 1519 Stormwind City). The client matches it against
+  `GetCurrentMapAreaID()`; `GetCurrentMapZone()` returns an index, not this id.
 - `zoneName`, `subzone`: display strings for the tooltip; `subzone` is the finer location.
 - `mapX`, `mapY`: exact zone-map coordinates, 0..1, top-left origin. Sent only to players in the
   same zone.

@@ -302,13 +302,14 @@ The conflict is concrete, not theoretical:
 - The app refuses to export an ID it finds taken, which protects the database but does not make the
   chosen ID a project ID. A free key in the 60000s is still outside every reserved range.
 
-**The rule that follows: use Azeroth World Editor to move existing rows, never to create content.**
-Moving a spawn is an `UPDATE` on a row that already exists, and its GUID already belongs to the
-project block. Creating an NPC, object, item, quest, trainer, vendor or loot row belongs to the
-content-author, in tracked SQL, with an ID from the registry.
+**The rule that follows: use Azeroth World Editor to move existing rows, or to draft new content in
+an open project; never let its allocator choose a project ID.** Moving a spawn is an `UPDATE` on a
+row that already exists. Creating an NPC, object, item, quest, trainer, vendor or loot row still
+belongs to tracked SQL with an ID from the registry. The MCP assistant can draft that content in the
+open project, but the committed row is the tracked SQL patch, and its ID is one the registry allows.
 
-What to do when a patch contains a new row: discard it. Re-do the work as a move, or hand the new
-content to the content-author with the coordinates and the intent.
+What to do when a patch contains a new row with an app-chosen ID: discard it. Re-do the work as a
+move, or hand the new content to the content-author with the coordinates and the intent.
 
 ## What it cannot do
 
@@ -323,6 +324,29 @@ content to the content-author with the coordinates and the intent.
 
 A feature that needs one of these is not an AWE job. Stop and route it to the client-patch pipeline or
 the content-author.
+
+## MCP / AI assistant
+
+The app can run a local MCP server so an assistant works in the open project. It is off until you
+turn it on.
+
+1. **Settings > MCP / AI**, tick **Allow AI to edit this project**.
+2. Copy the address (default `http://127.0.0.1:47600/mcp`) and the token.
+3. Configure OpenCode as a remote server with `Authorization: Bearer <token>`. Full config and
+   security rules: [mcp-servers.md](mcp-servers.md).
+
+The server listens on loopback only; every request carries the token. The assistant can look up
+quests, NPCs, objects, items and spells, read the world around a point with z and facing, place
+spawns and patrols, and draft quests, NPCs, objects, items, scenes and loot in the project. Every
+change is one undoable **AI: ...** step.
+
+It never writes the world database and cannot apply a patch to a dev database. Export and apply
+remain yours. The ID rule above still applies: use the registry range, not the app allocator, for a
+row that will be committed.
+
+The call boards are the worked example: AWE's `area_overview` found each innkeeper's z, facing and
+nearby floor objects; the agent wrote tracked SQL with gameobject `930101` and spawn GUIDs
+`5714521-5714535`.
 
 ## Verification and rollback
 
@@ -381,7 +405,9 @@ result; a `.reload` does not move a spawn.
 | `Access denied for user 'acore'` | Wrong password or host mismatch | Password from `worldserver.conf` |
 | Permission denied on export | Export folder missing or unwritable | Use `data/sql/custom/db_world`; check it exists |
 | Moved NPC still at the old spot | Spawns load at server start | `make stop && make start`, then re-check |
-| New row in the patch | Content creation, not a move | Discard; see [ID-range conflict](#id-range-conflict) |
+| New row with an app-chosen ID in the patch | Content creation outside the registry | Discard; use tracked SQL and a registry ID |
+| MCP assistant gets 401 | Token wrong or missing | Copy the token from Settings; update the header; save |
+| MCP assistant cannot connect | App closed or MCP tab off | Open the app; enable MCP / AI; use the address shown |
 
 Run the commands from the repository root. The `acore` grant is created for `localhost`; a TCP login
 can match a different host, which is the usual cause of the access-denied line above.
@@ -397,6 +423,7 @@ pipeline.
 
 - https://github.com/DMCK96/azeroth-world-editor
 - https://dmck96.github.io/azeroth-world-editor/
+- [mcp-servers.md](mcp-servers.md)
 - [id-registry.md](../database/id-registry.md)
 - [dbeaver.md](../database/dbeaver.md)
 - [apply-sql-update.md](../operation/apply-sql-update.md)

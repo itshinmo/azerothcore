@@ -32,7 +32,7 @@ The project uses a three-archive family, split by data domain rather than one le
 |---------|--------|-----|
 | `Data/patch-X.MPQ` | item data | the **only** carrier of `DBFilesClient\Item.dbc` |
 | `Data/patch-Y.MPQ` | white dungeon/raid preview models, owned by `fix-journal-white-models` (batch 1: stock goblin male) | none |
-| `Data/patch-Z.MPQ` | map/UI (`ServerMapPOI`) | none |
+| `Data/patch-Z.MPQ` | map/UI (`ServerMapPOI`) + `Cooldown.lua` nil guard | none |
 
 - Each archive is MPQ v1, zlib, `(listfile)` and `(attributes)` present.
 - `.gitattributes` marks `*.MPQ`, `*.mpq`, `*.dbc`, `*.blp`, `*.m2`, `*.skin` and `*.anim` binary;

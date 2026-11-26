@@ -127,17 +127,18 @@ Then, with the client started:
 
 1. The login chat shows the canary line from `Interface\FrameXML\WorldMapFrame.lua`.
 2. The login chat shows the `ServerMapPOI` load line.
-3. Open the world map. Static markers appear only on their zones.
-4. Hover a marker: the tooltip shows its label. Click it: chat echoes the label.
-5. Check the red overlay on the selected PvP zones.
-6. `/reload`, reopen the map; no Lua error dialog and no `Interface\AddOns\ServerMapPOI` error.
-7. Close the map; markers are hidden, no map work continues.
-8. Item data: a server `item_template` row is required. Grant a custom item, for example
+3. Trigger a quest-item cooldown or the Call of Water path; no `Cooldown.lua` error.
+4. Open the world map. Static markers appear only on their zones.
+5. Hover a marker: the tooltip shows its label. Click it: chat echoes the label.
+6. Check the red overlay on the selected PvP zones.
+7. `/reload`, reopen the map; no Lua error dialog and no `Interface\AddOns\ServerMapPOI` error.
+8. Close the map; markers are hidden, no map work continues.
+9. Item data: a server `item_template` row is required. Grant a custom item, for example
    `.additem 901001`, and inspect the bag icon and tooltip. The icon must render; a red question
    mark means the Item.dbc row or its DisplayInfoID is missing.
-9. Server: restart with matching data. Copy `data/client-patches/item-data/dist/Item.dbc` to
-   `<server>/DataDir/dbc/Item.dbc` (owner only; back up first), or apply the same rows through the
-   `item_dbc` table. Do not half-apply. The server loads Item.dbc through `sItemStore`. Compare the
+10. Server: restart with matching data. Copy `data/client-patches/item-data/dist/Item.dbc` to
+    `<server>/DataDir/dbc/Item.dbc` (owner only; back up first), or apply the same rows through the
+    `item_dbc` table. Do not half-apply. The server loads Item.dbc through `sItemStore`. Compare the
    server file first: any server-only custom rows (for example `2050641`) must be in `items.json`
    and rebuilt, or the replacement loses them.
 10. `/reload` and repeat. No client error dialog.
