@@ -20,6 +20,24 @@ last-verified: 2026-11-22 (23bf75546; bot rig paused; manual verification is the
   remain out of scope until the base game is done.
 - Branch: `local-server-setup` is the integration branch. Confirm with `git status`.
 
+## Session record — 2026-11-26 (dungeon XP split, auto-learn removed)
+
+- **Dungeon XP is trash 10% / boss 33%, dungeon quests 6x base.** `mod-dungeon-xp` replaced
+  `DungeonXp.KillFactor` with `DungeonXp.TrashKillFactor = 0.10` and
+  `DungeonXp.BossKillFactor = 0.33`; `DungeonXp.QuestFactor` is 3.0 on top of the global
+  `Rate.XP.Quest = 2`. Boss means the same thing `mod-objectives` credits: instance map plus
+  `Creature::IsDungeonBoss()` or `isWorldBoss()`; a null victim counts as trash. Raids follow the
+  split through `IncludeRaids`, which keeps its meaning. Selection and clamps are pure functions in
+  `modules/mod-dungeon-xp/src/DungeonXpMath.h` with `DungeonXpMathTest` (6 tests).
+  [ADR-012](../../decisions/ADR-012-progression-rates.md) revision 2026-11-26.
+- **`mod-auto-learn-spells` removed** (ADR-021 revision 2026-11-26, clause 1 superseded; RFC-003
+  Group A amendment). Trainers are the sole spell source again, so the planned class-trainer shop
+  summon has a transaction to sell. Dual spec at 30 free and dropped auto flight paths unaffected.
+  **Shaman consequence:** the module's login grant of Earth/Fire/Water/Air Totem (5175-5178) is
+  gone; the stock `Call of Earth/Fire/Water/Air` chains were audited and all four totems are quest
+  rewards with reachable starters and enders, so shamans are not broken. Fire and Water have no
+  vendor fallback (only 5175 and 5178 are sold), so the quests are the route. No SQL added.
+
 ## Session record — 2026-11-24 (treasure placement, chest fix, item balance)
 
 - **Unlocked chests were unclickable.** `GameObject::Use` had no `GAMEOBJECT_TYPE_CHEST` case; most
@@ -246,6 +264,7 @@ travel time, retail-authentic, no fix. Client bundle stays on WoSSilicon; Object
 - `mod-auto-learn-spells` (new local module): class trainer spells learned automatically at
   level-up/each login via the core `Trainer` availability filter; no spell list, no config.
   LEARN_SPELL wrappers (class mounts, druid flight forms) stay trainer visits.
+  **Removed 2026-11-26** — trainers are the sole spell source again (ADR-021 revision).
 - Dual spec at level 30, free (`MinDualSpecLevel = 30` in `worldserver.conf.dist` + live config).
 - Auto flight paths **dropped** by owner decision (players discover FPs; RFC-003 amended).
 - Build green, `make test` green, server restarted clean (0 errors). Owner in-game checklist in
