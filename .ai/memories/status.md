@@ -1,6 +1,6 @@
 ---
 description: Current project status, last verified commit, known issues, open decisions, and next tasks. Read after overview on any task.
-last-verified: 2026-11-27 (feat/map-pins; map layer replaced with bosses and custom services; owner playtest pending)
+last-verified: 2026-11-27 (feat/map-pins-generator; round-3 fixes, generated pin data; owner hover test pending)
 ---
 
 # Status
@@ -52,6 +52,43 @@ last-verified: 2026-11-27 (feat/map-pins; map layer replaced with bosses and cus
   DB; `call_boards.sql` and the ID registry are unchanged.
 - **Open.** Owner in-client test: tooltips, pin positions, counts (EK 11, Kalimdor 14, Outland 5,
   Northrend 2) and the Dalaran micro-map.
+
+## Session record — 2026-11-27 (playtest round 3: continent offsets, hover, generator)
+
+- **Owner playtest round 3.** Zone pins all correct. Two continent clusters wrong: the Silvermoon
+  pair drew in the ocean north of the Eastern Kingdoms and the Exodar pair under `THE GREAT SEA`.
+  Hovering a pin showed no tooltip, and left-clicking one did not ping the map either.
+- **Ocean-pin root cause.** Silvermoon and the Exodar stand on map 530 but display on map 0 and 1,
+  and the continent fraction was computed from the raw map-530 coordinates. The client applies the
+  additive `WorldMapTransforms.dbc` offset first: `(-2400, +2400)` for Eastern Kingdoms,
+  `(+10133.333, +17600)` for Kalimdor. Four rows fixed: Silvermoon Warpweaver
+  `0.6287/0.0481 -> 0.5698/0.1365`, Silvermoon Call Board `0.6234/0.0592 -> 0.5645/0.1476`, Exodar
+  Warpweaver `0.7797/0.6820 -> 0.3014/0.2690`, Exodar Call Board `0.7816/0.6747 -> 0.3033/0.2616`.
+  The DBC offsets are used, not HereBeDragons' differing 2662.8 constant, because they match the
+  client's own Silvermoon landmark.
+- **Hover root cause.** The pin was a child of `WorldMapButton` at `WORLDMAP_POI_FRAMELEVEL + 50`;
+  it drew but no mouse event reached it. Pins are now children of `WorldMapFrame` at
+  `GetFrameLevel() + 7` with the frame's strata, the arrangement Questie uses in this client
+  (HandyNotes uses `+6`). Tooltip is `WorldMapTooltip`, and hover sets
+  `WorldMapPOIFrame.allowBlobTooltip = false` so `WorldMapBlobFrame_OnUpdate` cannot replace it.
+  Because the pin is anchored in the unscaled frame, offsets multiply by `WorldMapButton:GetScale()`.
+  `/wmp` prints the pin count, zone index and the frame under the cursor.
+- **Generator.** `data/client-patches/map-pins/generate.py` writes `src/WorldMapPins/data/`
+  (`zones.lua`, `bosses.lua`, `services.lua`) from tracked SQL plus `WorldMapArea.dbc`,
+  `WorldMapTransforms.dbc`, `DungeonMap.dbc` and `AreaTable.dbc`. Zone identity comes from the SQL
+  `zoneId` column, not the coordinate, because zone bounds overlap. `build.py --check` runs
+  `generate.py --check`, so a moved spawn with stale pin data fails the build. Reproduces all 32
+  existing pins exactly.
+- **Scope amended.** ADR-037 now accepts hub portal rooms and player ship/zeppelin stations.
+  Formerly the ADR excluded portals. See the ADR for the destination sets and the 120-yard merge
+  rule.
+- **Patch-Z.** sha256 `4c630fda4d373e91b58bcbdae0534dc444677026c103dab02e7ea3a31f2dbbeb`, 31,148
+  bytes, 7 files (addon TOC, three generated data files, addon Lua, FrameXML canary, Cooldown nil
+  guard).
+- **Verification.** Lua addon test (32 pins, hover, frame level, map scale, continent offsets),
+  8 generator Python tests, build + `--check`, `make verify-docs`.
+- **Open.** Owner in-client test of hover and click on the rebuilt `patch-Z`. If hover still fails,
+  `/wmp` names the frame that took the mouse.
 
 ## Session record — 2026-11-26 (map POI second pass, call boards, Cooldown, MCPs)
 

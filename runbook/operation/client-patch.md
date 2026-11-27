@@ -189,14 +189,16 @@ DB write.
 | `which` skips an archive | Archive is encrypted or corrupt | Expected for some vendor patches; use the source it reports. |
 | Canary absent in game | `patch-Z` did not load; a lower archive won | Re-run `which`; confirm the client is English; check the file name case. |
 | Addon load line absent | MPQ addon did not load or is disabled | Check the addon list; re-verify the TOC and the `Interface\AddOns` path. |
-| Markers on the wrong spot | Spawn moved or map convention mismatch | Edit the matching row in `data/client-patches/map-pins/src/WorldMapPins/WorldMapPins.lua`; compare a known NPC in game; rebuild. |
-| Dalaran markers wrong | WorldMapArea has zero bounds for Dalaran | Recompute the pair from `DungeonMap.dbc` row 27 (map 571); rebuild. |
+| Markers on the wrong spot | Spawn moved, or the checked-in pin data is stale | Edit the tracked SQL, run `python3 data/client-patches/map-pins/generate.py`, rebuild. Never edit `src/WorldMapPins/data/*.lua` by hand. |
+| Generated pin data stale | `build.py --check` fails with `generated pin data is stale` | Run `generate.py` and commit the regenerated data with the SQL change. |
+| Dalaran markers wrong | WorldMapArea has zero bounds for Dalaran | The generator uses the `DungeonMap.dbc` row matching the zone floor (27, map 571); confirm that row is present in the client DBC. |
+| Silvermoon or Exodar markers in the ocean | Continent fraction projected without the map-530 `WorldMapTransforms` offset | The generator adds `(-2400, +2400)` for Eastern Kingdoms or `(+10133.333, +17600)` for Kalimdor before projecting; zone fractions stay raw. |
 | Lua error at login | FrameXML source changed under a new bundle | Rebuild from the new highest-priority source; do not reuse the old patch. |
 | `verify` fails after a rebuild | Expected: a rebuild changes the archive hash | Regenerate the manifest and commit both. |
 | Custom item shows a red `?` | Item.dbc row missing, DisplayInfoID missing, or `patch-X` not loaded | Run `item_dbc.py inspect --archive ... --ids <id>`; confirm `which Item.dbc` is `patch-X`; check ItemDisplayInfo.dbc. |
 | `Item.dbc` header rejected | Not 8 fields / 32-byte rows | Use the client's 3.3.5a Item.dbc, not a Cataclysm or later table. |
 | Item.dbc conflict | `patch-Y` or `patch-Z` also carries Item.dbc | Remove the other carrier; X must be the only one. |
-| Pin tooltip absent | Pin sits below the client quest POI layer or has the mouse disabled | Keep the frame level at `WORLDMAP_POI_FRAMELEVEL + 50` and `EnableMouse(true)`. |
+| Pin tooltip absent | Wrong parent, or the pin is under the client quest POI layer | Parent to `WorldMapFrame` at `GetFrameLevel() + 7` with the frame's strata, `EnableMouse(true)`, hover via `WorldMapTooltip`, and set `WorldMapPOIFrame.allowBlobTooltip = false`. `/wmp` prints the frame under the cursor. |
 
 ## References
 
