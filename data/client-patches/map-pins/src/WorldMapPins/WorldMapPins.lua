@@ -22,6 +22,10 @@ local ICONS = {
     boss = "Interface\\TargetingFrame\\UI-RaidTargetingIcon_8",
     warpweaver = "Interface\\Icons\\INV_NetherPortal",
     callboard = "Interface\\GossipFrame\\AvailableQuestIcon",
+    -- Portal pins carry their own per-room icon; this is only the fallback.
+    portal = "Interface\\Icons\\Spell_Arcane_PortalShattrath",
+    ship = "Interface\\Icons\\INV_ShipMount",
+    zeppelin = "Interface\\Icons\\INV_ZeppelinMount",
 }
 
 -- Filled by data/*.lua, which the TOC loads before this file. The kinds are listed by name and
@@ -30,7 +34,7 @@ local ICONS = {
 ns.Pins = {}
 for _, key in ipairs({ "PinBosses", "PinServices", "PinPortals", "PinTransports" }) do
     for _, pin in ipairs(ns[key] or {}) do
-        if not ICONS[pin.kind] then
+        if not pin.icon and not ICONS[pin.kind] then
             error("WorldMapPins: no icon for pin kind " .. tostring(pin.kind))
         end
         ns.Pins[#ns.Pins + 1] = pin
@@ -91,7 +95,7 @@ local function CreatePin(pin)
     icon:SetWidth(14)
     icon:SetHeight(14)
     icon:SetPoint("CENTER")
-    icon:SetTexture(ICONS[pin.kind])
+    icon:SetTexture(pin.icon or ICONS[pin.kind])
     button.icon = icon
     button.pin = pin
 
@@ -108,8 +112,14 @@ local function CreatePin(pin)
         tip:SetOwner(self, "ANCHOR_RIGHT")
         -- The city is in the title, not only in a lower line. On a continent map a city's
         -- Warpweaver and Call Board sit 1-7 pixels apart, so only the top pin of the pair can be
-        -- hovered; the title has to say which service and which city that top pin is.
-        if self.pin.kind == "boss" then
+        -- hovered; the title has to say which service and which city that top pin is. Portal and
+        -- transport pins carry an explicit title and subtitle instead.
+        if self.pin.title then
+            tip:SetText(self.pin.title)
+            if self.pin.subtitle and self.pin.subtitle ~= "" then
+                tip:AddLine(self.pin.subtitle, 0.8, 0.8, 0.8)
+            end
+        elseif self.pin.kind == "boss" then
             tip:SetText(self.pin.label)
             tip:AddLine(self.pin.note .. " - " .. self.pin.place, 0.8, 0.8, 0.8)
         else

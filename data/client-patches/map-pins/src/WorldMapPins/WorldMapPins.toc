@@ -9,4 +9,6 @@
 data\zones.lua
 data\bosses.lua
 data\services.lua
+data\portals.lua
+data\transports.lua
 WorldMapPins.lua

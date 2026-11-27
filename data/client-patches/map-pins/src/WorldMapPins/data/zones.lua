@@ -2,19 +2,27 @@
 -- Zone id -> the name GetMapZones returns for it. Pin visibility is matched on this.
 -- AreaTable.dbc: sha256 eb4bcfa77b03aed853c4783ac260a4259970effaad5b8a74d868783b4dbdc44e
 -- DungeonMap.dbc: sha256 aa31db35a2266694d8318c410712a18540d86469e3d6134eb648a1d9694f21f5
+-- TaxiPathNode.dbc: sha256 9e330838d1a50170354485514bf2d94395339070cde883fa8d18a5a7e7ed6214
 -- WorldMapArea.dbc: sha256 90e1ec678c8226c76f4dd9f7904f05a4cb0a58c8b4d386719b24949bd55925bb
 -- WorldMapTransforms.dbc: sha256 ba3f2a65c35ba0ab158f4a336c6195b0dcf4754d2e4f53fea5dbe5acf1ad479c
 
 local ADDON, ns = ...
 ns.Zones = {
     [10] = "Duskwood",
+    [11] = "Wetlands",
+    [14] = "Durotar",
+    [15] = "Dustwallow Marsh",
     [16] = "Azshara",
     [17] = "The Barrens",
     [33] = "Stranglethorn Vale",
     [47] = "The Hinterlands",
+    [85] = "Tirisfal Glades",
+    [141] = "Teldrassil",
+    [148] = "Darkshore",
     [331] = "Ashenvale",
     [357] = "Feralas",
     [440] = "Tanaris",
+    [495] = "Howling Fjord",
     [618] = "Winterspring",
     [1497] = "Undercity",
     [1519] = "Stormwind City",
@@ -26,6 +34,8 @@ ns.Zones = {
     [3487] = "Silvermoon City",
     [3520] = "Shadowmoon Valley",
     [3523] = "Netherstorm",
+    [3524] = "Azuremyst Isle",
+    [3537] = "Borean Tundra",
     [3557] = "The Exodar",
     [3703] = "Shattrath City",
     [4395] = "Dalaran",

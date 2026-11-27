@@ -114,6 +114,8 @@ end
 load("data/zones.lua")
 load("data/bosses.lua")
 load("data/services.lua")
+load("data/portals.lua")
+load("data/transports.lua")
 load("WorldMapPins.lua")
 
 -- The addon keeps its frames private; collect them from CreateFrame instead.
@@ -137,31 +139,143 @@ local function visible()
     return out
 end
 
-local function labels(list)
-    local out = {}
-    for _, frame in ipairs(list) do
-        out[#out + 1] = frame.pin.label
-    end
-    table.sort(out)
-    return out
-end
-
 -- Static data.
-assert(#ns.Pins == 32, "expected 32 pins, got " .. #ns.Pins)
-local counts = { boss = 0, warpweaver = 0, callboard = 0 }
+assert(#ns.Pins == 73, "expected 73 pins, got " .. #ns.Pins)
+local counts = { boss = 0, warpweaver = 0, callboard = 0, portal = 0, ship = 0, zeppelin = 0 }
 for _, pin in ipairs(ns.Pins) do
     counts[pin.kind] = (counts[pin.kind] or 0) + 1
     assert(pin.mx >= 0 and pin.mx <= 1 and pin.my >= 0 and pin.my <= 1,
-        "zone position outside the map: " .. pin.label)
+        "zone position outside the map: " .. tostring(pin.label))
     assert(pin.cx >= 0 and pin.cx <= 1 and pin.cy >= 0 and pin.cy <= 1,
-        "continent position outside the map: " .. pin.label)
+        "continent position outside the map: " .. tostring(pin.label))
 end
 assert(counts.boss == 7, "expected 7 world bosses")
 assert(counts.warpweaver == 10, "expected 10 Warpweavers")
 assert(counts.callboard == 15, "expected 15 Call Boards")
+assert(counts.portal == 12, "expected 12 portal rooms")
+assert(counts.ship == 16, "expected 16 ship stations")
+assert(counts.zeppelin == 13, "expected 13 zeppelin stations")
 for _, pin in ipairs(ns.Pins) do
-    assert(pin.kind == "boss" or pin.kind == "warpweaver" or pin.kind == "callboard",
+    assert(pin.kind == "boss" or pin.kind == "warpweaver" or pin.kind == "callboard"
+        or pin.kind == "portal" or pin.kind == "ship" or pin.kind == "zeppelin",
         "unexpected pin kind: " .. pin.kind)
+end
+
+-- Portal pins: one per room, explicit title and subtitle, one destination per line.
+local function find(predicate, what)
+    for _, pin in ipairs(ns.Pins) do
+        if predicate(pin) then
+            return pin
+        end
+    end
+    error("pin not found: " .. what)
+end
+local shattrat = find(function(pin)
+    return pin.kind == "portal" and pin.title == "Shattrath City"
+        and pin.subtitle == "Terrace of Light"
+end, "Shattrath Terrace of Light")
+assert(#shattrat.lines == 8, "Shattrath must list 8 capital destinations")
+assert(shattrat.lines[1] == "To Stormwind", shattrat.lines[1])
+assert(shattrat.icon == "Interface\\Icons\\Spell_Arcane_PortalShattrath", shattrat.icon)
+
+local enclave = find(function(pin)
+    return pin.kind == "portal" and pin.subtitle == "Silver Enclave"
+end, "Silver Enclave")
+assert(enclave.title == "Dalaran", enclave.title)
+assert(enclave.icon == "Interface\\Icons\\Spell_Arcane_PortalStormWind", enclave.icon)
+assert(#enclave.lines == 5, "Silver Enclave must list 5 destinations")
+
+local sunreaver = find(function(pin)
+    return pin.kind == "portal" and pin.subtitle == "Sunreaver's Sanctuary"
+end, "Sunreaver's Sanctuary")
+assert(sunreaver.title == "Dalaran", sunreaver.title)
+assert(sunreaver.icon == "Interface\\Icons\\Spell_Arcane_PortalOrgrimmar", sunreaver.icon)
+assert(#sunreaver.lines == 5, "Sunreaver's Sanctuary must list 5 destinations")
+
+-- A portal pin without its own icon must fall back to the kind icon instead of erroring.
+assert(ns.ICONS.portal == "Interface\\Icons\\Spell_Arcane_PortalShattrath", ns.ICONS.portal)
+
+local blasted = find(function(pin)
+    return pin.kind == "portal" and pin.title == "Stormwind City"
+end, "Stormwind Blasted Lands portal")
+-- Icon names must match the client's own spelling, because tools/icon-browser/IconBrowserIcons.lua
+-- is the list we choose from and it is case-sensitive there.
+assert(blasted.icon == "Interface\\Icons\\Spell_Arcane_PortalStormWind", blasted.icon)
+assert(blasted.subtitle == "Portal to Blasted Lands", blasted.subtitle)
+assert(blasted.lines[1] == "To Blasted Lands", blasted.lines[1])
+
+-- Transport pins: one per station node, no merging, station as title, destination as one line.
+local harbor = find(function(pin)
+    return pin.kind == "ship" and pin.title == "Stormwind Harbor"
+        and pin.lines[1] == "To Auberdine"
+end, "Stormwind Harbor to Auberdine")
+assert(harbor.icon == nil, "ship pins use the kind icon")
+assert(ns.ICONS.ship == "Interface\\Icons\\INV_ShipMount", ns.ICONS.ship)
+
+local westguard = find(function(pin) return pin.title == "Westguard Keep" end, "Westguard Keep")
+assert(#westguard.lines == 1 and westguard.lines[1] == "To Shattered Straits",
+    "the shared-coordinate route must be one pin naming the other end")
+
+-- A portal pin must draw its own room icon, not the kind fallback, and its tooltip must show the
+-- city, the room and the destinations. Stormwind's fallback and room icons differ, so this bites.
+continent, mapZoneIndex, zoneName = 2, 1, "Stormwind City"
+ns.Refresh()
+local blastedFrame = nil
+for _, frame in ipairs(visible()) do
+    if frame.pin.kind == "portal" then blastedFrame = frame end
+end
+assert(blastedFrame, "Stormwind must show its Blasted Lands portal pin")
+assert(blastedFrame.icon.texture == blastedFrame.pin.icon,
+    "portal pin must draw its room icon, got " .. tostring(blastedFrame.icon.texture))
+blastedFrame.scripts.OnEnter(blastedFrame)
+assert(WorldMapTooltip.lines[1] == "Stormwind City",
+    "portal tooltip title, got " .. tostring(WorldMapTooltip.lines[1]))
+assert(WorldMapTooltip.lines[2] == "Portal to Blasted Lands",
+    "portal tooltip room, got " .. tostring(WorldMapTooltip.lines[2]))
+assert(WorldMapTooltip.lines[3] == "To Blasted Lands",
+    "portal tooltip destination, got " .. tostring(WorldMapTooltip.lines[3]))
+blastedFrame.scripts.OnLeave(blastedFrame)
+
+-- Shattrath shows two portal pins and lists every capital.
+continent, mapZoneIndex, zoneName = 3, 1, "Shattrath City"
+ns.Refresh()
+local portals = 0
+for _, frame in ipairs(visible()) do
+    if frame.pin.kind == "portal" then portals = portals + 1 end
+end
+assert(portals == 2, "Shattrath must show both portal pins, got " .. portals)
+
+-- A transport pin tooltip is the station and the destination, and it uses the neutral kind icon.
+continent, mapZoneIndex, zoneName = 2, 1, "Wetlands"
+ns.Refresh()
+local harborFrame = nil
+for _, frame in ipairs(visible()) do
+    if frame.pin.kind == "ship" and frame.pin.title == "Menethil Harbor"
+        and frame.pin.lines[1] == "To Theramore" then
+        harborFrame = frame
+    end
+end
+assert(harborFrame, "Menethil Harbor to Theramore pin missing")
+assert(harborFrame.icon.texture == "Interface\\Icons\\INV_ShipMount",
+    "ship pin must use the neutral ship icon, got " .. tostring(harborFrame.icon.texture))
+harborFrame.scripts.OnEnter(harborFrame)
+assert(WorldMapTooltip.lines[1] == "Menethil Harbor",
+    "transport tooltip title, got " .. tostring(WorldMapTooltip.lines[1]))
+assert(WorldMapTooltip.lines[2] == "To Theramore",
+    "transport tooltip destination, got " .. tostring(WorldMapTooltip.lines[2]))
+harborFrame.scripts.OnLeave(harborFrame)
+assert(ns.ICONS.zeppelin == "Interface\\Icons\\INV_ZeppelinMount", ns.ICONS.zeppelin)
+
+-- The owner chose one pin per station node and no distance merging, so every transport node must
+-- be its own coordinate. A reintroduced merge removes a pin and passes a uniqueness check that
+-- keys on title, so this asserts distinct coordinates directly.
+local coords = {}
+for _, pin in ipairs(ns.Pins) do
+    if pin.kind == "ship" or pin.kind == "zeppelin" then
+        local key = string.format("%.1f|%.1f", pin.x, pin.y)
+        assert(not coords[key], "two transport pins share a coordinate: " .. key)
+        coords[key] = true
+    end
 end
 
 -- Hooks must be installed.
@@ -169,13 +283,19 @@ for _, name in ipairs({ "WorldMapFrame_Update", "WorldMapFrame_OnShow", "WorldMa
     assert(hooks[name] and #hooks[name] == 1, "missing hook: " .. name)
 end
 
--- Stormwind zone map: Warpweaver + Call Board, exact positions, hoverable.
+-- Stormwind zone map: Warpweaver, Call Board, one Blasted Lands portal and the two harbor
+-- station pins. The Warpweaver pin carries the position and hover assertions.
 continent, mapZoneIndex, zoneName = 1, 1, "Stormwind City"
 ns.Refresh()
 local stormwind = visible()
-assert(#stormwind == 2, "Stormwind must show 2 pins, got " .. #stormwind)
-local names = labels(stormwind)
-assert(names[1] == "Call Board" and names[2] == "Warpweaver", "wrong Stormwind pins")
+assert(#stormwind == 5, "Stormwind must show 5 pins, got " .. #stormwind)
+local service = 0
+for _, frame in ipairs(stormwind) do
+    if frame.pin.kind == "warpweaver" or frame.pin.kind == "callboard" then
+        service = service + 1
+    end
+end
+assert(service == 2, "Stormwind must show both service pins, got " .. service)
 local warp = nil
 for _, frame in ipairs(stormwind) do
     if frame.pin.label == "Warpweaver" then warp = frame end
@@ -262,7 +382,7 @@ assert(#visible() == 0, "Westfall must show no pins")
 -- Client order is 1 Kalimdor, 2 Eastern Kingdoms, 3 Outland, 4 Northrend.
 continent, mapZoneIndex, zoneName = 2, 0, ""
 ns.Refresh()
-assert(#visible() == 11, "Eastern Kingdoms must show 11 pins, got " .. #visible())
+assert(#visible() == 25, "Eastern Kingdoms must show 25 pins, got " .. #visible())
 local first = visible()[1]
 local cpoint = first.points[#first.points]
 assert(math.abs(cpoint[4] - first.pin.cx * WorldMapButton:GetWidth()) < 0.01,
@@ -272,13 +392,13 @@ assert(math.abs(cpoint[5] + first.pin.cy * WorldMapButton:GetHeight()) < 0.01,
 
 continent, mapZoneIndex = 1, 0
 ns.Refresh()
-assert(#visible() == 14, "Kalimdor must show 14 pins, got " .. #visible())
+assert(#visible() == 32, "Kalimdor must show 32 pins, got " .. #visible())
 continent, mapZoneIndex = 3, 0
 ns.Refresh()
-assert(#visible() == 5, "Outland must show 5 pins, got " .. #visible())
+assert(#visible() == 7, "Outland must show 7 pins, got " .. #visible())
 continent, mapZoneIndex = 4, 0
 ns.Refresh()
-assert(#visible() == 2, "Northrend must show 2 pins, got " .. #visible())
+assert(#visible() == 9, "Northrend must show 9 pins, got " .. #visible())
 
 -- Hiding the map hides every pin.
 hooks.WorldMapFrame_OnHide[1]()
@@ -321,7 +441,7 @@ local realPrint = print
 print = function(text) printed[#printed + 1] = text end
 SlashCmdList["WORLDMAPPINS"]()
 print = realPrint
-assert(#printed == 1 and printed[1]:find("^WorldMapPins: 32 pins"), printed[1] or "no output")
+assert(#printed == 1 and printed[1]:find("^WorldMapPins: 73 pins"), printed[1] or "no output")
 
 -- The zone list resolver handles the "The"/"City" spelling differences.
 zoneName = "Stormwind City"

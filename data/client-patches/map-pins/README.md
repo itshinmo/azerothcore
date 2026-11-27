@@ -10,8 +10,8 @@ needs to advertise. Contract: [ADR-037](../../../decisions/ADR-037-world-map-pin
 | Outdoor world bosses | 7 | `acore_world.creature` entries: Azuregos, Lethon, Taerar, Emeriss, Ysondre, Doom Lord Kazzak, Doomwalker |
 | Warpweaver (transmogrifier) | 10 | `data/sql/custom/db_world/collections_npc_spawns.sql`, entry `910012` |
 | Call Board | 15 | `data/sql/custom/db_world/call_boards.sql`, entry `930101` |
-| Hub portals | one per room | `Spell_Arcane_Portal*` icons; Shattrath, Quel'Danas, Dalaran, Blasted Lands |
-| Ship and zeppelin stations | one per cluster | 15 player routes in `acore_world.transports`; icons from `patch-I` |
+| Hub portals | 12 | one pin per room: Shattrath row, Quel'Danas, two Dalaran enclaves, 8 capital Blasted Lands portals; stock `Spell_Arcane_Portal*` icons |
+| Ship and zeppelin stations | 29 | 15 player routes in `acore_world.transports`, one pin per station node; `INV_ShipMount` / `INV_ZeppelinMount` from `patch-I` |
 
 Stock NPC categories are deliberately absent: no flight masters, innkeepers, battlemasters, meeting
 stones or city leaders. Addons such as Questie cover those, and a wrong stock pin is worse than none.
@@ -20,12 +20,25 @@ network and the player ship and zeppelin stations. A player needs them to plan t
 not place the station pins accurately.
 
 The portal rooms are the Shattrath City row (8 capital destinations), the Shattrath portal to the Isle
-of Quel'Danas, the Dalaran Alliance enclave (5), the Dalaran Horde enclave (5) and one Blasted Lands
-portal per capital (8). Portals draw one pin per room, not per portal object, so the tooltip lists
-every destination once. Transport pins come from the 15 player routes; the two Icecrown gunships, the
-Northrend turtles and Garvan's Reef stay out. Stations within about 120 yards on one map merge into
-one pin listing every destination from that spot, and `Westguard Keep`/`Shattered Straits` share a
-coordinate, so that route is one pin.
+of Quel'Danas, the Dalaran Silver Enclave (5), the Dalaran Sunreaver's Sanctuary (5) and one Blasted
+Lands portal per capital (8). Portals draw one pin per room, at the centroid of that room's portal
+objects, not per portal object: Shattrath's eight portals span about 145 by 103 yards, so per-object
+pins would overlap and only the top tooltip would ever open. Each room uses a faction icon: Stormwind
+for the Alliance enclave, Orgrimmar for the Horde one, its own city icon for each capital's Blasted
+Lands portal, and `Spell_Arcane_PortalShattrath` for both Shattrath pins.
+
+Transport pins come from the 15 player routes; the two Icecrown gunships, the two Northrend turtles
+and Garvan's Reef stay out. There is **one pin per station node and no distance merging**: the owner
+wants every node visible, so Orgrimmar shows four, Undercity three, Grom'gol two and Auberdine three.
+The only collapse is the exact-duplicate node of the Westguard Keep route, whose two stops share one
+coordinate; that pin is titled `Westguard Keep` and points at `Shattered Straits`.
+
+Stacked pins are a known limitation. On a continent map a capital carries three service pins
+(Warpweaver, Call Board, Blasted Lands portal) plus its station pins, all within a few pixels, so only
+the top pin of each stack can be hovered there. Orgrimmar, Undercity and Grom'gol add their transport
+nodes to the same stack. Zone maps separate most of them. Every tooltip title names the place and
+service, so the reachable pin is still identifiable; this is the same rule the owner chose for the
+Warpweaver and Call Board pairs.
 
 Pins show on their own zone map and on the continent map, at the exact spawn position. No stack
 fan-out, no fake offsets.
@@ -42,8 +55,9 @@ Hovering shows the pin's lines on `WorldMapTooltip`, the client's own map toolti
 - boss: the boss name, then `<Classic world boss> - <zone>`;
 - Warpweaver: the city, then `Warpweaver - Transmogrifier`;
 - Call Board: the city or hub, then `Call Board - Custom quest board`;
-- portal: the room name and every destination, one per line;
-- station: the station name and `To <destination>`.
+- portal: the city, the room, then every destination as `To <city>`;
+- station: the station name, then `To <destination>`, one line per route at that node. Ship pins use
+  `INV_ShipMount`, zeppelin pins `INV_ZeppelinMount`, both from `Data/patch-I.mpq`.
 
 The city is the title because every capital has a Warpweaver and a Call Board 1 to 7 pixels apart on
 the continent map, and only the top pin of a pair can be hovered there. The owner chose to keep all
@@ -58,10 +72,9 @@ transmogrifier; the stock chest icon read as generic loot. The texture comes fro
 `Data/patch-I.mpq` (Reforged icon set), not a stock 3.3.5 archive; a client without `patch-I` shows
 a placeholder for that one icon.
 
-Portal pins use the stock `Spell_Arcane_Portal*` icons. Transport pins use
-`INV_AllianceShipMount`/`INV_ShipMount` for boats and
-`INV_HordeZeppelinMount`/`INV_ZeppelinMount` for zeppelins; those four come from `Data/patch-I.mpq`
-too, so the same client caveat applies. A transport tooltip is always two lines: the station name,
+Portal pins use the stock `Spell_Arcane_Portal*` icons, one per room. Transport pins use
+`INV_ShipMount` for every boat and `INV_ZeppelinMount` for every zeppelin; both come from
+`Data/patch-I.mpq`, so the same client caveat applies. A transport tooltip is the station name and
 then `To <destination>`. Vessel names are not shown.
 
 Clicking forwards to `WorldMapButton_OnClick`, so the stock map ping still works.
@@ -131,11 +144,11 @@ Continent index order is the client's, not the map id order: **1 Kalimdor, 2 Eas
 
 | Input | Source | SHA256 |
 |-------|--------|--------|
-| Zone and continent pin fractions | `Data/patch-M.mpq` `WorldMapArea.dbc` | `c7361fae70d2f3136e98b8d19f86a594b3592a6ec3351e184eafb350db7d6503` |
-| Dalaran pin fractions | `Data/patch-M.mpq` `DungeonMap.dbc` row 27 | `34beae04678c69cf536946217106d3e935d65d833dc86c59d120e8f335e756e9` |
-| FrameXML canary | `Data/enUS/patch-enUS-3.MPQ` (source archive) | `e05b75b212cdda98f86beef35eb024aa1ff416a7164d08873c49b7ae1f3105c8` |
-| Cooldown nil guard | `Data/enUS/locale-enUS.MPQ` (source archive) | `7b93af66d6f5bb0aaaed35202a376c5e2a75df0daea8e0c6c117ab2bfbde77b5` |
-| Built archive | `dist/patch-Z.MPQ`, 31,148 bytes | `4c630fda4d373e91b58bcbdae0534dc444677026c103dab02e7ea3a31f2dbbeb` |
+| Zone and continent pin fractions | `Data/patch-M.mpq` `WorldMapArea.dbc` | `f712a0e435d22b73ecd4d812a1aae5ef8e21a36371c9f5de03de461b05f46cdb` |
+| Dalaran pin fractions | `Data/patch-M.mpq` `DungeonMap.dbc` row 27 | `f712a0e435d22b73ecd4d812a1aae5ef8e21a36371c9f5de03de461b05f46cdb` |
+| FrameXML canary | `Data/enUS/patch-enUS-3.MPQ` (source archive) | `f712a0e435d22b73ecd4d812a1aae5ef8e21a36371c9f5de03de461b05f46cdb` |
+| Cooldown nil guard | `Data/enUS/locale-enUS.MPQ` (source archive) | `f712a0e435d22b73ecd4d812a1aae5ef8e21a36371c9f5de03de461b05f46cdb` |
+| Built archive | `dist/patch-Z.MPQ`, 35,580 bytes | `f712a0e435d22b73ecd4d812a1aae5ef8e21a36371c9f5de03de461b05f46cdb` |
 
 `manifest.json` carries the per-entry hashes and is the audit record; this table names the DBC
 sources the fractions were computed from. The built archive row is the current checked-in pair;

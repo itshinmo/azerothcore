@@ -11,7 +11,9 @@ from __future__ import annotations
 import struct
 import sys
 import tempfile
+import types
 import unittest
+import unittest.mock
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -369,6 +371,174 @@ class RenderTest(unittest.TestCase):
             generate.render("PinBosses", "Bosses.", pins, {}),
             generate.render("PinBosses", "Bosses.", pins, {}),
         )
+
+
+def write_taxi_dbc(path: Path, rows: list[tuple]) -> None:
+    """Write a TaxiPathNode.dbc.
+
+    Row layout: id, path, index, map, x, y, z, flags, delay, arrival, departure. Fields 4, 5, 6
+    and 8 are floats; the rest are ints.
+    """
+    floats = {4, 5, 6, 8}
+    packed = []
+    for row in rows:
+        values = []
+        for index, value in enumerate(row):
+            if index in floats:
+                values.append(struct.unpack("<i", struct.pack("<f", float(value)))[0])
+            else:
+                values.append(int(value))
+        packed.append(values)
+    write_dbc(path, packed, [""])
+
+
+class PortalRoomsTest(unittest.TestCase):
+    def test_twelve_rooms_with_icons_and_destinations(self):
+        self.assertEqual(len(generate.PORTAL_ROOMS), 12)
+        for title, subtitle, _map, _x, _y, zone, icon, destinations in generate.PORTAL_ROOMS:
+            self.assertTrue(title and subtitle, "every room names a city and a place")
+            self.assertTrue(zone > 0, "every room has a zone id")
+            self.assertTrue(icon.startswith("Spell_Arcane_Portal"), icon)
+            self.assertGreaterEqual(len(destinations), 1, subtitle)
+
+    def test_the_shattrath_room_lists_eight_capitals(self):
+        room = next(room for room in generate.PORTAL_ROOMS if room[1] == "Terrace of Light")
+        self.assertEqual(
+            room[7],
+            ("Stormwind", "Ironforge", "Darnassus", "The Exodar", "Orgrimmar", "Undercity",
+             "Thunder Bluff", "Silvermoon City"),
+        )
+
+    def test_eight_blast_lands_portals_one_per_capital(self):
+        blasted = [room for room in generate.PORTAL_ROOMS if "Blasted Lands" in room[1]]
+        self.assertEqual(len(blasted), 8)
+        self.assertEqual(
+            sorted(room[0] for room in blasted),
+            ["Darnassus", "Ironforge", "Orgrimmar", "Silvermoon City", "Stormwind City",
+             "The Exodar", "Thunder Bluff", "Undercity"],
+        )
+
+
+class TransportNodesTest(unittest.TestCase):
+    ROUTES = {101: "ship", 102: "zeppelin"}
+
+    def build(self, folder: Path, rows: list[tuple]) -> Path:
+        dbc = folder / "dbc"
+        dbc.mkdir()
+        write_taxi_dbc(dbc / "TaxiPathNode.dbc", rows)
+        return dbc
+
+    def nodes(self, dbc: Path, routes: dict, stations: dict, same: dict | None = None):
+        with unittest.mock.patch.dict(generate.TRANSPORT_PATHS, routes, clear=True), \
+                unittest.mock.patch.dict(generate.STATIONS, stations, clear=True), \
+                unittest.mock.patch.dict(generate.SAME_POINT_ROUTES, same or {}, clear=True):
+            return generate.transport_nodes(types.SimpleNamespace(dbc=dbc))
+
+    def test_two_stops_produce_two_pins_naming_each_other(self):
+        rows = [
+            (1, 101, 0, 0, -100.0, 200.0, 10.0, 0, 60, 0, 0),
+            (2, 101, 1, 0, -50.0, 250.0, 10.0, 0, 60, 0, 0),
+            (3, 102, 0, 1, 300.0, 400.0, 5.0, 0, 60, 0, 0),
+            (4, 102, 1, 1, 350.0, 450.0, 5.0, 0, 60, 0, 0),
+        ]
+        stations = {
+            (0, -100.0, 200.0): ("Alpha", 10),
+            (0, -50.0, 250.0): ("Beta", 10),
+            (1, 300.0, 400.0): ("Gamma", 20),
+            (1, 350.0, 450.0): ("Delta", 20),
+        }
+        with tempfile.TemporaryDirectory() as folder:
+            nodes = self.nodes(self.build(Path(folder), rows), self.ROUTES, stations)
+        by_title = {node["station"]: node for node in nodes}
+        self.assertEqual(len(nodes), 4)
+        self.assertEqual(by_title["Alpha"]["destination"], "Beta")
+        self.assertEqual(by_title["Beta"]["destination"], "Alpha")
+        self.assertEqual(by_title["Gamma"]["kind"], "zeppelin")
+        self.assertEqual(by_title["Delta"]["destination"], "Gamma")
+        self.assertEqual(by_title["Alpha"]["zone_id"], 10)
+
+    def test_a_stop_without_delay_is_not_a_station(self):
+        rows = [
+            (1, 101, 0, 0, -100.0, 200.0, 10.0, 0, 60, 0, 0),
+            (2, 101, 1, 0, 0.0, 0.0, 10.0, 0, 0, 0, 0),
+            (3, 101, 2, 0, -50.0, 250.0, 10.0, 0, 60, 0, 0),
+        ]
+        stations = {
+            (0, -100.0, 200.0): ("Alpha", 10),
+            (0, -50.0, 250.0): ("Beta", 10),
+        }
+        with tempfile.TemporaryDirectory() as folder:
+            nodes = self.nodes(
+                self.build(Path(folder), rows), {101: "ship"}, stations
+            )
+        self.assertEqual(len(nodes), 2, "the delay-free node is a waypoint, not a station")
+
+    def test_one_stop_must_be_a_waypoint_not_a_station(self):
+        rows = [
+            (1, 101, 0, 0, 0.0, 0.0, 0.0, 0, 60, 0, 0),
+            (2, 101, 1, 0, 10.0, 10.0, 0.0, 0, 60, 0, 0),
+            (3, 101, 2, 0, 20.0, 20.0, 0.0, 0, 60, 0, 0),
+        ]
+        with tempfile.TemporaryDirectory() as folder:
+            dbc = self.build(Path(folder), rows)
+            with self.assertRaises(generate.GenerateError) as caught:
+                self.nodes(dbc, {101: "ship"}, {
+                    (0, 0.0, 0.0): ("A", 10),
+                    (0, 10.0, 10.0): ("B", 10),
+                    (0, 20.0, 20.0): ("C", 10),
+                })
+        self.assertIn("expected 2", str(caught.exception))
+
+    def test_shared_coordinate_route_becomes_one_pin(self):
+        rows = [
+            (1, 101, 0, 0, 5.0, 5.0, 0.0, 0, 60, 0, 0),
+            (2, 101, 1, 0, 5.0, 5.0, 0.0, 0, 60, 0, 0),
+        ]
+        with tempfile.TemporaryDirectory() as folder:
+            nodes = self.nodes(
+                self.build(Path(folder), rows),
+                {101: "zeppelin"},
+                {(0, 5.0, 5.0): ("Here", 10)},
+                {101: ("Here", "There")},
+            )
+        self.assertEqual(len(nodes), 1)
+        self.assertEqual(nodes[0]["station"], "Here")
+        self.assertEqual(nodes[0]["destination"], "There")
+
+    def test_a_shared_coordinate_route_must_be_declared(self):
+        rows = [
+            (1, 101, 0, 0, 5.0, 5.0, 0.0, 0, 60, 0, 0),
+            (2, 101, 1, 0, 5.0, 5.0, 0.0, 0, 60, 0, 0),
+        ]
+        with tempfile.TemporaryDirectory() as folder:
+            with self.assertRaises(generate.GenerateError) as caught:
+                self.nodes(self.build(Path(folder), rows), {101: "ship"},
+                           {(0, 5.0, 5.0): ("Here", 10)})
+        self.assertIn("SAME_POINT_ROUTES", str(caught.exception))
+
+    def test_a_station_without_a_name_is_an_error(self):
+        rows = [
+            (1, 101, 0, 0, 0.0, 0.0, 0.0, 0, 60, 0, 0),
+            (2, 101, 1, 0, 10.0, 10.0, 0.0, 0, 60, 0, 0),
+        ]
+        with tempfile.TemporaryDirectory() as folder:
+            with self.assertRaises(generate.GenerateError):
+                self.nodes(self.build(Path(folder), rows), {101: "ship"},
+                           {(0, 0.0, 0.0): ("Only one", 10)})
+
+    def test_an_unused_station_entry_is_an_error(self):
+        rows = [
+            (1, 101, 0, 0, 0.0, 0.0, 0.0, 0, 60, 0, 0),
+            (2, 101, 1, 0, 10.0, 10.0, 0.0, 0, 60, 0, 0),
+        ]
+        with tempfile.TemporaryDirectory() as folder:
+            with self.assertRaises(generate.GenerateError) as caught:
+                self.nodes(self.build(Path(folder), rows), {101: "ship"}, {
+                    (0, 0.0, 0.0): ("A", 10),
+                    (0, 10.0, 10.0): ("B", 10),
+                    (0, 99.0, 99.0): ("Stale", 10),
+                })
+        self.assertIn("no route uses", str(caught.exception))
 
 
 if __name__ == "__main__":

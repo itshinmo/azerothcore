@@ -477,8 +477,8 @@ Two representative failures from the before run:
 
 | Asset | Logged error | Status |
 |-------|--------------|--------|
-| `westfallcabbage.m2` | `Cannot read properties of undefined (reading 'blend')` | Cause seen in files; mirror not run |
-| `duskwoodtreecanopy03.mdx` | `404 Not Found` | Not a mirror problem; no archive holds `.mdx` |
+| `westfallcabbage.m2` | `reading 'blend'` on undefined | Confirmed: `patch-D` HD model, stock skin |
+| `duskwoodtreecanopy03.mdx` | `404 Not Found` | Resolves with `patch-D` present; absent from the mirror |
 
 The `blend` error comes from `substituteSimpleEffect`, which reads
 `model.materials[batch.materialIndex].blend`. `patch-D.mpq` ships `westfallcabbage.m2` with one
@@ -486,12 +486,42 @@ material. The only skin is stock `WestFallCabbage00.skin` in `common-2.MPQ`, and
 materials 0 and 1: material 1 is `undefined`, so the read throws. Removing `patch-D` should remove
 this error, but the mirror was not run against AWE, so the fix is unproven.
 
-The `.mdx` path is not an extension mismatch. AWE has no `.mdx` to `.m2` rewrite: it reads the ADT
-`mmdx` name literally, and no archive in the client holds any `.mdx`. Removing `patch-D` cannot change
-a name that is absent from every archive, so the 404 remains. Only the game client resolves it.
+The `.mdx` 404 is **not** an extension mismatch. AWE's `modelPath()` rewrites `.mdx` and `.mdl` to
+`.m2`, and lowercases every asset path. `duskwoodtreecanopy03.m2` exists in `common-2.MPQ` at mixed
+case and in `patch-D.mpq` at lower case. With `patch-D` present the lower-case copy wins the lookup;
+without it, the mixed-case stock name is the only candidate and the fetch misses. So the 404 is a
+case-sensitivity miss that `patch-D` was masking, and the mirror makes it reappear rather than fix it.
 
 The blob capture could not be repeated: **Trees & props** was off in the focused Darkshire view, and
 the MCP cannot toggle a layer. The blobs remain the owner's observation with that layer on.
+
+### Spawns drawn as marker boxes
+
+AWE draws a blue or orange box for a spawn whose model it cannot build, and logs
+`3D view: <kind> <guid> (display <id>) has no model the client knows; drawn as a marker`. The box
+means the spawn is present but its look is missing, not that the row is wrong.
+
+The usual cause is a missing **character model family**, not a missing model file. A NPC whose
+`CreatureDisplayInfo` row has an `ExtendedDisplayInfoID` is dressed from the character tables
+(`ChrRaces`, `CharSections`, `CharHairGeosets`, `CreatureDisplayInfoExtra`) instead of using a plain
+model. `ChrRaces.dbc` exists **only** in `Data/enUS/*.MPQ`, so a client folder that does not expose
+the `enUS` archives renders every dressed humanoid as a box while still drawing a plain-model NPC
+(such as the project's Warpweaver, `CreatureDisplayInfo` 19646 with no extended display) correctly.
+That is the signature to look for.
+
+The stock-client mirror hits exactly this if `Data/enUS` is a **directory symlink**: the archive
+scan lists top-level `*.MPQ` files and treats `enUS` as a link, not a folder to descend into, so the
+client reports 19 archives instead of 30. Symlink the 11 locale archives *inside* a real `enUS`
+directory instead:
+
+```bash
+mkdir -p ~/Games/wotlk-awe/Data/enUS
+cd ~/Games/wotlk-awe/Data/enUS
+for f in ~/Games/wotlk-clean/Data/enUS/*.MPQ; do ln -sf "$f" .; done
+```
+
+AWE caches the archive list for the life of the connection: after changing the folder, reconnect
+before trusting the archive count on the **Game client** badge.
 
 Workaround: move the camera past the asset, or hide **Trees & props** while placing. Judge the
 result in the game client, not in AWE.
@@ -508,11 +538,14 @@ ln -s ~/Games/wotlk-clean/Wow.exe ~/Games/wotlk-awe/Wow.exe
 find ~/Games/wotlk-clean/Data -maxdepth 1 -type f -iname '*.mpq' \
   ! -iname 'patch-d.mpq' ! -iname 'patch-z.mpq.old-*' \
   -exec ln -s {} ~/Games/wotlk-awe/Data/ \;
-ln -s ~/Games/wotlk-clean/Data/enUS ~/Games/wotlk-awe/Data/enUS
-ls -la ~/Games/wotlk-awe ~/Games/wotlk-awe/Data
+mkdir -p ~/Games/wotlk-awe/Data/enUS
+cd ~/Games/wotlk-awe/Data/enUS && for f in ~/Games/wotlk-clean/Data/enUS/*.MPQ; do ln -sf "$f" .; done
+ls -la ~/Games/wotlk-awe ~/Games/wotlk-awe/Data ~/Games/wotlk-awe/Data/enUS
 ```
 
-Expected: 19 top-level archive links plus the `enUS` link. `patch-D.mpq` is absent, and so are
+Expected: 19 top-level archive links plus 11 inside a **real** `enUS` folder, so 30 archives against
+the real client's 31. Do not make `enUS` itself a symlink: the archive scan skips it, `ChrRaces.dbc`
+is then missing, and every dressed NPC draws as a marker box. `patch-D.mpq` is absent, and so are
 `.DS_Store` and the `patch-Z.MPQ.old-*` backups.
 
 AWE's MCP cannot change the Game client folder. Switch it by hand: open the connection settings, set
