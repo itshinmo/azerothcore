@@ -7,6 +7,7 @@ confuse the two.
 |------|---------|--------|
 | `dev/` | doctor, server lifecycle, backup, verification | available |
 | `gm-addon/` | in-game GM command menu | available |
+| `icon-browser/` | in-game browser for every `Interface\Icons` texture, with the icon list generator | available |
 | `api-tests/bruno/` | manual GM API collection | available |
 
 Database access is external: DBeaver, documented in `runbook/database/dbeaver.md`. There is no

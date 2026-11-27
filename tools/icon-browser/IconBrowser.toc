@@ -1,0 +1,7 @@
+## Interface: 30300
+## Title: Icon Browser
+## Notes: Browse every Interface\Icons texture. Click an icon to copy its path. GM tooling only.
+## Author: AzerothCore private server
+## Version: 1.0.0
+IconBrowserIcons.lua
+IconBrowser.lua

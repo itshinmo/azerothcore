@@ -72,6 +72,7 @@ I do it"; behavior lives in `specs/`.
 - [audit.md](gm/audit.md) — GM command audit table, queries, redaction, failure behavior.
 - [gm-api.md](gm/gm-api.md) — GM API, HMAC auth, actor identity, RBAC, audit, endpoints.
 - [addon.md](gm/addon.md) — in-game GM command menu.
+- [icon-browser.md](gm/icon-browser.md) — in-game icon browser for finding texture paths.
 - [item-grant-refund.md](gm/item-grant-refund.md) — grants, mail, refunds.
 - [ban-appeal.md](gm/ban-appeal.md) — ban and appeal procedure.
 - [incident-response.md](gm/incident-response.md) — contain, diagnose, restore, record.
