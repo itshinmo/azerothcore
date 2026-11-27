@@ -49,12 +49,14 @@ last-verified: 2026-11-27 (local-server-setup; round-3 map pin fixes merged: con
 - **Portal pins.** One pin per portal room, not per portal object: Shattrath City row (8 capital
   destinations), Shattrath to Quel'Danas, Dalaran Alliance (5), Dalaran Horde (5), and one Blasted
   Lands portal per capital (8). Stock `Spell_Arcane_Portal*` icons; tooltip lists every destination.
-- **Transport pins.** One pin per station cluster, cut from the 15 player boat and zeppelin routes
-  in `acore_world.transports`; the two Icecrown gunships, the two Northrend turtles and Garvan's
-  Reef stay out. Stations within about 120 yards on one map merge into one pin. Ship icons
-  `INV_AllianceShipMount`/`INV_ShipMount`, zeppelin `INV_HordeZeppelinMount`/`INV_ZeppelinMount`,
-  all from `Data/patch-I.mpq`. Tooltip is exactly two lines: station name and `To <destination>`; no
-  vessel names. `Westguard Keep`/`Shattered Straits` share a coordinate, so it is one combined pin.
+- **Transport pins.** One pin per station node, cut from the 15 player boat and zeppelin routes in
+  `acore_world.transports`; the two Icecrown gunships, the two Northrend turtles and Garvan's Reef
+  stay out. No distance merging: Orgrimmar shows four, Undercity three, Grom'gol two, Auberdine
+  three, and stacked pins on a continent map are accepted. The only collapse is the exact-duplicate
+  node of the Westguard Keep route, whose stops share one coordinate; that pin is titled
+  `Westguard Keep` and points at `Shattered Straits`. Icons are neutral: `INV_ShipMount` for boats,
+  `INV_ZeppelinMount` for zeppelins, both from `Data/patch-I.mpq`. Tooltip is the station name and
+  `To <destination>`; no vessel names.
 - **Icon browser addon.** A GM addon browses `Interface\Icons` from inside the client, in its own
   change. AWE has no icon list and no model thumbnail grid, so icon choice for pins, gossip and
   addons is made in the client, and a model is picked by name or display id in the editor.
@@ -70,10 +72,20 @@ last-verified: 2026-11-27 (local-server-setup; round-3 map pin fixes merged: con
   `materials[1].blend` and throws. That cause is seen in the files but not proven by an AWE mirror
   run. No upstream issue filed. Runbook updated with the mirror procedure, including the export folder
   warning that `data/sql/custom/db_world` is applied at the next restart.
-- **Server data badge.** AWE's saved profile has `dbcDir` `/Users/gasman/wow/azerothcore/data`, not
-  `/Users/gasman/wow/Data`, so the badge reports one problem: `QuestXP.dbc` is missing from that path
-  and its `dbc/` subfolder. The intended folder has a valid 100-record, 11-field `QuestXP.dbc`. No
-  folder was changed; the runbook troubleshooting row records the fix.
+- **Server data badge.** AWE's saved profile had `dbcDir` `/Users/gasman/wow/azerothcore/data`, not
+  `/Users/gasman/wow/Data`, so the badge reported one problem: `QuestXP.dbc` missing from that path
+  and its `dbc/` subfolder. The intended folder has a valid 100-record, 11-field `QuestXP.dbc`. The
+  owner repointed the profile; the badge clears.
+- **NPCs drawn as marker boxes, cause found.** AWE draws a blue or orange box when a spawn has no
+  buildable model, and logs `has no model the client knows; drawn as a marker`. A NPC with an
+  `ExtendedDisplayInfoID` is dressed from the character tables instead of a plain model, and
+  `ChrRaces.dbc` exists only in `Data/enUS/*.MPQ`. The mirror's `Data/enUS` was a directory symlink,
+  so the archive scan skipped it, `ChrRaces.dbc` was absent, and every dressed humanoid drew as a
+  box while a plain-model NPC (the project Warpweaver, display 19646, no extended display) still
+  drew correctly. Fixed by making `enUS` a real folder of archive symlinks: 30 archives instead of
+  19. AWE caches the archive list per connection, so a reconnect is required before the count is
+  trusted. The mirror keeps stock graphics by design and is the fast client for placing objects and
+  moving NPCs.
 - **Tooltip title.** The city is the title and the second line names the service. Every capital has a
   Warpweaver and a Call Board 1 to 7 pixels apart on the continent map (Undercity 1.0 px, Stormwind
   1.3 px, Thunder Bluff 2.1 px) and pins are 24 px, so only the top pin of a pair can be hovered
@@ -87,8 +99,16 @@ last-verified: 2026-11-27 (local-server-setup; round-3 map pin fixes merged: con
   `WorldMapPOIFrame.allowBlobTooltip` switched off when the map closed while hovered, and the ADR
   declared generated data files that no branch produced. Each new assertion was mutation-tested:
   14 deliberate reverts, 14 failures.
-- **Open.** Owner still has to test hover in the client: tooltip, click ping, and the four corrected
-  continent positions on the EK and Kalimdor maps.
+- **Portal and transport pins shipped.** 12 portal pins (one per room at the portal centroid, faction
+  icon per room, city + room + destination lines) and 29 transport pins (one per station node, no
+  distance merging, `INV_ShipMount` / `INV_ZeppelinMount`, station + `To <destination>`). The
+  Westguard Keep route's stops share one coordinate, so it is one pin titled `Westguard Keep`
+  pointing at `Shattered Straits`. Total pin count 73. Stacked Orgrimmar, Undercity and Grom'gol
+  pins on a continent map are the accepted limitation; the title names the reachable pin.
+  `generate.py` now reads `TaxiPathNode.dbc` for the station nodes and derives the pin from each
+  route, so a transport route change fails the build rather than shipping a stale station.
+- **Open.** Owner still has to test in the client: hover and click ping, the four corrected continent
+  positions, the 12 portal rooms and the 29 station pins.
 
 ## Session record — 2026-11-27 (map layer replaced: bosses and custom services only)
 

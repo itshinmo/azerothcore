@@ -6,7 +6,13 @@ bug, so they are generated and checked:
 
 * the spawn coordinates, from tracked SQL under ``data/sql/custom/db_world/``;
 * the zone map bounds, from ``WorldMapArea.dbc`` (or ``DungeonMap.dbc`` when the zone has none);
-* the map-530 continent offset, from ``WorldMapTransforms.dbc`` (Silvermoon and the Exodar).
+* the map-530 continent offset, from ``WorldMapTransforms.dbc`` (Silvermoon and the Exodar);
+* the transport station nodes, from ``TaxiPathNode.dbc`` (delay > 0 marks a stop);
+* the zone display names, from ``AreaTable.dbc``.
+
+shortcut: the 12 portal room coordinates are curated constants with no tracked source. A portal
+object that moves ships a stale pin silently; add a ``gameobject`` query to the build when that
+happens. Everything else here fails the build when its source moves.
 
     python3 data/client-patches/map-pins/generate.py
     python3 data/client-patches/map-pins/generate.py --check
@@ -35,15 +41,127 @@ WARPWEAVER_SQL = ROOT / "data/sql/custom/db_world/collections_npc_spawns.sql"
 CALLBOARD_SQL = ROOT / "data/sql/custom/db_world/call_boards.sql"
 CALLBOARD_COUNT = 15
 
+# Portal rooms. One pin per room, at the centroid of that room's portal objects, never one pin
+# per portal: Shattrath's eight portals span about 145 by 103 yards, so per-object pins would
+# overlap and only the top tooltip would ever open. Fields:
+# (title, subtitle, map, x, y, zone id, icon name, ("destination", ...)).
+PORTAL_ROOMS = [
+    (
+        "Shattrath City", "Terrace of Light", 530, -1869.6, 5412.5, 3703,
+        "Spell_Arcane_PortalShattrath",
+        ("Stormwind", "Ironforge", "Darnassus", "The Exodar", "Orgrimmar", "Undercity",
+         "Thunder Bluff", "Silvermoon City"),
+    ),
+    (
+        "Shattrath City", "Portal to the Isle of Quel'Danas", 530, -1839.9, 5500.6, 3703,
+        "Spell_Arcane_PortalShattrath",
+        ("the Isle of Quel'Danas",),
+    ),
+    (
+        "Dalaran", "Silver Enclave", 571, 5707.0, 731.0, 4395,
+        "Spell_Arcane_PortalStormWind",
+        ("Stormwind", "Ironforge", "Darnassus", "The Exodar", "Shattrath City"),
+    ),
+    (
+        "Dalaran", "Sunreaver's Sanctuary", 571, 5939.0, 582.9, 4395,
+        "Spell_Arcane_PortalOrgrimmar",
+        ("Orgrimmar", "Undercity", "Thunder Bluff", "Silvermoon City", "Shattrath City"),
+    ),
+    ("Stormwind City", "Portal to Blasted Lands", 0, -9007.6, 871.9, 1519,
+     "Spell_Arcane_PortalStormWind", ("Blasted Lands",)),
+    ("Ironforge", "Portal to Blasted Lands", 0, -4606.4, -929.0, 1537,
+     "Spell_Arcane_PortalIronForge", ("Blasted Lands",)),
+    ("Darnassus", "Portal to Blasted Lands", 1, 9661.8, 2509.6, 1657,
+     "Spell_Arcane_PortalDarnassus", ("Blasted Lands",)),
+    ("The Exodar", "Portal to Blasted Lands", 530, -4037.8, -11555.5, 3557,
+     "Spell_Arcane_PortalExodar", ("Blasted Lands",)),
+    ("Undercity", "Portal to Blasted Lands", 0, 1768.8, 55.4, 1497,
+     "Spell_Arcane_PortalUnderCity", ("Blasted Lands",)),
+    ("Orgrimmar", "Portal to Blasted Lands", 1, 1472.6, -4215.7, 1637,
+     "Spell_Arcane_PortalOrgrimmar", ("Blasted Lands",)),
+    ("Thunder Bluff", "Portal to Blasted Lands", 1, -944.1, 274.9, 1638,
+     "Spell_Arcane_PortalThunderBluff", ("Blasted Lands",)),
+    ("Silvermoon City", "Portal to Blasted Lands", 530, 9984.3, -7107.6, 3487,
+     "Spell_Arcane_PortalSilvermoon", ("Blasted Lands",)),
+]
+
+# Player transport routes from acore_world.transports, keyed by the taxi path id their transport
+# gameobject uses. The two Icecrown gunships, the two Northrend turtles and Garvan's Reef are
+# deliberately absent: they are not a station a player plans travel around.
+# One pin per station node, no merging. Stations are NOT collapsed by distance: the owner wants
+# every node visible, and the tooltip names the destination so a stacked pin still reads. Only
+# the exact-duplicate node of the Westguard route is deduplicated.
+TRANSPORT_PATHS = {
+    241: "ship",       # The Maiden's Fancy: Booty Bay - Ratchet
+    285: "zeppelin",   # The Iron Eagle: Grom'gol - Orgrimmar
+    292: "ship",       # The Lady Mehley: Menethil - Theramore
+    293: "ship",       # The Moonspray: Auberdine - Rut'theran Village
+    301: "zeppelin",   # The Purple Princess: Grom'gol - Undercity
+    302: "zeppelin",   # The Thundercaller: Undercity - Orgrimmar
+    503: "ship",       # Elune's Blessing: Auberdine - Valaar's Berth
+    712: "zeppelin",   # The Mighty Wind: Orgrimmar - Warsong Hold
+    727: "zeppelin",   # Westguard Keep - Shattered Straits (both nodes share one coordinate)
+    737: "zeppelin",   # Cloudkisser: Undercity - Vengeance Landing
+    777: "ship",       # Feathermoon Ferry: The Forgotten Coast - Feathermoon Stronghold
+    964: "ship",       # Northspear: Menethil - Valgarde
+    965: "ship",       # Stormwind's Pride: Valiance Keep - Stormwind Harbor
+    967: "ship",       # The Bravery: Auberdine - Stormwind Harbor
+    1221: "zeppelin",  # The Zephyr: Orgrimmar - Thunder Bluff
+}
+
+# Station name and zone per station node, keyed by (map, x, y) rounded to a tenth of a yard.
+# TaxiPathNode gives the coordinate; the name and zone a player recognises are curated, because
+# a coordinate alone cannot say "Stormwind Harbor" or which city zone it belongs to. A node
+# missing here, or an entry no node uses, fails the generator.
+STATIONS = {
+    (0, -14277.7, 582.9): ("Booty Bay", 33),
+    (0, -12464.0, 231.6): ("Grom'gol Base Camp", 33),
+    (0, -12406.9, 211.8): ("Grom'gol Base Camp", 33),
+    (0, -3905.2, -585.8): ("Menethil Harbor", 11),
+    (0, -3712.7, -569.5): ("Menethil Harbor", 11),
+    # The Undercity zeppelin towers stand outside the city zone, in Tirisfal Glades.
+    (0, 2062.4, 293.0): ("Undercity", 85),
+    (0, 2062.6, 235.3): ("Undercity", 85),
+    (0, 2056.5, 381.6): ("Undercity", 85),
+    (0, -8288.8, 1424.7): ("Stormwind Harbor", 1519),
+    (0, -8650.7, 1346.1): ("Stormwind Harbor", 1519),
+    (1, -1005.6, -3841.6): ("Ratchet", 17),
+    # The Orgrimmar zeppelin towers stand outside the city zone, in Durotar.
+    (1, 1360.9, -4631.3): ("Orgrimmar", 14),
+    (1, 1318.1, -4658.0): ("Orgrimmar", 14),
+    (1, 1185.0, -4144.2): ("Orgrimmar", 14),
+    (1, 1125.4, -4134.9): ("Orgrimmar", 14),
+    (1, -4016.4, -4740.6): ("Theramore", 15),
+    (1, 8534.3, 1018.0): ("Rut'theran Village", 141),
+    (1, 6594.6, 769.8): ("Auberdine", 148),
+    (1, 6406.0, 822.9): ("Auberdine", 148),
+    (1, 6550.4, 938.2): ("Auberdine", 148),
+    (1, -4352.4, 2441.2): ("The Forgotten Coast", 357),
+    (1, -4200.3, 3281.4): ("Feathermoon Stronghold", 357),
+    (1, -1026.9, 375.8): ("Thunder Bluff", 1638),
+    (530, -4265.0, -11317.2): ("Valaar's Berth", 3524),
+    (571, 1414.0, -3091.5): ("Westguard Keep", 495),
+    (571, 1989.4, -6082.8): ("Vengeance Landing", 495),
+    (571, 584.0, -5118.9): ("Valgarde", 495),
+    (571, 2837.9, 6187.4): ("Warsong Hold", 3537),
+    (571, 2218.4, 5119.6): ("Valiance Keep", 3537),
+}
+
+# A route whose two station nodes share one coordinate cannot name a direction from that point.
+# It becomes one pin titled after the first name, pointing at the second.
+SAME_POINT_ROUTES = {727: ("Westguard Keep", "Shattered Straits")}
+
 # The name a player sees, for zones whose WorldMapArea name is compact or misspelled.
 PLACES = {
+    15: "Dustwallow Marsh",
     16: "Azshara",
     17: "The Barrens",
-    33: "Booty Bay",
     47: "The Hinterlands",
+    85: "Tirisfal Glades",
     331: "Ashenvale",
     357: "Feralas",
     440: "Gadgetzan",
+    495: "Howling Fjord",
     618: "Everlook",
     1497: "Undercity",
     1519: "Stormwind City",
@@ -55,6 +173,8 @@ PLACES = {
     3487: "Silvermoon City",
     3520: "Shadowmoon Valley",
     3523: "Area 52",
+    3524: "Azuremyst Isle",
+    3537: "Borean Tundra",
     3557: "The Exodar",
     3703: "Shattrath City",
     4395: "Dalaran",
@@ -352,11 +472,29 @@ def render(key: str, header: str, pins: list[dict], dbc_hashes: dict[str, str]) 
     for pin in pins:
         lines.append(
             f'    {{ kind = "{lua_text(pin["kind"])}", zone = {pin["zone"]}, '
-            f'place = "{lua_text(pin["place"])}", label = "{lua_text(pin["label"])}",\n'
-            f'      note = "{lua_text(pin["note"])}", x = {pin["x"]}, y = {pin["y"]},\n'
-            f'      mx = {pin["mx"]:.4f}, my = {pin["my"]:.4f}, '
-            f'cont = {pin["cont"]}, cx = {pin["cx"]:.4f}, cy = {pin["cy"]:.4f} }},'
+            f'place = "{lua_text(pin["place"])}", label = "{lua_text(pin["label"])}",'
         )
+        lines.append(f'      note = "{lua_text(pin["note"])}",')
+        if pin.get("title"):
+            title = f'      title = "{lua_text(pin["title"])}"'
+            if pin.get("subtitle"):
+                title += f', subtitle = "{lua_text(pin["subtitle"])}"'
+            lines.append(title + ",")
+        if pin.get("icon"):
+            lines.append(f'      icon = "Interface\\\\Icons\\\\{lua_text(pin["icon"])}",')
+        lines.append(
+            f'      x = {pin["x"]}, y = {pin["y"]}, '
+            f'mx = {pin["mx"]:.4f}, my = {pin["my"]:.4f},'
+        )
+        lines.append(f'      cont = {pin["cont"]}, cx = {pin["cx"]:.4f}, cy = {pin["cy"]:.4f},')
+        destinations = pin.get("lines") or []
+        if destinations:
+            lines.append("      lines = {")
+            for destination in destinations:
+                lines.append(f'          "{lua_text(destination)}",')
+            lines.append("      } },")
+        else:
+            lines.append("      },")
     lines.extend(["}", ""])
     return "\n".join(lines)
 
@@ -378,6 +516,83 @@ def render_zones(maps: Maps, zone_ids: list[int], dbc_hashes: dict[str, str]) ->
         lines.append(f'    [{zone_id}] = "{lua_text(name)}",')
     lines.extend(["}", ""])
     return "\n".join(lines)
+
+
+def transport_nodes(maps: Maps) -> list[dict]:
+    """Station pins derived from TaxiPathNode: every node where the vessel stops.
+
+    TaxiPathNode fields: 0 id, 1 path, 2 index, 3 map, 4..6 x/y/z, 7 flags, 8 delay,
+    9 arrival event, 10 departure event. A vessel stops where delay > 0.
+    """
+    path = maps.dbc / "TaxiPathNode.dbc"
+    if not path.is_file():
+        raise GenerateError(f"missing {path}; the transport pins need it")
+    by_path: dict[int, list[tuple[int, float, float, float]]] = {}
+    for row in read_dbc(path):
+        path_id = row.ints[1]
+        if path_id not in TRANSPORT_PATHS:
+            continue
+        if row.ints[8] <= 0:
+            continue
+        by_path.setdefault(path_id, []).append(
+            (row.ints[2], row.ints[3], row.floats[4], row.floats[5])
+        )
+    missing = set(TRANSPORT_PATHS) - set(by_path)
+    if missing:
+        raise GenerateError(f"no stopped nodes for transport paths: {sorted(missing)}")
+
+    used: set[tuple[int, float, float]] = set()
+    nodes: list[dict] = []
+    for path_id, kind in TRANSPORT_PATHS.items():
+        stops = sorted(by_path[path_id])
+        if len(stops) != 2:
+            raise GenerateError(f"path {path_id} has {len(stops)} stops, expected 2")
+        (_, map_a, xa, ya), (_, map_b, xb, yb) = stops
+        a = (map_a, round(xa, 1), round(ya, 1))
+        b = (map_b, round(xb, 1), round(yb, 1))
+
+        stations: list[tuple[tuple[int, float, float], str, str]] = []
+        if a == b:
+            names = SAME_POINT_ROUTES.get(path_id)
+            if names is None:
+                raise GenerateError(
+                    f"path {path_id} has both stops at {a}; add it to SAME_POINT_ROUTES"
+                )
+            stations.append((a, names[0], names[1]))
+        else:
+            if path_id in SAME_POINT_ROUTES:
+                raise GenerateError(
+                    f"path {path_id} is listed in SAME_POINT_ROUTES but its stops differ"
+                )
+            for here, there in ((a, b), (b, a)):
+                name = STATIONS.get(here)
+                other = STATIONS.get(there)
+                if name is None or other is None:
+                    raise GenerateError(f"path {path_id}: no station entry for {here} or {there}")
+                stations.append((here, name[0], other[0]))
+
+        for coord, station_name, destination in stations:
+            entry = STATIONS.get(coord)
+            if entry is None:
+                raise GenerateError(f"path {path_id}: no station entry for {coord}")
+            zone_id = entry[1]
+            used.add(coord)
+            nodes.append(
+                dict(
+                    kind=kind,
+                    zone_id=zone_id,
+                    map_id=coord[0],
+                    x=coord[1],
+                    y=coord[2],
+                    station=station_name,
+                    destination=destination,
+                )
+            )
+
+    unused = set(STATIONS) - used
+    if unused:
+        raise GenerateError(f"station entries no route uses: {sorted(unused)}")
+    return nodes
 
 
 def build(maps: Maps) -> dict[str, str]:
@@ -425,15 +640,64 @@ def build(maps: Maps) -> dict[str, str]:
 
     bosses.sort(key=lambda pin: (pin["cont"], pin["label"]))
     services.sort(key=lambda pin: (pin["kind"], pin["cont"], pin["place"]))
-    zone_ids = {pin["zone"] for pin in bosses + services}
+
+    portals = []
+    for title, subtitle, map_id, x, y, zone_id, icon, destinations in PORTAL_ROOMS:
+        fractions = maps.fractions(map_id, x, y, f"{title} {subtitle}", zone_id)
+        portals.append(
+            dict(
+                kind="portal",
+                label="Portal",
+                note=subtitle,
+                title=title,
+                subtitle=subtitle,
+                icon=icon,
+                x=x,
+                y=y,
+                lines=[f"To {destination}" for destination in destinations],
+                **fractions,
+            )
+        )
+
+    transports = []
+    for node in transport_nodes(maps):
+        fractions = maps.fractions(
+            node["map_id"], node["x"], node["y"], node["station"], node["zone_id"]
+        )
+        transports.append(
+            dict(
+                kind=node["kind"],
+                label=node["station"],
+                note="",
+                title=node["station"],
+                x=node["x"],
+                y=node["y"],
+                lines=[f"To {node['destination']}"],
+                **fractions,
+            )
+        )
+
+    portals.sort(key=lambda pin: (pin["cont"], pin["zone"], pin["subtitle"]))
+    transports.sort(key=lambda pin: (pin["kind"], pin["cont"], pin["place"], pin["lines"][0]))
+    zone_ids = {pin["zone"] for pin in bosses + services + portals + transports}
     hashes = {
         name: hashlib.sha256((maps.dbc / name).read_bytes()).hexdigest()
-        for name in ("AreaTable.dbc", "DungeonMap.dbc", "WorldMapArea.dbc", "WorldMapTransforms.dbc")
+        for name in (
+            "AreaTable.dbc",
+            "DungeonMap.dbc",
+            "TaxiPathNode.dbc",
+            "WorldMapArea.dbc",
+            "WorldMapTransforms.dbc",
+        )
     }
     return {
         "bosses.lua": render("PinBosses", "Outdoor world bosses.", bosses, hashes),
         "services.lua": render(
             "PinServices", "Warpweaver and Call Board spawns from tracked SQL.", services, hashes
+        ),
+        "portals.lua": render("PinPortals", "Hub portal rooms.", portals, hashes),
+        "transports.lua": render(
+            "PinTransports", "Player ship and zeppelin station nodes.", transports, hashes
         ),
         "zones.lua": render_zones(maps, zone_ids, hashes),
     }
