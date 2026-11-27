@@ -130,10 +130,12 @@ Then, with the client started:
 3. Trigger a quest-item cooldown or the Call of Water path; no `Cooldown.lua` error.
 4. Open the world map in Stormwind. The Warpweaver and Call Board pins sit on their exact spots.
 5. Hover each pin: the tooltip shows name, kind and place. Click a pin: the stock map ping fires.
+   A missing tooltip or a click that does nothing: `/wmp` prints the frame under the cursor.
 6. Zone maps draw only their own pins: Duskwood shows Taerar, Westfall shows none.
 7. Dalaran city micro-map: Warpweaver and Call Board on their spots.
-8. Continent maps draw only that continent: Eastern Kingdoms 11, Kalimdor 14, Outland 5,
-   Northrend 2.
+8. Continent maps draw only that continent, and Silvermoon and The Exodar sit on their own
+   continents rather than in the ocean. Per-kind counts live in
+   [map-pins/README.md](../../data/client-patches/map-pins/README.md).
 9. `/reload`, reopen the map; no Lua error dialog and no `Interface\AddOns\WorldMapPins` error.
 10. Close the map; pins are hidden, no map work continues.
 11. Item data: a server `item_template` row is required. Grant a custom item, for example

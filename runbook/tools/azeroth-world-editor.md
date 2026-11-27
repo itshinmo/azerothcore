@@ -85,7 +85,9 @@ these values on production: production stays human-only and read-only for tools.
 Ground snapping needs `maps/` and `mmaps/` beside `dbc/`, so the server data folder must be the whole
 `Data` tree, not a copy of `dbc/` alone.
 
-The export folder points into the main checkout (`/Users/gasman/wow/azerothcore`). When you work in a
+The export folder points at the tracked `data/sql/custom/db_world` in the main checkout
+(`/Users/gasman/wow/azerothcore`), and the local worldserver applies every `.sql` file in that folder
+at the next restart. Read [Export folder](#export-folder) before the first export. When you work in a
 worktree, copy the coordinates from the export into that worktree's copy of the tracked file, and keep
 the main checkout untouched.
 
@@ -147,6 +149,27 @@ to move along that axis only; drag a square handle to move in that pair of axes;
 move freely. **R** replaces the arrows with rotation rings. The card beside the selection shows the
 current position, so a value can be read before letting go.
 
+### Models and assets
+
+The object card previews one display id at a time. Select an NPC or object and the card shows the
+model its `creature_template` or `gameobject_template` row points at, with its current scale.
+
+To preview a look in the World pane, use **Find…** on the entry or name and choose **Go**; the camera
+flies to the spawn and selects it, and the pane draws the model from the game client folder. A model
+the client does not have draws as a placeholder or not at all. Press **Play** to see its idle and walk
+animations.
+
+To change the look, open **Edit NPC…** or **Edit object…**. **Look & gear** on an NPC and **Look** on
+an object find a model by name or take a display id, one at a time; **Other ways** in the picker takes
+the display id. There is no thumbnail grid of models to page through. Nothing is written until the
+project patch is exported.
+
+Icons are not part of AWE at all. They live in `Interface\Icons` inside the client MPQs, and an icon
+is chosen by browsing them in the client and copying the texture path. The Icon Browser addon for
+that lands in its own change; until it is installed, find an icon name from an existing record or the
+MPQ list and preview it in the client. AWE never lists icon names, so an icon choice for the map pins,
+a gossip option or an addon is made in the client, not here.
+
 ## Move an existing NPC and export the patch
 
 This is the working procedure for relocating the Adventure Quartermasters (`910020` Stormwind spawn
@@ -190,9 +213,10 @@ This is the working procedure for relocating the Adventure Quartermasters (`9100
     `data/sql/custom/db_world/objectives_engine.sql` for the quartermasters. Both are
     `DELETE` + `INSERT`, so replacing the tuple is the whole change.
 13. Delete the exported `.sql` and `_revert.sql` from the export folder once the tuple is in place.
-    The worldserver applies every new file in that folder in filename order, and `_revert.sql` sorts
-    after its patch, so a leftover pair ends with the move undone. The old coordinates stay in
-    `git diff` and in the backup, so nothing is lost.
+    **The folder is applied automatically at every restart** (see [Export folder](#export-folder)).
+    The worldserver applies every new file in it in filename order, and `_revert.sql` sorts after its
+    patch, so a leftover pair ends with the move undone. The old coordinates stay in `git diff` and
+    in the backup, so nothing is lost.
 14. Lint, then restart so the local worldserver applies the custom SQL (ADR-018). Do not restart
     while an unreviewed export is still in the folder: the restart applies it:
 
@@ -211,6 +235,86 @@ that walks away from its post.
 A gameobject moves the same way: right-click it, **G** and **R**, then **Export project patch**. Its
 patch updates `gameobject` instead of `creature`; the ID rule and the verification are unchanged,
 except that `.gobject near` and `.go gameobject <spawnGuid>` replace the creature commands.
+
+## Move a Call Board
+
+The 15 Call Boards are gameobject `930101`, spawn GUIDs `5714521-5714535`, in
+`data/sql/custom/db_world/call_boards.sql`. The block is reserved in the ID registry
+([id-registry.md](../database/id-registry.md)); no other spawn may use it. The same steps as the NPC
+walkthrough, with the gameobject commands:
+
+1. Back up first: `make backup`.
+2. Open the app, connect, confirm the three top-bar badges.
+3. **Find…** the entry `930101`. The dialog lists all 15 spawns, nearest first. Choose **Go** on the
+   one to move. A board is placed at an innkeeper, so the spawn you want is the one in front of the
+   inn you are changing.
+4. Click the board to select it. The card must show entry `930101` and a GUID in
+   `5714521-5714535`. Any other GUID is a stray copy: stop.
+5. Read X, Y, Z and map from the card, or rely on the backup.
+6. Switch to **Select**, press **G**, drag the board to the new spot, and hold **Alt** so it snaps to
+   the floor. A Call Board against a wall must not float; check the floor after the drop.
+7. Press **R** and turn it to face the approach, the same way the innkeeper does.
+8. Press **Play**, then **Reset**. The board must stand where you put it, not inside the wall or the
+   innkeeper.
+9. Open **Project changes**. The row must read **Spawns changed**. **Revert** must return the board to
+   the old spot; prove it once, then move it back.
+10. Stop the server before exporting: `make stop`. The export folder is applied by the worldserver
+    on its next start, so a restart while an unreviewed export sits there applies it. See
+    [Export folder](#export-folder).
+11. Choose **Export project patch**.
+12. Check the patch: it must be an `UPDATE` on `gameobject` filtered by the existing `guid`. Any
+    `INSERT`, any new `entry`, and any GUID outside `5714521-5714535` is a refusal.
+13. Copy the tuple into `data/sql/custom/db_world/call_boards.sql`. The file is `DELETE` + `INSERT`
+    over the whole block, so replacing the tuple is the whole change.
+14. Delete the exported `.sql` and `_revert.sql` before any restart.
+15. Lint and start: `python3 apps/codestyle/codestyle-sql.py`, then `make start`.
+16. Run `.gobject near 20` at the new spot and confirm the GUID, entry and coordinates.
+    `.go gameobject <spawnGuid>` teleports to it for the walk-up check.
+
+`call_boards.sql` is re-applicable, so the restart replaces the rows and the new position is what the
+world loads. A board that also moves on the map is a map-pin data change, not just this tuple; see
+[From an AWE edit to committed SQL](#from-an-awe-edit-to-committed-sql).
+
+## From an AWE edit to committed SQL
+
+An AWE edit is not the change. The change is the tracked tuple, and for these rows it also has
+downstream files that read the same coordinates.
+
+| Row | Tracked file | Notes |
+|-----|--------------|-------|
+| Warpweaver, `910012` | `data/sql/custom/db_world/collections_npc_spawns.sql` | GUIDs `5400001-5400010` |
+| Call Board, `930101` | `data/sql/custom/db_world/call_boards.sql` | GUIDs `5714521-5714535` |
+| Quartermasters, `910020`/`910021` | `data/sql/custom/db_world/objectives_engine.sql` | Spawns `5400011`/`5400012` |
+
+A Warpweaver move has one extra consequence. The `points_of_interest` rows `950110-950119` in
+`data/sql/custom/db_world/collections_guard_directions.sql` mirror the ten Warpweaver positions, and
+they are what the guard directions point at. Update the matching row in the same change:
+
+```text
+950110 Stormwind    950111 Ironforge   950112 Darnassus   950113 The Exodar   950114 Orgrimmar
+950115 Undercity    950116 Thunder Bluff 950117 Silvermoon 950118 Shattrath    950119 Dalaran
+```
+
+Order of work, after the tuple is in the tracked file and before the restart:
+
+1. If the spawn is a Warpweaver, update its `points_of_interest` row to the same coordinates. The
+   row `ID`, icon and name stay; a spawn that moved to a different city is a different row, not this
+   procedure.
+2. Regenerate the pin data, then rebuild the archive:
+
+   ```bash
+   python3 data/client-patches/map-pins/generate.py
+   python3 data/client-patches/map-pins/build.py
+   ```
+
+   What the generator reads, what it writes, and why it exists is the contract in
+   [ADR-037](../../decisions/ADR-037-world-map-pins.md) rule 4 and
+   [map-pins/README.md](../../data/client-patches/map-pins/README.md). Do not restate it here.
+3. Lint, restart, verify, then install the new `patch-Z.MPQ` in the client (the owner installs; see
+   [map-pins/README.md](../../data/client-patches/map-pins/README.md)).
+
+A Call Board move needs steps 2-3 too: the board pin comes from `call_boards.sql`. A quartermaster
+move needs only the tuple and a restart; no pin reads it.
 
 ## The NPC editor
 
@@ -245,6 +349,32 @@ Both are safe to open: opening an NPC writes nothing. The patch writes stock or 
 change them, and the revert patch restores the original rows. Anything the app cannot represent is
 read-only with a line saying why. Never use these tabs to add stock to a new NPC in this project;
 that is content authoring and belongs in tracked SQL with a registered entry.
+
+## Export folder
+
+Set **Export folder** to `/Users/gasman/wow/azerothcore/data/sql/custom/db_world`. That is the tracked
+project SQL folder, so the export lands beside the file it will be folded into.
+
+**Warning. The worldserver applies every `.sql` file in that folder at the next restart, reviewed or
+not.** The folder is not a scratch area. An export left there is applied on `make start` even if you
+never opened it, and its `_revert.sql` is applied right after it.
+
+Safe order:
+
+1. `make stop`. The server is down, so no restart can apply the export by accident.
+2. Export from AWE.
+3. Open the exported `.sql` and its `_revert.sql` and review them against the rules above.
+4. Copy the tuple into the tracked file, and lint it.
+5. **Delete the export and its revert file from the export folder**, before any restart. If the change
+   is not meant to be applied yet, move the pair out of the folder instead.
+6. `make start`, then verify in game.
+
+An export made while the server runs sits in the apply folder until the next restart. If you cannot
+stop the server first, delete or move the export the moment the tuple is copied.
+
+The folder is the main checkout, even when you work in a worktree. Copy the coordinates into the
+worktree's tracked file and keep the main checkout untouched; see
+[What each folder unlocks](#what-each-folder-unlocks).
 
 ## Export vs Apply to dev
 
@@ -320,10 +450,33 @@ move, or hand the new content to the content-author with the coordinates and the
 | PvP zone masks | Not edited; the app does not model the PvP zone flags |
 | DBC files | No `Spell.dbc`, `Item.dbc` or `CharBaseInfo.dbc` edit; that is the client-patch pipeline |
 | Client patches | No MPQ, model or map change; see [client-patch.md](../operation/client-patch.md) |
+| Icon gallery | No icon list; `Interface\Icons` is browsed in the client, by hand or with the Icon Browser addon |
+| Model gallery | No thumbnail browser; the Look tab finds a model by name or display id |
 | Arbitrary SQL | It writes the tables it models, not free-form queries; a schema change is DBeaver or tracked SQL |
 
 A feature that needs one of these is not an AWE job. Stop and route it to the client-patch pipeline or
 the content-author.
+
+## AWE rendering limitations
+
+The owner confirmed on 2026-11-27 that the white blob shapes in Darkshire appear only in AWE, not in
+the game client. The same spot renders correctly in the game, so this is an app fault, not a data
+fault, and nothing in the world database, a model or a patch is changed because of it.
+
+The app logged 112 assets it could not load. Two representative failures:
+
+| Asset | Logged error | Status |
+|-------|--------------|--------|
+| `WestfallCabbage.m2` | `Cannot read properties of undefined (reading 'blend')` | Undiagnosed |
+| `duskwoodtreecanopy03.mdx` | `404 Not Found` | Undiagnosed |
+
+The `.mdx` path is not a simple extension mismatch: the app rewrites `.mdx` to `.m2`, and the model
+exists in more than one archive. The `blend` error looks like the M2 parser on that model, but that is
+a guess. Treat both causes as unknown rather than repeating one, and do not file an upstream issue
+from this note alone.
+
+Workaround: move the camera past the asset, or hide **Trees & props** while placing. Judge the
+result in the game client, not in AWE.
 
 ## MCP / AI assistant
 
@@ -405,7 +558,9 @@ result; a `.reload` does not move a spawn.
 | `Access denied for user 'acore'` | Wrong password or host mismatch | Password from `worldserver.conf` |
 | Permission denied on export | Export folder missing or unwritable | Use `data/sql/custom/db_world`; check it exists |
 | Moved NPC still at the old spot | Spawns load at server start | `make stop && make start`, then re-check |
-| New row with an app-chosen ID in the patch | Content creation outside the registry | Discard; use tracked SQL and a registry ID |
+| Unreviewed export applied at start | Export folder is the tracked SQL folder | Delete the export before the restart |
+| White blobs in Darkshire | AWE parser fault | Ignore; see [rendering limitations](#awe-rendering-limitations) |
+| New row with an app-chosen ID in the patch | Content creation outside the registry | Discard; tracked SQL only |
 | MCP assistant gets 401 | Token wrong or missing | Copy the token from Settings; update the header; save |
 | MCP assistant cannot connect | App closed or MCP tab off | Open the app; enable MCP / AI; use the address shown |
 
@@ -429,5 +584,6 @@ pipeline.
 - [apply-sql-update.md](../operation/apply-sql-update.md)
 - [backup-restore.md](../operation/backup-restore.md)
 - [client-patch.md](../operation/client-patch.md)
+- [map-pins/README.md](../../data/client-patches/map-pins/README.md)
 - [treasure-placer.md](../gm/treasure-placer.md)
 - [decisions/ADR-018-realm-strategy.md](../../decisions/ADR-018-realm-strategy.md)

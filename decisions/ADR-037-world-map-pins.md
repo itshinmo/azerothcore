@@ -1,6 +1,9 @@
-# ADR-037 — World map pins: world bosses and custom services only
+# ADR-037 — World map pins: custom content, world bosses, portals and transport stations
 
 - Status: accepted
+- Amended: 2026-11-27 — title broadened; scope extended to the hub portal network and the player
+  transport stations (rule 1, rule 2 relaxed); rule 4 (no generator) superseded; rule 5 (hover)
+  corrected by playtest evidence; rule 7 gained the map-530 offset
 - Date: 2026-11-27
 - Supersedes: [ADR-032](ADR-032-map-poi-layer.md) (withdrawn)
 - Related: [ADR-027](ADR-027-client-patch-pipeline.md),
@@ -15,40 +18,105 @@ layer duplicated what Questie already does correctly.
 
 The project still needs to advertise content it adds itself: the ten capital Warpweavers
 (transmogrifier, entry `910012`) and the fifteen Call Boards (entry `930101`). Those are custom
-spawns no third-party addon knows about. The seven outdoor world bosses are the one stock exception
-the owner asked to keep.
+spawns no third-party addon knows about. The seven outdoor world bosses are the first stock
+exception the owner asked to keep.
+
+A second playtest on 2026-11-27 added one more need. A player planning a trip needs to know where the
+hub portals and the boat and zeppelin stations are, and Questie does not cover the ship and zeppelin
+stations accurately. Those two networks are fixed world infrastructure, not the open-ended stock NPC
+list ADR-032 tried to draw.
 
 ## Decision
 
-1. **Scope is custom content plus world bosses.** The layer draws:
+1. **Scope is custom content, the seven world bosses, the hub portal network and the player
+   transport stations.** The layer draws:
    - the 7 outdoor world bosses: Azuregos, Lethon, Taerar, Emeriss, Ysondre (Classic), Doom Lord
      Kazzak and Doomwalker (The Burning Crusade);
    - the 10 Warpweaver spawns from `data/sql/custom/db_world/collections_npc_spawns.sql`;
-   - the 15 Call Board spawns from `data/sql/custom/db_world/call_boards.sql`.
-2. **No stock NPC categories, ever.** Flight masters, innkeepers, battlemasters, meeting stones,
-   portals and city leaders stay out. Questie and similar addons own that data. A new pin is added
-   only when the project adds the spawn it points at.
+   - the 15 Call Board spawns from `data/sql/custom/db_world/call_boards.sql`;
+   - **hub portal pins** (in review, landing with the portal slice), one pin per portal room rather
+     than per portal object: the Shattrath City
+     portal row (8 capital destinations), the Shattrath portal to the Isle of Quel'Danas, the
+     Dalaran Alliance enclave (5 destinations), the Dalaran Horde enclave (5 destinations), and one
+     pin per capital's Blasted Lands portal (8). Portal pins use the stock `Spell_Arcane_Portal*`
+     icons, and the tooltip lists every destination, one per line;
+   - **ship and zeppelin station pins** (in review, landing with the transport slice), one pin per
+     station cluster from the 15 player boat and zeppelin routes in `acore_world.transports`. The
+     two Icecrown gunships, the two Northrend turtles and Garvan's Reef stay out. Stations
+     physically close together merge into one pin: markers within about 120 yards on the same map
+     become a single pin listing every destination from that spot. Ship icons are
+     `INV_AllianceShipMount` and `INV_ShipMount`, zeppelin icons `INV_HordeZeppelinMount` and
+     `INV_ZeppelinMount`, all from `Data/patch-I.mpq`. A transport
+     tooltip is exactly two lines: the station name (for example `Stormwind Harbor`) and
+     `To <destination>`; vessel names are not shown.
+
+   Portals and transports are an explicit exception to the custom-content rule. They are fixed world
+   infrastructure a player needs to plan travel, the set is small and closed, and Questie does not
+   cover the ship and zeppelin stations accurately. The exception does not reopen the ADR-032 list.
+2. **No other stock NPC categories, ever.** Flight masters, innkeepers, battlemasters, meeting
+   stones and city leaders stay out. Questie and similar addons own that data. A new pin is added
+   only when the project adds the spawn it points at, or when it belongs to one of the two closed
+   networks in rule 1.
 3. **No WotLK boss pin.** All four Wrath world bosses (Archavon, Emalon, Koralon, Toravon) are
    inside Vault of Archavon. An instance pin would point at an entrance, not a world spawn; the
    owner excluded it on 2026-11-27.
-4. **Exact static positions.** Zone and continent fractions are baked in
-   `src/WorldMapPins/WorldMapPins.lua`, computed from the spawn coordinates with the 3.3.5 rotated
-   axes. There is no generator, no runtime projection and no stack fan-out.
-5. **Hover must work.** Each pin is a 24x24 button at `WORLDMAP_POI_FRAMELEVEL + 50`, above the
-   client landmark buttons (91) and the quest POI layer (100), with the mouse enabled. `OnEnter`
-   opens one `GameTooltip` with name, kind and place. `OnClick` forwards to
-   `WorldMapButton_OnClick`, so the stock map ping still works. Warpweaver uses the
-   `INV_NetherPortal` icon: a dark void portal, matching the ethereal transmogrifier.
+4. **Generated static positions.** Zone and continent fractions are baked into per-kind data files
+   under `src/WorldMapPins/data/` and generated by `data/client-patches/map-pins/generate.py` from
+   the tracked SQL plus `WorldMapArea.dbc`, `WorldMapTransforms.dbc` and `DungeonMap.dbc`. Each pin
+   kind gets its own file, so two slices can touch the layer without editing one table.
+   **Status:** `zones.lua`, `bosses.lua` and `services.lua` are implemented; the portal and
+   transport files land with their slices. Pin fractions computed by hand
+   produced the ocean-pin bug, and the owner moves Warpweavers and Call Boards by hand, so the
+   fractions come from one command. There is still no runtime projection and no stack fan-out.
+   `build.py --check` runs `generate.py --check` and fails when a checked-in data file is stale.
+   A build regenerates the data; `--check` verifies it is already current.
+5. **Hover must work, and the parent frame decides it.** A pin parented to `WorldMapButton` at
+   `WORLDMAP_POI_FRAMELEVEL + 50` draws but receives no mouse event at all: no tooltip, and the
+   click does not reach the map either. The working arrangement, proven by Questie in the same
+   client, is a 24x24 button parented to `WorldMapFrame` at `GetFrameLevel() + 7`, with the frame's
+   strata and the mouse enabled. `OnEnter` opens `WorldMapTooltip` with the place as the title and
+   the service on the second line, and sets `WorldMapPOIFrame.allowBlobTooltip = false` while the
+   pin is hovered; `OnLeave` and `HideAll` restore it.
+   `OnClick` forwards to `WorldMapButton_OnClick`, so the stock map ping still works. Warpweaver
+   uses the `INV_NetherPortal` icon: a dark void portal, matching the ethereal transmogrifier.
+   The title carries the city because a capital's Warpweaver and Call Board sit 1 to 7 pixels apart
+   on the continent map and only the top pin of the pair can be hovered. The owner chose to keep all
+   20 pins self-describing rather than merge or offset them; zone maps show both pins apart.
 6. **Same archive, no DBC.** `patch-Z.MPQ` carries `Interface\AddOns\WorldMapPins`, the
    `WorldMapFrame.lua` load-order canary and the `Cooldown.lua` nil guard. Zero DBC files.
 7. **Zone detection by displayed map.** `GetCurrentMapContinent` plus the `GetCurrentMapZone`
    index into `GetMapZones` resolves the open zone; `0` is the continent map. Names are normalized
    (`The` prefix, `City` suffix). Silvermoon and the Exodar use `WorldMapArea.DisplayMapID`
-   (Eastern Kingdoms and Kalimdor), not their `MapID` (530).
+   (Eastern Kingdoms and Kalimdor), not their `MapID` (530). Their continent fractions also need the
+   additive offset from `WorldMapTransforms.dbc` before projection (`0` Eastern Kingdoms,
+   `-2400` X and `+2400` Y; `1` Kalimdor, `+10133.333` X and `+17600` Y). Their zone fractions never
+   take the offset. Skipping it put the Silvermoon pair in the ocean and the Exodar pair under the
+   `THE GREAT SEA` label, the bug fixed on 2026-11-27.
 8. **Continent index order is the client's, not geographic.** `GetCurrentMapContinent` follows
    `WorldMapArea`'s area-id-0 file order: **1 Kalimdor, 2 Eastern Kingdoms, 3 Outland,
    4 Northrend**. Assuming 1=Eastern Kingdoms draws every EK pin on the Kalimdor map and every
-   Kalimdor pin on the EK map, which is the ocean-pin bug fixed on 2026-11-27.
+   Kalimdor pin on the EK map. That swap and the missing map-530 offset in rule 7 were the two halves
+   of the ocean-pin bug fixed on 2026-11-27.
+
+## Amendments
+
+**2026-11-27, second amendment (this one).**
+
+- Rule 1 gained the hub portal network and the player transport stations, with the exception
+  rationale above. Rule 2 was relaxed from "custom content only" to "custom content plus the two
+  closed networks"; every other stock category stays out.
+- Rule 4 replaced "no generator" with generated per-kind data files and a `--check` staleness gate.
+  The rejected reasoning was that static data is simple enough to keep in one hand-edited table. The
+  ocean-pin bug showed the opposite: a hand conversion of `WorldMapTransforms` is easy to get wrong
+  and invisible until a playtest.
+- Rule 5 replaced "a button at `WORLDMAP_POI_FRAMELEVEL + 50`, parented to `WorldMapButton`" with the
+  `WorldMapFrame + 7` arrangement. The old level was chosen on the belief that the pin had to sit
+  above the quest POI frame. Playtest evidence: the pin drew and received no mouse event at all.
+- Rule 7 gained the map-530 `WorldMapTransforms` offset, which rule 7 previously omitted.
+
+**2026-11-27, first amendment (same day, earlier).** ADR-032 was withdrawn and the layer was
+replaced: the 1,128-marker stock POI layer became 7 world bosses plus the custom services, with no
+stock NPC categories.
 
 ## Alternatives considered
 
@@ -61,11 +129,31 @@ the owner asked to keep.
 - **Server `SMSG_GOSSIP_POI`.** Rejected: minimap-only and needs a gossip interaction.
 - **Instance pin for Vault of Archavon.** Rejected by the owner; it would advertise an entrance,
   not a world boss location.
+- **Keep the hand-computed fractions.** Rejected: the ocean-pin bug came from a hand conversion,
+  and the owner moves Warpweavers and Call Boards by hand. A generator plus a `--check` gate is the
+  cheaper failure.
+- **One pin per portal object, and one per transport marker.** Rejected: a portal room would draw
+  five overlapping pins with the same destination list, and the docks would turn into a pile. One
+  pin per room, and one pin per cluster of stations within about 120 yards, keeps the map readable.
+- **Draw the gunships, turtles and Garvan's Reef.** Rejected: the Icecrown gunships are not a travel
+  route a player boards, and the three flavour vessels (two turtles and Garvan's Reef) have no
+  station a player plans around.
 
 ## Consequences
 
-- Pins drift only when a custom spawn moves. Edit the one row and rebuild; there is no generator to
-  rerun.
-- Questie remains the reference for stock NPCs; the project layer does not compete with it.
+- Pin fractions come from `generate.py`; a spawn move is one SQL edit plus
+  `python3 data/client-patches/map-pins/generate.py`, then `build.py`. `build.py --check` fails when
+  the tracked data is stale, so a forgotten regeneration is caught before the archive is packed.
+- The generator depends on the client DBCs (`WorldMapArea`, `WorldMapTransforms`, `DungeonMap`). It
+  reads them from `~/wow/Data/dbc` by default, so a run needs the client data folder, not a server.
+- Two closed networks are now in scope. A change to a portal room or a transport route in the world
+  database can invalidate the tracked pin data; regenerate after a content or SQL change that
+  touches `transports` or the portal spell destinations.
+- Questie remains the reference for stock NPCs; the project layer does not compete with it. For ship
+  and zeppelin stations the project layer is the accurate one.
 - The map addon still appears in the client addon list and is enabled with the bundle.
-- Adding a new custom service to the map is a data-row change plus `build.py`, not a new subsystem.
+- Adding a new custom service to the map is a data-row change plus `generate.py` and `build.py`, not
+  a new subsystem. Adding a pin kind is a data file and an icon choice.
+- Hover and click depend on the parent frame, not on the frame level. A future pin layer that
+  parents to `WorldMapButton` will draw and stay dead.
+

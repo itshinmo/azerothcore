@@ -196,7 +196,6 @@ coincidence and zone-relative pins landed on the continent texture.
 - [specs/client-patch.md](../specs/client-patch.md)
 - [data/client-patches/map-pins/README.md](../data/client-patches/map-pins/README.md) (replacement)
 - [runbook/tools/mcp-servers.md](../runbook/tools/mcp-servers.md)
-- [runbook/audits/2026-11-26-playtest-round-2.md](../runbook/audits/2026-11-26-playtest-round-2.md)
 - `data/sql/custom/db_world/collections_npc_spawns.sql`
 - `data/sql/custom/db_world/collections_guard_directions.sql`
 - `data/sql/custom/db_world/call_boards.sql`
