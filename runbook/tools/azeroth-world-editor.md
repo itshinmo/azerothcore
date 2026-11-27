@@ -463,20 +463,67 @@ The owner confirmed on 2026-11-27 that the white blob shapes in Darkshire appear
 the game client. The same spot renders correctly in the game, so this is an app fault, not a data
 fault, and nothing in the world database, a model or a patch is changed because of it.
 
-The app logged 112 assets it could not load. Two representative failures:
+A focused capture at Darkshire on 2026-11-27 reported **112 things could not be loaded**:
+
+| Run | Game client folder | Count |
+|-----|--------------------|-------|
+| Before | `/Users/gasman/Games/wotlk-clean` | 112 |
+| After | `/Users/gasman/Games/wotlk-awe` | Not measured |
+
+The after run needs a manual folder switch: AWE's MCP has no tool for the Game client folder. Build
+the mirror, switch the field, and record the new count; see [Stock-client mirror](#stock-client-mirror).
+
+Two representative failures from the before run:
 
 | Asset | Logged error | Status |
 |-------|--------------|--------|
-| `WestfallCabbage.m2` | `Cannot read properties of undefined (reading 'blend')` | Undiagnosed |
-| `duskwoodtreecanopy03.mdx` | `404 Not Found` | Undiagnosed |
+| `westfallcabbage.m2` | `Cannot read properties of undefined (reading 'blend')` | Cause seen in files; mirror not run |
+| `duskwoodtreecanopy03.mdx` | `404 Not Found` | Not a mirror problem; no archive holds `.mdx` |
 
-The `.mdx` path is not a simple extension mismatch: the app rewrites `.mdx` to `.m2`, and the model
-exists in more than one archive. The `blend` error looks like the M2 parser on that model, but that is
-a guess. Treat both causes as unknown rather than repeating one, and do not file an upstream issue
-from this note alone.
+The `blend` error comes from `substituteSimpleEffect`, which reads
+`model.materials[batch.materialIndex].blend`. `patch-D.mpq` ships `westfallcabbage.m2` with one
+material. The only skin is stock `WestFallCabbage00.skin` in `common-2.MPQ`, and its two batches index
+materials 0 and 1: material 1 is `undefined`, so the read throws. Removing `patch-D` should remove
+this error, but the mirror was not run against AWE, so the fix is unproven.
+
+The `.mdx` path is not an extension mismatch. AWE has no `.mdx` to `.m2` rewrite: it reads the ADT
+`mmdx` name literally, and no archive in the client holds any `.mdx`. Removing `patch-D` cannot change
+a name that is absent from every archive, so the 404 remains. Only the game client resolves it.
+
+The blob capture could not be repeated: **Trees & props** was off in the focused Darkshire view, and
+the MCP cannot toggle a layer. The blobs remain the owner's observation with that layer on.
 
 Workaround: move the camera past the asset, or hide **Trees & props** while placing. Judge the
 result in the game client, not in AWE.
+
+### Stock-client mirror
+
+A symlink tree that reproduces the stock client without `patch-D.mpq`. It is not a second 35 GB copy.
+Run from any directory:
+
+```bash
+rm -rf ~/Games/wotlk-awe
+mkdir -p ~/Games/wotlk-awe/Data
+ln -s ~/Games/wotlk-clean/Wow.exe ~/Games/wotlk-awe/Wow.exe
+find ~/Games/wotlk-clean/Data -maxdepth 1 -type f -iname '*.mpq' \
+  ! -iname 'patch-d.mpq' ! -iname 'patch-z.mpq.old-*' \
+  -exec ln -s {} ~/Games/wotlk-awe/Data/ \;
+ln -s ~/Games/wotlk-clean/Data/enUS ~/Games/wotlk-awe/Data/enUS
+ls -la ~/Games/wotlk-awe ~/Games/wotlk-awe/Data
+```
+
+Expected: 19 top-level archive links plus the `enUS` link. `patch-D.mpq` is absent, and so are
+`.DS_Store` and the `patch-Z.MPQ.old-*` backups.
+
+AWE's MCP cannot change the Game client folder. Switch it by hand: open the connection settings, set
+**Game client folder** to `/Users/gasman/Games/wotlk-awe`, and reconnect. Hover the **Game client**
+badge: it must read 30 archives, one fewer than the real client's 31. Return to Darkshire and recount
+the error toast against 112.
+
+The mirror shows stock models only. It has no HD model, texture or environment from `patch-D.mpq`, and
+it does not test any other patch. To switch back, set **Game client folder** to
+`/Users/gasman/Games/wotlk-clean` and reconnect; to remove the mirror,
+`rm -rf ~/Games/wotlk-awe`.
 
 ## MCP / AI assistant
 
@@ -554,12 +601,13 @@ result; a `.reload` does not move a spawn.
 | "No game client folder" banner | Same as above; the World needs the client | Set the folder; editors still work |
 | No floors, heights or snapping | Server data folder incomplete or unset | Server data: `/Users/gasman/wow/Data` |
 | Spells and models are ID-only | Server data folder not loaded | Same field; check the **Server data** badge |
+| `Server data: 1 problem` | Configured folder lacks `dbc/QuestXP.dbc` | Use `/Users/gasman/wow/Data` |
 | Connection refused | MySQL down, wrong port, wrong interface | `make status`; check the host and port |
 | `Access denied for user 'acore'` | Wrong password or host mismatch | Password from `worldserver.conf` |
 | Permission denied on export | Export folder missing or unwritable | Use `data/sql/custom/db_world`; check it exists |
 | Moved NPC still at the old spot | Spawns load at server start | `make stop && make start`, then re-check |
 | Unreviewed export applied at start | Export folder is the tracked SQL folder | Delete the export before the restart |
-| White blobs in Darkshire | AWE parser fault | Ignore; see [rendering limitations](#awe-rendering-limitations) |
+| White blobs in Darkshire | AWE-only; client is clean | Use the [mirror](#stock-client-mirror) to test `patch-D` |
 | New row with an app-chosen ID in the patch | Content creation outside the registry | Discard; tracked SQL only |
 | MCP assistant gets 401 | Token wrong or missing | Copy the token from Settings; update the header; save |
 | MCP assistant cannot connect | App closed or MCP tab off | Open the app; enable MCP / AI; use the address shown |
