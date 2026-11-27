@@ -58,12 +58,22 @@ last-verified: 2026-11-27 (local-server-setup; round-3 map pin fixes merged: con
 - **Icon browser addon.** A GM addon browses `Interface\Icons` from inside the client, in its own
   change. AWE has no icon list and no model thumbnail grid, so icon choice for pins, gossip and
   addons is made in the client, and a model is picked by name or display id in the editor.
-- **AWE limits recorded.** The Darkshire white blobs are app-side. The app logged 112 assets it could
-  not load; two representative ones are `WestfallCabbage.m2` (M2 parser, `reading 'blend'`) and
-  `duskwoodtreecanopy03.mdx` (404). Both causes are recorded as undiagnosed, because the app already
-  rewrites `.mdx` to `.m2` and the model exists in several archives, so the extension theory was
-  wrong. The game client is unaffected; no upstream issue is filed. Runbook updated, including the export
-  folder warning that `data/sql/custom/db_world` is applied at the next restart.
+- **AWE limits recorded, stock mirror built.** The Darkshire white blobs are app-side; the game client
+  is unaffected. A focused 2026-11-27 capture at Darkshire shows 112 assets could not be loaded. The
+  stock mirror `~/Games/wotlk-awe` is ready: every archive symlinked except `patch-D.mpq` (19 top-level
+  plus `enUS`, 30 archives against the real client's 31), with `Wow.exe` symlinked. The after count is
+  not measured because AWE's MCP has no Game client folder setter; the owner must switch the field by
+  hand. The `.mdx` 404 is inherent: AWE has no `.mdx` to `.m2` rewrite, it reads the ADT `mmdx` name
+  literally, and no client archive holds any `.mdx`; the mirror cannot fix it. The `blend` error is
+  explained by the files: `patch-D.mpq` ships `westfallcabbage.m2` with one material, while the only
+  skin is stock `WestFallCabbage00.skin` and its batches index materials 0 and 1, so AWE reads
+  `materials[1].blend` and throws. That cause is seen in the files but not proven by an AWE mirror
+  run. No upstream issue filed. Runbook updated with the mirror procedure, including the export folder
+  warning that `data/sql/custom/db_world` is applied at the next restart.
+- **Server data badge.** AWE's saved profile has `dbcDir` `/Users/gasman/wow/azerothcore/data`, not
+  `/Users/gasman/wow/Data`, so the badge reports one problem: `QuestXP.dbc` is missing from that path
+  and its `dbc/` subfolder. The intended folder has a valid 100-record, 11-field `QuestXP.dbc`. No
+  folder was changed; the runbook troubleshooting row records the fix.
 - **Tooltip title.** The city is the title and the second line names the service. Every capital has a
   Warpweaver and a Call Board 1 to 7 pixels apart on the continent map (Undercity 1.0 px, Stormwind
   1.3 px, Thunder Bluff 2.1 px) and pins are 24 px, so only the top pin of a pair can be hovered
