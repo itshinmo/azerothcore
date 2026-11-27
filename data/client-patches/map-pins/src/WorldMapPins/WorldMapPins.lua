@@ -8,6 +8,10 @@
 -- Warpweavers, call_boards.sql for the Call Boards. mx/my are zone-map fractions and cx/cy
 -- continent fractions. 3.3.5 zone maps rotate the axes:
 --   mx = (yMax - worldY) / (yMax - yMin), my = (xMax - worldX) / (xMax - xMin)
+-- Silvermoon and the Exodar live on map 530 but display on the Eastern Kingdoms and Kalimdor
+-- maps, so their continent fractions first apply the additive offset from
+-- WorldMapTransforms.dbc (map 530 -> region 0: -2400, +2400; map 530 -> region 1:
+-- +10133.333, +17600) and then project. Skipping the offset put both cities in the ocean.
 -- Recompute by hand if a spawn moves; this file is static on purpose.
 
 local ADDON, ns = ...
@@ -80,7 +84,7 @@ ns.Pins = {
       mx = 0.5852, my = 0.4414, cont = 1, cx = 0.4008, cy = 0.1171 },
     { kind = "warpweaver", zone = 3557, place = "The Exodar", label = "Warpweaver",
       note = "Transmogrifier", x = -3931.7, y = -11625.6,
-      mx = 0.5292, my = 0.4570, cont = 1, cx = 0.7797, cy = 0.6820 },
+      mx = 0.5292, my = 0.4570, cont = 1, cx = 0.3014, cy = 0.2690 },
     { kind = "warpweaver", zone = 1637, place = "Orgrimmar", label = "Warpweaver",
       note = "Transmogrifier", x = 1894.1, y = -4324.3,
       mx = 0.4589, my = 0.4060, cont = 1, cx = 0.5813, cy = 0.4445 },
@@ -92,7 +96,7 @@ ns.Pins = {
       mx = 0.5531, my = 0.5671, cont = 1, cx = 0.4654, cy = 0.5725 },
     { kind = "warpweaver", zone = 3487, place = "Silvermoon City", label = "Warpweaver",
       note = "Transmogrifier", x = 9870.2, y = -7442.9,
-      mx = 0.8602, my = 0.3514, cont = 2, cx = 0.6287, cy = 0.0481 },
+      mx = 0.8602, my = 0.3514, cont = 2, cx = 0.5698, cy = 0.1365 },
     { kind = "warpweaver", zone = 3703, place = "Shattrath City", label = "Warpweaver",
       note = "Transmogrifier", x = -2006.6, y = 5371.1,
       mx = 0.5850, my = 0.6117, cont = 3, cx = 0.4366, cy = 0.6723 },
@@ -110,7 +114,7 @@ ns.Pins = {
       mx = 0.6692, my = 0.1595, cont = 1, cx = 0.4032, cy = 0.1090 },
     { kind = "callboard", zone = 3557, place = "The Exodar", label = "Call Board",
       note = "Custom quest board", x = -3751.869951, y = -11696.12314,
-      mx = 0.5959, my = 0.2018, cont = 1, cx = 0.7816, cy = 0.6747 },
+      mx = 0.5959, my = 0.2018, cont = 1, cx = 0.3033, cy = 0.2616 },
     { kind = "callboard", zone = 1637, place = "Orgrimmar", label = "Call Board",
       note = "Custom quest board", x = 1629.452468, y = -4435.918796,
       mx = 0.5385, my = 0.6889, cont = 1, cx = 0.5843, cy = 0.4553 },
@@ -122,7 +126,7 @@ ns.Pins = {
       mx = 0.4566, my = 0.6393, cont = 1, cx = 0.4627, cy = 0.5745 },
     { kind = "callboard", zone = 3487, place = "Silvermoon City", label = "Call Board",
       note = "Custom quest board", x = 9569.86665, y = -7226.669362,
-      mx = 0.6818, my = 0.7237, cont = 2, cx = 0.6234, cy = 0.0592 },
+      mx = 0.6818, my = 0.7237, cont = 2, cx = 0.5645, cy = 0.1476 },
     { kind = "callboard", zone = 3703, place = "Shattrath City", label = "Call Board",
       note = "Custom quest board", x = -2180.831174, y = 5404.332052,
       mx = 0.5596, my = 0.8117, cont = 3, cx = 0.4347, cy = 0.6873 },
@@ -157,16 +161,30 @@ for zone, name in pairs(ns.Zones) do
     ZONE_BY_NAME[Normalize(name)] = zone
 end
 
+-- The map tooltip, not GameTooltip. WorldMapTooltip is a GameTooltip at TOOLTIP strata
+-- parented to WorldMapFrame; the client uses it for every other map hover (units, quest
+-- POIs, the buttons), so it is the one that renders above the map texture.
 local function Tooltip()
-    return GameTooltip
+    return WorldMapTooltip or GameTooltip
+end
+
+-- Pins are children of WorldMapFrame at its frame level + 7, with the frame's strata
+-- copied. That is exactly what Questie does in this client (HandyNotes uses +6) and it is
+-- the only map-pin arrangement proven to receive hover and click. The previous build was a
+-- child of WorldMapButton at WORLDMAP_POI_FRAMELEVEL + 50: it drew, but no mouse event
+-- ever reached it.
+local function PlaceLevel(button)
+    if WorldMapFrame then
+        button:SetFrameStrata(WorldMapFrame:GetFrameStrata())
+        button:SetFrameLevel(WorldMapFrame:GetFrameLevel() + 7)
+    end
 end
 
 local function CreatePin(pin)
-    local button = CreateFrame("Button", nil, WorldMapButton)
+    local button = CreateFrame("Button", nil, WorldMapFrame)
     button:SetWidth(24)
     button:SetHeight(24)
-    -- Above the client landmark buttons (level 91) and the quest POI layer (level 100).
-    button:SetFrameLevel((WORLDMAP_POI_FRAMELEVEL or 100) + 50)
+    PlaceLevel(button)
     button:EnableMouse(true)
     button:RegisterForClicks("LeftButtonUp")
 
@@ -183,16 +201,31 @@ local function CreatePin(pin)
         if not tip then
             return
         end
+        -- Stop WorldMapBlobFrame_OnUpdate from swapping the tooltip back to the quest blob
+        -- under the cursor while the pin is hovered.
+        if WorldMapPOIFrame then
+            WorldMapPOIFrame.allowBlobTooltip = false
+        end
         tip:SetOwner(self, "ANCHOR_RIGHT")
-        tip:SetText(self.pin.label)
-        tip:AddLine(self.pin.note, 0.8, 0.8, 0.8)
-        tip:AddLine(self.pin.place, 0.65, 0.8, 1)
+        -- The city is the title, not a lower line: a capital's Warpweaver and Call Board sit 1 to
+        -- 7 pixels apart on the continent map, so only the top pin of a pair can be hovered and
+        -- its title has to say which city it is.
+        if self.pin.kind == "boss" then
+            tip:SetText(self.pin.label)
+            tip:AddLine(self.pin.note .. " - " .. self.pin.place, 0.8, 0.8, 0.8)
+        else
+            tip:SetText(self.pin.place)
+            tip:AddLine(self.pin.label .. " - " .. self.pin.note, 0.8, 0.8, 0.8)
+        end
         tip:Show()
     end)
     button:SetScript("OnLeave", function()
         local tip = Tooltip()
         if tip then
             tip:Hide()
+        end
+        if WorldMapPOIFrame then
+            WorldMapPOIFrame.allowBlobTooltip = true
         end
     end)
     button:SetScript("OnClick", function(self, mouseButton)
@@ -216,6 +249,11 @@ local function HideAll()
     if tip then
         tip:Hide()
     end
+    -- Closing the map or switching zone while hovered skips OnLeave, so restore the quest
+    -- blob tooltip here or it stays switched off.
+    if WorldMapPOIFrame then
+        WorldMapPOIFrame.allowBlobTooltip = true
+    end
 end
 
 local function DisplayedZone(continent, index)
@@ -231,10 +269,10 @@ local function DisplayedZone(continent, index)
 end
 
 local function Refresh()
-    if not WorldMapButton then
+    if not WorldMapButton or not WorldMapFrame then
         return
     end
-    if WorldMapFrame and not WorldMapFrame:IsShown() then
+    if not WorldMapFrame:IsShown() then
         HideAll()
         return
     end
@@ -242,8 +280,11 @@ local function Refresh()
     local index = GetCurrentMapZone and GetCurrentMapZone()
     local zone = DisplayedZone(continent, index)
     local onContinent = index == 0 and continent ~= nil and continent >= 1 and continent <= 4
-    local width = WorldMapButton:GetWidth()
-    local height = WorldMapButton:GetHeight()
+    -- The pins are children of WorldMapFrame, which is not scaled. WorldMapButton is scaled
+    -- to the current map size, so the offsets must use its displayed size, not its raw size.
+    local scale = WorldMapButton:GetScale() or 1
+    local width = WorldMapButton:GetWidth() * scale
+    local height = WorldMapButton:GetHeight() * scale
 
     for i, pin in ipairs(ns.Pins) do
         local button = Frame.pins[i]
@@ -258,7 +299,7 @@ local function Refresh()
             x, y = pin.cx, pin.cy
         end
         if x then
-            button:SetFrameLevel((WORLDMAP_POI_FRAMELEVEL or 100) + 50)
+            PlaceLevel(button)
             button:ClearAllPoints()
             button:SetPoint("CENTER", WorldMapButton, "TOPLEFT", x * width, -y * height)
             button:Show()
@@ -277,6 +318,25 @@ end
 Hook("WorldMapFrame_Update", Refresh)
 Hook("WorldMapFrame_OnShow", Refresh)
 Hook("WorldMapFrame_OnHide", HideAll)
+
+-- `/wmp` prints the frame under the cursor and the pin count. When a hover does not open the
+-- tooltip this says whether a pin, the client quest POI layer, or something else owns the
+-- mouse, without a debugger.
+local function Diagnose()
+    local out = "WorldMapPins: " .. #ns.Pins .. " pins"
+    if not WorldMapFrame or not WorldMapFrame:IsShown() then
+        print(out .. ", map closed")
+        return
+    end
+    local frame = GetMouseFocus and GetMouseFocus()
+    local name = frame and (frame:GetName() or frame.pin and "pin: " .. frame.pin.label)
+    print(out .. ", map open, zone index " .. tostring(GetCurrentMapZone and GetCurrentMapZone())
+        .. ", mouse over " .. tostring(name or "nothing"))
+end
+
+SLASH_WORLDMAPPINS1 = "/wmp"
+SLASH_WORLDMAPPINS2 = "/worldmappins"
+SlashCmdList["WORLDMAPPINS"] = Diagnose
 
 if Frame.RegisterEvent then
     Frame:RegisterEvent("PLAYER_LOGIN")

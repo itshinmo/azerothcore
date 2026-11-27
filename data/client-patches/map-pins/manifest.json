@@ -1,14 +1,14 @@
 {
   "archive": "patch-Z.MPQ",
-  "built_at": "2026-11-26T22:20:06+00:00",
+  "built_at": "2026-11-27T17:37:23+00:00",
   "compression": "zlib",
   "dbc_files": 0,
   "entries": [
     {
-      "compressed_size": 4170,
+      "compressed_size": 5501,
       "path": "Interface\\AddOns\\WorldMapPins\\WorldMapPins.lua",
-      "sha256": "ee8eb7fc2919e5cea8754d79a834a4cc9a005a0592233b32ffc1725846f448c1",
-      "size": 12774,
+      "sha256": "f442544d21e53b48e3e269d503eb727ce0b1790dc1bef1c6f99d20ea85ad7c6a",
+      "size": 15865,
       "verify_flags": 80
     },
     {
@@ -62,12 +62,12 @@
     ]
   },
   "schema": 1,
-  "sha256": "c4088d412e9722cafec75d0ec79ed56fe2c5f581a017f34b2f3ff2c8b1c3c643",
-  "size": 27923,
+  "sha256": "a68263d4d7130d8bf5cc54ace894beae65ab2d987108baaba42de743633cccef",
+  "size": 29254,
   "sources": [
     {
       "path": "Interface\\AddOns\\WorldMapPins\\WorldMapPins.lua",
-      "sha256": "ee8eb7fc2919e5cea8754d79a834a4cc9a005a0592233b32ffc1725846f448c1",
+      "sha256": "f442544d21e53b48e3e269d503eb727ce0b1790dc1bef1c6f99d20ea85ad7c6a",
       "source": "data/client-patches/map-pins/src/WorldMapPins/WorldMapPins.lua"
     },
     {

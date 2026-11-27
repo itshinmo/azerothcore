@@ -20,12 +20,24 @@ fan-out, no fake offsets.
 
 ## Tooltip
 
-Each pin is a 24x24 button at `WORLDMAP_POI_FRAMELEVEL + 50`, above the client landmark buttons
-(level 91) and the quest POI layer (level 100), with the mouse enabled. Hovering shows three lines:
+Each pin is a 24x24 button parented to `WorldMapFrame`, at the frame's own strata and frame level
+plus 7, with the mouse enabled. That is the arrangement Questie uses in this client; HandyNotes uses
+`+6`. A pin parented to `WorldMapButton` at `WORLDMAP_POI_FRAMELEVEL + 50` drew correctly but never
+received a mouse event, which is why hover and click both failed in the 2026-11-27 playtest.
 
-- boss: name, `Classic world boss` or `The Burning Crusade world boss`, zone;
-- Warpweaver: `Warpweaver`, `Transmogrifier`, city;
-- Call Board: `Call Board`, `Custom quest board`, city or hub.
+Hovering uses `WorldMapTooltip`, the client's own map tooltip:
+
+- boss: the boss name, then `<Classic world boss> - <zone>`;
+- Warpweaver: the city, then `Warpweaver - Transmogrifier`;
+- Call Board: the city or hub, then `Call Board - Custom quest board`.
+
+The city is the title because every capital has a Warpweaver and a Call Board 1 to 7 pixels apart on
+the continent map, and only the top pin of a pair can be hovered there. The owner chose to keep all
+20 pins self-describing rather than merge or offset them. Zone maps show both pins apart.
+
+Hover also sets `WorldMapPOIFrame.allowBlobTooltip = false`, because otherwise
+`WorldMapBlobFrame_OnUpdate` replaces the pin tooltip with the quest-blob tooltip under the cursor.
+Leaving restores it.
 
 Warpweaver uses `Interface\Icons\INV_NetherPortal`, a dark void portal that matches the ethereal
 transmogrifier; the stock chest icon read as generic loot. The texture comes from
@@ -33,6 +45,10 @@ transmogrifier; the stock chest icon read as generic loot. The texture comes fro
 a placeholder for that one icon.
 
 Clicking forwards to `WorldMapButton_OnClick`, so the stock map ping still works.
+
+`/wmp` (or `/worldmappins`) prints the pin count, the open map zone index and the name of the frame
+under the cursor. Use it when a hover does not open the tooltip: it says whether a pin, the client
+quest POI layer, or something else owns the mouse.
 
 ## Build
 
@@ -55,8 +71,19 @@ my = (xMax - worldX) / (xMax - xMin)
 
 Zone bounds come from `WorldMapArea.dbc`. Dalaran is the exception: its `WorldMapArea` row has zero
 bounds, so both Dalaran pins come from `DungeonMap.dbc` floor 27 (map 571), the city micro-map.
-Silvermoon and the Exodar use `DisplayMapID` (Eastern Kingdoms and Kalimdor), not their `MapID`
-(530).
+
+Silvermoon and the Exodar are the second exception. They sit on map 530 but display on the Eastern
+Kingdoms and Kalimdor maps, so their **continent** fractions need the additive offset from
+`WorldMapTransforms.dbc` before projection:
+
+| Map 530 region | Offset X | Offset Y |
+|----------------|----------|----------|
+| `0` Eastern Kingdoms | `-2400` | `+2400` |
+| `1` Kalimdor | `+10133.333` | `+17600` |
+
+Their zone fractions never take the offset. Skipping it put the Silvermoon pair in the ocean north of
+the Eastern Kingdoms and the Exodar pair under the `THE GREAT SEA` label, which is the bug the owner
+reported on 2026-11-27.
 
 Continent index order is the client's, not the map id order: **1 Kalimdor, 2 Eastern Kingdoms,
 3 Outland, 4 Northrend**, the `WorldMapArea` area-id-0 file order. Pins store that index. Mapping
@@ -70,7 +97,7 @@ Continent index order is the client's, not the map id order: **1 Kalimdor, 2 Eas
 | Dalaran pin fractions | `Data/patch-M.mpq` `DungeonMap.dbc` row 27 | `34beae04678c69cf536946217106d3e935d65d833dc86c59d120e8f335e756e9` |
 | FrameXML canary | `Data/enUS/patch-enUS-3.MPQ` (source archive) | `e05b75b212cdda98f86beef35eb024aa1ff416a7164d08873c49b7ae1f3105c8` |
 | Cooldown nil guard | `Data/enUS/locale-enUS.MPQ` (source archive) | `7b93af66d6f5bb0aaaed35202a376c5e2a75df0daea8e0c6c117ab2bfbde77b5` |
-| Built archive | `dist/patch-Z.MPQ`, 27,923 bytes | `c4088d412e9722cafec75d0ec79ed56fe2c5f581a017f34b2f3ff2c8b1c3c643` |
+| Built archive | `dist/patch-Z.MPQ`, 29,254 bytes | `a68263d4d7130d8bf5cc54ace894beae65ab2d987108baaba42de743633cccef` |
 
 `manifest.json` carries the per-entry hashes and is the audit record; this table names the DBC
 sources the fractions were computed from.
