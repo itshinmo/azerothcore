@@ -1,6 +1,7 @@
 ---
 description: Current project status, last verified commit, known issues, open decisions, and next tasks. Read after overview on any task.
-last-verified: 2026-11-27 (feat/map-pins; map layer replaced with bosses and custom services; owner playtest pending)
+last-verified: 2026-11-27 (docs/map-pins-scope-and-awe; ADR-037 scope amended; generated pin data;
+  hover on WorldMapFrame + 7; owner in-client hover test pending)
 ---
 
 # Status
@@ -19,6 +20,52 @@ last-verified: 2026-11-27 (feat/map-pins; map layer replaced with bosses and cus
 - Website work has not started and is not part of the current phase. Custom content and shop work
   remain out of scope until the base game is done.
 - Branch: `local-server-setup` is the integration branch. Confirm with `git status`.
+
+## Session record — 2026-11-27 (playtest round 3: map pins second pass)
+
+- **Four continent fractions corrected.** Silvermoon and The Exodar sit on map 530 but display on the
+  Eastern Kingdoms and Kalimdor maps, so their continent fractions need the additive
+  `WorldMapTransforms.dbc` offset before projection: map 530 → region 0 adds `-2400` X and `+2400` Y,
+  map 530 → region 1 adds `+10133.333` X and `+17600` Y. Zone fractions never take the offset. The
+  four fixed values: Silvermoon Warpweaver `0.6287/0.0481` → `0.5698/0.1365`; Silvermoon Call Board
+  `0.6234/0.0592` → `0.5645/0.1476`; Exodar Warpweaver `0.7797/0.6820` → `0.3014/0.2690`; Exodar
+  Call Board `0.7816/0.6747` → `0.3033/0.2616`. Both cities had drawn in the ocean.
+- **Hover root cause.** A pin parented to `WorldMapButton` at `WORLDMAP_POI_FRAMELEVEL + 50` received
+  no mouse event at all: no tooltip, and the click did not reach the map either. The working
+  arrangement, proven by Questie in the same client, is a 24x24 button parented to `WorldMapFrame` at
+  `GetFrameLevel() + 7`, with the frame's strata, the tooltip on `WorldMapTooltip`, and
+  `WorldMapPOIFrame.allowBlobTooltip = false` while hovered. Offsets now use
+  `WorldMapButton:GetWidth() * GetScale()`. `/wmp` prints the pin count and the frame under the
+  cursor for a hover that does not open.
+- **Generator added.** `data/client-patches/map-pins/generate.py` writes per-kind data files under
+  `src/WorldMapPins/data/` from the tracked SQL plus the client DBC. The hand-computed ocean-pin bug
+  and the owner's by-hand moves are the reason. A build regenerates the data; `--check` fails on a
+  stale file. The contract is [ADR-037](../../decisions/ADR-037-world-map-pins.md) rule 4.
+- **ADR-037 amended** (not rewritten; title and `Status: accepted` kept, `Amended: 2026-11-27`
+  added). Scope is now custom content, the 7 world bosses, the hub portal network and the player
+  transport stations. Rule 4 (no generator) superseded; rule 5 rewritten with the parent-frame
+  evidence. The flight master / innkeeper / battlemaster / meeting stone / city leader exclusion
+  stands; portals and transports are the explicit closed exception. `decisions/README.md` row updated.
+- **Portal pins.** One pin per portal room, not per portal object: Shattrath City row (8 capital
+  destinations), Shattrath to Quel'Danas, Dalaran Alliance (5), Dalaran Horde (5), and one Blasted
+  Lands portal per capital (8). Stock `Spell_Arcane_Portal*` icons; tooltip lists every destination.
+- **Transport pins.** One pin per station cluster, cut from the 15 player boat and zeppelin routes
+  in `acore_world.transports`; the two Icecrown gunships, the two Northrend turtles and Garvan's
+  Reef stay out. Stations within about 120 yards on one map merge into one pin. Ship icons
+  `INV_AllianceShipMount`/`INV_ShipMount`, zeppelin `INV_HordeZeppelinMount`/`INV_ZeppelinMount`,
+  all from `Data/patch-I.mpq`. Tooltip is exactly two lines: station name and `To <destination>`; no
+  vessel names. `Westguard Keep`/`Shattered Straits` share a coordinate, so it is one combined pin.
+- **Icon browser addon.** A GM addon browses `Interface\Icons` from inside the client, in its own
+  change. AWE has no icon list and no model thumbnail grid, so icon choice for pins, gossip and
+  addons is made in the client, and a model is picked by name or display id in the editor.
+- **AWE limits recorded.** The Darkshire white blobs are app-side. The app logged 112 assets it could
+  not load; two representative ones are `WestfallCabbage.m2` (M2 parser, `reading 'blend'`) and
+  `duskwoodtreecanopy03.mdx` (404). Both causes are recorded as undiagnosed, because the app already
+  rewrites `.mdx` to `.m2` and the model exists in several archives, so the extension theory was
+  wrong. The game client is unaffected; no upstream issue is filed. Runbook updated, including the export folder
+  warning that `data/sql/custom/db_world` is applied at the next restart.
+- **Open.** Owner still has to test hover in the client: tooltip, click ping, and the four corrected
+  continent positions on the EK and Kalimdor maps.
 
 ## Session record — 2026-11-27 (map layer replaced: bosses and custom services only)
 
