@@ -1,7 +1,7 @@
 ---
 description: Current project status, last verified commit, known issues, open decisions, and next tasks. Read after overview on any task.
-last-verified: 2026-11-27 (docs/map-pins-scope-and-awe; ADR-037 scope amended; generated pin data;
-  hover on WorldMapFrame + 7; owner in-client hover test pending)
+last-verified: 2026-11-27 (local-server-setup; round-3 map pin fixes merged: continent offsets,
+  generated pin data, hover; owner in-client hover test pending)
 ---
 
 # Status
@@ -21,7 +21,7 @@ last-verified: 2026-11-27 (docs/map-pins-scope-and-awe; ADR-037 scope amended; g
   remain out of scope until the base game is done.
 - Branch: `local-server-setup` is the integration branch. Confirm with `git status`.
 
-## Session record — 2026-11-27 (playtest round 3: map pins second pass)
+## Session record — 2026-11-27 (playtest round 3: map pin offsets, hover, generated data)
 
 - **Four continent fractions corrected.** Silvermoon and The Exodar sit on map 530 but display on the
   Eastern Kingdoms and Kalimdor maps, so their continent fractions need the additive
@@ -62,8 +62,21 @@ last-verified: 2026-11-27 (docs/map-pins-scope-and-awe; ADR-037 scope amended; g
   not load; two representative ones are `WestfallCabbage.m2` (M2 parser, `reading 'blend'`) and
   `duskwoodtreecanopy03.mdx` (404). Both causes are recorded as undiagnosed, because the app already
   rewrites `.mdx` to `.m2` and the model exists in several archives, so the extension theory was
-  wrong. The game client is unaffected; no upstream issue is filed. Runbook updated, including the export folder
-  warning that `data/sql/custom/db_world` is applied at the next restart.
+  wrong. The game client is unaffected; no upstream issue is filed. Runbook updated, including the export
+  folder warning that `data/sql/custom/db_world` is applied at the next restart.
+- **Tooltip title.** The city is the title and the second line names the service. Every capital has a
+  Warpweaver and a Call Board 1 to 7 pixels apart on the continent map (Undercity 1.0 px, Stormwind
+  1.3 px, Thunder Bluff 2.1 px) and pins are 24 px, so only the top pin of a pair can be hovered
+  there. The owner chose to keep all 20 pins self-describing over merging or offsetting them.
+- **Where the round-3 work landed.** `fix/map-pins-continent-tooltip` (coordinates and hover),
+  `docs/map-pins-scope-and-awe` (ADR amendment and the AWE runbook), `feat/map-pins-generator`
+  (generator and the final `patch-Z`, sha256
+  `4c630fda4d373e91b58bcbdae0534dc444677026c103dab02e7ea3a31f2dbbeb`, 31,148 bytes), and
+  `feat/icon-browser` (the icon browser addon), merged in that order.
+- **Review.** Three reviewer passes; two real bugs found and fixed before merge: `HideAll` left
+  `WorldMapPOIFrame.allowBlobTooltip` switched off when the map closed while hovered, and the ADR
+  declared generated data files that no branch produced. Each new assertion was mutation-tested:
+  14 deliberate reverts, 14 failures.
 - **Open.** Owner still has to test hover in the client: tooltip, click ping, and the four corrected
   continent positions on the EK and Kalimdor maps.
 

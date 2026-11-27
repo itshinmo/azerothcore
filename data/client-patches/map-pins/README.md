@@ -70,18 +70,33 @@ Clicking forwards to `WorldMapButton_OnClick`, so the stock map ping still works
 under the cursor. Use it when a hover does not open the tooltip: it says whether a pin, the client
 quest POI layer, or something else owns the mouse.
 
+## Generated data
+
+Pin rows are not edited by hand. `generate.py` reads the spawn coordinates from tracked SQL and the
+map bounds from the client DBC, then writes one file per pin kind under `src/WorldMapPins/data/`:
+
+| File | Source |
+|------|--------|
+| `zones.lua` | `AreaTable.dbc` names for the zones that hold a pin |
+| `bosses.lua` | the seven outdoor world boss spawns |
+| `services.lua` | `collections_npc_spawns.sql` and `call_boards.sql` |
+
+`build.py --check` runs `generate.py --check` and fails when a committed data file is stale, so a
+moved spawn cannot ship with an old position. A spawn move is: edit the tracked SQL, run
+`generate.py`, rebuild.
+
 ## Build
 
 ```bash
+python3 data/client-patches/map-pins/generate.py
 python3 data/client-patches/map-pins/build.py
 python3 data/client-patches/map-pins/build.py --check
 luajit data/client-patches/map-pins/tests/test_addon.lua
+python3 -m unittest discover -s data/client-patches/map-pins/tests -v
 ```
 
-The build copies the addon, appends the FrameXML canary, applies the `Cooldown.lua` nil guard,
-packs `patch-Z.MPQ`, verifies every entry, and writes `manifest.json`. Pin rows are currently static
-in `src/WorldMapPins/WorldMapPins.lua`; the generator that replaces that table lands in its own
-change, and ADR-037 rule 4 records why it exists.
+The build generates the pin data, copies the addon, appends the FrameXML canary, applies the
+`Cooldown.lua` nil guard, packs `patch-Z.MPQ`, verifies every entry, and writes `manifest.json`.
 
 Map fractions use the 3.3.5 rotated axes:
 
@@ -90,21 +105,23 @@ mx = (yMax - worldY) / (yMax - yMin)
 my = (xMax - worldX) / (xMax - xMin)
 ```
 
-Zone bounds come from `WorldMapArea.dbc`. Dalaran is the exception: its `WorldMapArea` row has zero
-bounds, so both Dalaran pins come from `DungeonMap.dbc` floor 27 (map 571), the city micro-map.
+Zone bounds come from `WorldMapArea.dbc`. Two exceptions are handled by the generator:
 
-Silvermoon and the Exodar are the second exception. They sit on map 530 but display on the Eastern
-Kingdoms and Kalimdor maps, so their **continent** fractions need the additive offset from
-`WorldMapTransforms.dbc` before projection:
+- **Dalaran** has a `WorldMapArea` row with zero bounds, so its pins come from the `DungeonMap.dbc`
+  row whose id matches the zone's floor (27, map 571), the city micro-map.
+- **Silvermoon and the Exodar** show on the Eastern Kingdoms and Kalimdor maps but stand on map
+  530, so their continent fraction applies the additive `WorldMapTransforms.dbc` offset before
+  projecting: `(-2400, +2400)` for Eastern Kingdoms, `(+10133.333, +17600)` for Kalimdor. Zone
+  fractions never take it. Skipping it is the ocean-pin bug the owner reported on 2026-11-27.
 
-| Map 530 region | Offset X | Offset Y |
-|----------------|----------|----------|
-| `0` Eastern Kingdoms | `-2400` | `+2400` |
-| `1` Kalimdor | `+10133.333` | `+17600` |
+The generator finds a Call Board's zone by the `zoneId` column of the tracked SQL, not by the
+coordinate: `WorldMapArea` bounds overlap, so a point alone is ambiguous (Feralas and Mulgore both
+contain Emeriss). The ten Warpweaver rows carry `zoneId` 0, so their zones come from the reserved
+GUID block in `WARPWEAVER_ZONES`; a Warpweaver GUID missing from that map fails the generator
+instead of falling back to a neighbouring zone.
 
-Their zone fractions never take the offset. Skipping it put the Silvermoon pair in the ocean north of
-the Eastern Kingdoms and the Exodar pair under the `THE GREAT SEA` label, which is the bug the owner
-reported on 2026-11-27.
+A boxed spawn row that cannot be parsed, or a row count that does not match, is an error. A
+silently dropped pin would look fine on the map and still pass `--check`.
 
 Continent index order is the client's, not the map id order: **1 Kalimdor, 2 Eastern Kingdoms,
 3 Outland, 4 Northrend**, the `WorldMapArea` area-id-0 file order. Pins store that index. Mapping
@@ -118,7 +135,7 @@ Continent index order is the client's, not the map id order: **1 Kalimdor, 2 Eas
 | Dalaran pin fractions | `Data/patch-M.mpq` `DungeonMap.dbc` row 27 | `34beae04678c69cf536946217106d3e935d65d833dc86c59d120e8f335e756e9` |
 | FrameXML canary | `Data/enUS/patch-enUS-3.MPQ` (source archive) | `e05b75b212cdda98f86beef35eb024aa1ff416a7164d08873c49b7ae1f3105c8` |
 | Cooldown nil guard | `Data/enUS/locale-enUS.MPQ` (source archive) | `7b93af66d6f5bb0aaaed35202a376c5e2a75df0daea8e0c6c117ab2bfbde77b5` |
-| Built archive | `dist/patch-Z.MPQ`, 29,254 bytes | `a68263d4d7130d8bf5cc54ace894beae65ab2d987108baaba42de743633cccef` |
+| Built archive | `dist/patch-Z.MPQ`, 31,148 bytes | `4c630fda4d373e91b58bcbdae0534dc444677026c103dab02e7ea3a31f2dbbeb` |
 
 `manifest.json` carries the per-entry hashes and is the audit record; this table names the DBC
 sources the fractions were computed from. The built archive row is the current checked-in pair;

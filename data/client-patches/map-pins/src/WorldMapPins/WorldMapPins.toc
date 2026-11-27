@@ -1,9 +1,12 @@
 ## Interface: 30300
 ## Title: World Map Pins
-## Notes: World bosses and custom services on the world map.
+## Notes: World bosses, custom services, hub portals and transport stations on the world map.
 ## Author: project client patch
-## Version: 1.0.0
+## Version: 1.1.0
 ## X-Category: Map
 ## LoadOnDemand: 0
 
+data\zones.lua
+data\bosses.lua
+data\services.lua
 WorldMapPins.lua

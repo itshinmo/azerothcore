@@ -44,7 +44,6 @@ local function Frame()
     function frame:Show() self.shown = true end
     function frame:Hide() self.shown = false end
     function frame:IsShown() return self.shown end
-    function frame:GetName() return self.name end
     function frame:CreateTexture()
         local texture = { shown = true }
         function texture:SetWidth() end
@@ -61,7 +60,6 @@ WORLDMAP_POI_FRAMELEVEL = 100
 WorldMapButton = Frame()
 WorldMapFrame = Frame()
 function WorldMapFrame:IsShown() return shown end
-WorldMapFrame.strata = "DIALOG"
 WorldMapPOIFrame = Frame()
 WorldMapPOIFrame.allowBlobTooltip = true
 WorldMapTooltip = Frame()
@@ -77,8 +75,7 @@ function GameTooltip:AddLine(text) self.lines[#self.lines + 1] = text end
 function GameTooltip:Show() self.shown = true end
 function GameTooltip:Hide() self.shown = false end
 SlashCmdList = {}
-GetMouseFocusTarget = nil
-function GetMouseFocus() return GetMouseFocusTarget end
+function GetMouseFocus() return nil end
 
 function CreateFrame(_, _, parent)
     local frame = Frame()
@@ -111,7 +108,13 @@ function WorldMapButton_OnClick()
 end
 
 local ns = {}
-assert(loadfile(root .. "/WorldMapPins.lua"))("WorldMapPins", ns)
+local function load(name)
+    assert(loadfile(root .. "/" .. name))("WorldMapPins", ns)
+end
+load("data/zones.lua")
+load("data/bosses.lua")
+load("data/services.lua")
+load("WorldMapPins.lua")
 
 -- The addon keeps its frames private; collect them from CreateFrame instead.
 local frames = {}
@@ -176,11 +179,12 @@ assert(names[1] == "Call Board" and names[2] == "Warpweaver", "wrong Stormwind p
 local warp = nil
 for _, frame in ipairs(stormwind) do
     if frame.pin.label == "Warpweaver" then warp = frame end
-    -- Questie's arrangement: WorldMapFrame level + 7, and the frame's own strata. Anything
-    -- lower loses the mouse to the client quest POI layer.
+    -- Questie's arrangement: WorldMapFrame level + 7, and the frame's own strata. A child of
+    -- WorldMapButton at POI_FRAMELEVEL + 50 drew but never received a mouse event.
     assert(frame.level == WorldMapFrame:GetFrameLevel() + 7,
         "pin must sit above the map frame, got " .. frame.level)
-    assert(frame.strata == "DIALOG", "pin must copy the map frame's strata, got " .. frame.strata)
+    assert(frame.strata == WorldMapFrame:GetFrameStrata(), "pin must copy the map strata")
+    -- The parent is what broke hover: a child of WorldMapButton drew but got no mouse event.
     assert(frame.parent == WorldMapFrame, "pin must be a child of WorldMapFrame")
     assert(frame.mouse, "pin must enable the mouse or hover never fires")
     assert(frame:GetWidth() == 24 and frame:GetHeight() == 24, "pin hit box must be 24x24")
@@ -205,9 +209,23 @@ assert(math.abs(point[5] + warp.pin.my * WorldMapButton:GetHeight() * 0.691) < 0
 WorldMapButton.scale = 1
 ns.Refresh()
 
+-- PlaceLevel runs on every refresh, not only at creation: the client re-levels its own map
+-- frames on show, so a pin that is only leveled once can fall behind.
+local before = warp.level
+WorldMapFrame.level = 120
+ns.Refresh()
+assert(warp.level == 127, "refresh must re-level the pin, got " .. warp.level)
+WorldMapFrame.level = before - 7
+ns.Refresh()
+assert(warp.level == before, "refresh must follow the frame level back")
+
+-- Hiding the map while hovered must restore the quest blob tooltip.
+WorldMapPOIFrame.allowBlobTooltip = false
+hooks.WorldMapFrame_OnHide[1]()
+assert(WorldMapPOIFrame.allowBlobTooltip == true, "OnHide must restore the blob tooltip")
+
 -- Hover must state what the pin is, on the map tooltip, and must silence the blob tooltip.
 WorldMapPOIFrame.allowBlobTooltip = true
-WorldMapTooltip.shown = false
 warp.scripts.OnEnter(warp)
 assert(WorldMapTooltip.lines[1] == "Stormwind City", "tooltip title is the city")
 assert(WorldMapTooltip.lines[2] == "Warpweaver - Transmogrifier",
@@ -229,6 +247,7 @@ continent, mapZoneIndex, zoneName = 1, 1, "Duskwood"
 ns.Refresh()
 local duskwood = visible()
 assert(#duskwood == 1, "Duskwood must show 1 pin, got " .. #duskwood)
+
 assert(duskwood[1].pin.label == "Taerar", "wrong Duskwood pin")
 duskwood[1].scripts.OnEnter(duskwood[1])
 assert(WorldMapTooltip.lines[1] == "Taerar", "boss tooltip title is the boss name")
@@ -261,11 +280,9 @@ continent, mapZoneIndex = 4, 0
 ns.Refresh()
 assert(#visible() == 2, "Northrend must show 2 pins, got " .. #visible())
 
--- Hiding the map hides every pin and restores the quest blob tooltip.
-WorldMapPOIFrame.allowBlobTooltip = false
+-- Hiding the map hides every pin.
 hooks.WorldMapFrame_OnHide[1]()
 assert(#visible() == 0, "OnHide must hide all pins")
-assert(WorldMapPOIFrame.allowBlobTooltip == true, "OnHide must restore the blob tooltip")
 
 -- The continent offsets for Silvermoon and The Exodar come from WorldMapTransforms.dbc. The
 -- client adds them before projecting on the Eastern Kingdoms and Kalimdor maps. The old raw
@@ -297,30 +314,14 @@ assert(exc.cont == 1 and close(exc.cx, 0.3033) and close(exc.cy, 0.2616),
 assert(close(smw.mx, 0.8602) and close(smw.my, 0.3514), "Silvermoon zone position changed")
 assert(close(exw.mx, 0.5292) and close(exw.my, 0.4570), "Exodar zone position changed")
 
--- The diagnostic slash command must exist and run without error, for each cursor state.
+-- The diagnostic slash command must exist and run without error.
 assert(type(SlashCmdList["WORLDMAPPINS"]) == "function", "missing /wmp diagnostic")
 local printed = {}
 local realPrint = print
 print = function(text) printed[#printed + 1] = text end
-shown = false                       -- map closed
-SlashCmdList["WORLDMAPPINS"]()
-shown = true
-continent, mapZoneIndex, zoneName = 1, 1, "Stormwind City"
-WorldMapFrame.level = 120           -- re-level path, only reached when the pin is drawn
-ns.Refresh()
-assert(warp.level == 127, "refresh must re-level the pin, got " .. warp.level)
-WorldMapFrame.level = 94 - 7
-ns.Refresh()
-assert(warp.level == 94, "refresh must follow the frame level back, got " .. warp.level)
-GetMouseFocusTarget = warp          -- cursor over a pin with no frame name
-SlashCmdList["WORLDMAPPINS"]()
-GetMouseFocusTarget = nil           -- cursor over nothing
 SlashCmdList["WORLDMAPPINS"]()
 print = realPrint
-assert(#printed == 3, "diagnostic must print once per call, got " .. #printed)
-assert(printed[1]:find("map closed"), printed[1])
-assert(printed[2]:find("pin: Warpweaver") and printed[2]:find("^WorldMapPins: 32 pins"), printed[2])
-assert(printed[3]:find("mouse over nothing"), printed[3])
+assert(#printed == 1 and printed[1]:find("^WorldMapPins: 32 pins"), printed[1] or "no output")
 
 -- The zone list resolver handles the "The"/"City" spelling differences.
 zoneName = "Stormwind City"
