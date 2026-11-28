@@ -42,7 +42,9 @@ list ADR-032 tried to draw.
      Portal pins use the stock `Spell_Arcane_Portal*` icons, one per room by faction: Stormwind for
      the Alliance enclave, Orgrimmar for the Horde enclave, the city's own icon for each capital's
      Blasted Lands portal, and the Shattrath icon for both Shattrath pins. The tooltip is the city,
-     the room, then every destination as `To <city>`;
+     the room, then every destination as `To <city>`. A room that is named after its own
+     destination reads `Portal - Blasted Lands` and lists nothing: repeating it as
+     `To Blasted Lands` was the duplicate the owner saw on 2026-11-28;
    - **ship and zeppelin station pins**, one pin per station node from the 15 player boat and
      zeppelin routes in `acore_world.transports`. The two Icecrown gunships, the two Northrend
      turtles and Garvan's Reef stay out. There is **no distance merging**: the owner wants every
@@ -135,6 +137,11 @@ list ADR-032 tried to draw.
   `WorldMapFrame + 7` arrangement. The old level was chosen on the belief that the pin had to sit
   above the quest POI frame. Playtest evidence: the pin drew and received no mouse event at all.
 - Rule 7 gained the map-530 `WorldMapTransforms` offset, which rule 7 previously omitted.
+- Rule 1's portal tooltip rule gained the destination-named room form. A Blasted Lands portal read
+  `Portal to Blasted Lands` and then `To Blasted Lands`; the owner reported the duplicate. The
+  room line became `Portal - Blasted Lands` and the room lists no destination, which is the same
+  rule applied to the Shattrath `Portal - Isle of Quel'Danas`, the only other room named after
+  what it serves.
 
 **2026-11-27, first amendment (same day, earlier).** ADR-032 was withdrawn and the layer was
 replaced: the 1,128-marker stock POI layer became 7 world bosses plus the custom services, with no

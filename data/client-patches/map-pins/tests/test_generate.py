@@ -463,7 +463,19 @@ class PortalRoomsTest(unittest.TestCase):
             self.assertTrue(title and subtitle, "every room names a city and a place")
             self.assertTrue(zone > 0, "every room has a zone id")
             self.assertTrue(icon.startswith("Spell_Arcane_Portal"), icon)
-            self.assertGreaterEqual(len(destinations), 1, subtitle)
+            # A room named after its destination lists none, or the tooltip says it twice.
+            if subtitle.startswith("Portal - "):
+                self.assertEqual(destinations, (), subtitle)
+            else:
+                self.assertGreaterEqual(len(destinations), 1, subtitle)
+
+    def test_a_destination_named_room_uses_the_dash_form(self):
+        # "Portal to Blasted Lands" plus "To Blasted Lands" was the duplicate the owner saw.
+        named = {room[0]: room[1] for room in generate.PORTAL_ROOMS
+                 if room[1].startswith("Portal - ")}
+        self.assertEqual(len(named), 9, named)
+        self.assertTrue(named["Stormwind City"] == "Portal - Blasted Lands", named)
+        self.assertTrue(named["Shattrath City"] == "Portal - Isle of Quel'Danas", named)
 
     def test_the_shattrath_room_lists_eight_capitals(self):
         room = next(room for room in generate.PORTAL_ROOMS if room[1] == "Terrace of Light")

@@ -212,8 +212,10 @@ end, "Stormwind Blasted Lands portal")
 -- Icon names must match the client's own spelling, because tools/icon-browser/IconBrowserIcons.lua
 -- is the list we choose from and it is case-sensitive there.
 assert(blasted.icon == "Interface\\Icons\\Spell_Arcane_PortalStormWind", blasted.icon)
-assert(blasted.subtitle == "Portal to Blasted Lands", blasted.subtitle)
-assert(blasted.lines[1] == "To Blasted Lands", blasted.lines[1])
+-- The room's name is the destination, so the pin carries no extra destination line.
+assert(blasted.subtitle == "Portal - Blasted Lands", blasted.subtitle)
+assert(blasted.lines == nil, "Blasted Lands must not repeat its name, got "
+    .. tostring(blasted.lines and blasted.lines[1]))
 
 -- Transport pins: one per station node, no merging, station as title, destination as one line.
 local harbor = find(function(pin)
@@ -241,10 +243,13 @@ assert(blastedFrame.icon.texture == blastedFrame.pin.icon,
 blastedFrame.scripts.OnEnter(blastedFrame)
 assert(WorldMapTooltip.lines[1] == "Stormwind City",
     "portal tooltip title, got " .. tostring(WorldMapTooltip.lines[1]))
-assert(WorldMapTooltip.lines[2] == "Portal to Blasted Lands",
+-- The room is already named after the destination, so the tooltip must not repeat it as "To
+-- Blasted Lands" on the next line. One mention of the destination per tooltip.
+assert(WorldMapTooltip.lines[2] == "Portal - Blasted Lands",
     "portal tooltip room, got " .. tostring(WorldMapTooltip.lines[2]))
-assert(WorldMapTooltip.lines[3] == "To Blasted Lands",
-    "portal tooltip destination, got " .. tostring(WorldMapTooltip.lines[3]))
+assert(WorldMapTooltip.lines[3] == nil,
+    "the Blasted Lands room must not repeat its destination, got "
+        .. tostring(WorldMapTooltip.lines[3]))
 blastedFrame.scripts.OnLeave(blastedFrame)
 
 -- Shattrath shows two portal pins and lists every capital.

@@ -21,7 +21,8 @@ not place the station pins accurately.
 
 The portal rooms are the Shattrath City row (8 capital destinations), the Shattrath portal to the Isle
 of Quel'Danas, the Dalaran Silver Enclave (5), the Dalaran Sunreaver's Sanctuary (5) and one Blasted
-Lands portal per capital (8). Portals draw one pin per room, at the centroid of that room's portal
+Lands portal per capital (8). The Blasted Lands rooms and the Quel'Danas room are named after the
+destination they serve, so their tooltips read `Portal - Blasted Lands` with no `To` line. Portals draw one pin per room, at the centroid of that room's portal
 objects, not per portal object: Shattrath's eight portals span about 145 by 103 yards, so per-object
 pins would overlap and only the top tooltip would ever open. Each room uses a faction icon: Stormwind
 for the Alliance enclave, Orgrimmar for the Horde one, its own city icon for each capital's Blasted
@@ -71,7 +72,9 @@ Hovering shows the pin's lines on `WorldMapTooltip`, the client's own map toolti
 - boss: the boss name, then `<Classic world boss> - <zone>`;
 - Warpweaver: the city, then `Warpweaver - Transmogrifier`;
 - Call Board: the city or hub, then `Call Board - Custom quest board`;
-- portal: the city, the room, then every destination as `To <city>`;
+- portal: the city, the room, then every destination as `To <city>`. A room named after its
+  own destination reads `Portal - Blasted Lands` and lists nothing, so the destination is not said
+  twice;
 - station: the station name, then `To <destination>`, one line per route at that node. Ship pins use
   `INV_ShipMount`, zeppelin pins `INV_ZeppelinMount`, both from `Data/patch-I.mpq`.
 
@@ -166,7 +169,7 @@ Continent index order is the client's, not the map id order: **1 Kalimdor, 2 Eas
 | Dalaran pin fractions | `Data/patch-M.mpq` `DungeonMap.dbc` row 27 | `aa31db35a2266694d8318c410712a18540d86469e3d6134eb648a1d9694f21f5` |
 | FrameXML canary | `Data/enUS/patch-enUS-3.MPQ` (source archive) | `e05b75b212cdda98f86beef35eb024aa1ff416a7164d08873c49b7ae1f3105c8` |
 | Cooldown nil guard | `Data/enUS/locale-enUS.MPQ` (source archive) | `7b93af66d6f5bb0aaaed35202a376c5e2a75df0daea8e0c6c117ab2bfbde77b5` |
-| Built archive | `dist/patch-Z.MPQ`, 37,455 bytes | `34e704a0f50a752fee20a00154201c60e568bbb2a2195768182fb421a9c0a381` |
+| Built archive | `dist/patch-Z.MPQ`, 37,445 bytes | `93c09e04add2924dd00f4c69bf0985ac812119e1d04289345e2e1e2aac2a5fea` |
 
 `manifest.json` carries the per-entry hashes and is the audit record; this table names the DBC
 sources the fractions were computed from. The built archive row is the current checked-in pair;
