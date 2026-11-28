@@ -1,7 +1,7 @@
 ---
 description: Current project status, last verified commit, known issues, open decisions, and next tasks. Read after overview on any task.
-last-verified: 2026-11-28 (fix/map-pins-zone-and-scale; round-4 playtest fixes: region maps,
-  view scaling, portal tooltip; owner in-client test pending after reinstall)
+last-verified: 2026-11-28 (local-server-setup @ 9449ccf7d; round-4 map pin fixes merged,
+  installed and owner-verified in client: region maps, view scaling, portal tooltip all PASS)
 ---
 
 # Status
@@ -56,8 +56,11 @@ last-verified: 2026-11-28 (fix/map-pins-zone-and-scale; round-4 playtest fixes: 
   that need the client DBC skip when `ACORE_DATA` is absent.
 - **Patch-Z.** `data/client-patches/map-pins/dist/patch-Z.MPQ`, sha256
   `f86b3f25cabd11504f99cf431cd9d11d97bd1b788a4c8d982b09e91d3b00ca18`, 38,131 bytes, 73 pins.
-  **The owner's installed copy is still the pre-branch `f712a0e4…`, so all three defects stay
-  visible until it is reinstalled.**
+  Installed in `~/Games/wotlk-clean/Data` on 2026-11-28; the previous archive (`f712a0e4…`,
+  35,580 bytes) is kept at `Data/.patch-backup/patch-Z.f712a0e4.MPQ` for rollback.
+- **Owner in-client verification: all PASS** (2026-11-28). Region maps draw the city pins
+  (Thunder Bluff on Mulgore and the other eight capitals), pins keep their world position with
+  "Show Quest Objectives" toggled, and the Blasted Lands tooltip shows no duplicate destination.
 
 ## Session record — 2026-11-27 (playtest round 3: map pin offsets, hover, generated data)
 
@@ -969,8 +972,9 @@ Remaining:
 ### Client-patch pipeline (in progress)
 
 - Built `tools/client-patch/` and the `patch-X/Y/Z` family: X item data, Y white preview models,
-  Z map POI layer. Owner in-client test is the remaining gate. See the 2026-11-23 session record and
-  [ADR-027](../../decisions/ADR-027-client-patch-pipeline.md).
+  Z map POI layer (the `WorldMapPins` addon, 73 pins). Owner in-client test **passed**
+  2026-11-28, including the round-4 map pin fixes. See the 2026-11-23 and 2026-11-28 session
+  records and [ADR-027](../../decisions/ADR-027-client-patch-pipeline.md).
 - Next targets, in order: the character-creation armor toggle (glue patch) and the race/class
   combination DBC rows (`patch-V`, proposal).
 - Mythic+ item rows are not in `patch-X` yet. The proposed ranges are `1100000-1899999` (obtainable)
