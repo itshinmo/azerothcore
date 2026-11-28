@@ -56,9 +56,10 @@ The region rectangle is several times the city's, so each pin carries a second f
 displayed zone. Reusing `mx`/`my` there drew every city pin hundreds of pixels off its region map,
 in the sea. The generator rejects a fraction outside 3% of the rectangle, which is how Orgrimmar's
 auction house (just past Durotar's eastern edge) stays allowed. That tolerance is a proximity
-check, not a parent check: neighbouring zones contain the pins too, so the curated table is
-verified by the coverage rule in the generator tests (the parent must be a zone covering the most
-of the city's rectangle), not by geometry alone. The Orgrimmar Warpweaver stores `py = -0.0243`
+check, not a parent check: neighbouring zones contain the pins too. The curated table is
+therefore verified by a coverage rule — the parent covers the most of the city's rectangle —
+which decides seven of the nine uniquely. Thunder Bluff and Shattrath tie with a neighbour, and no
+DBC field breaks the tie, so those two picks are editorial and recorded in `TIE_BREAKS`. The Orgrimmar Warpweaver stores `py = -0.0243`
 and draws about 16 pixels above Durotar's top edge, over the frame border; moving it would mean
 inventing a position the spawn does not have.
 

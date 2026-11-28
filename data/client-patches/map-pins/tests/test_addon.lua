@@ -383,15 +383,37 @@ WorldMapButton.screenTop = 640
 ns.Refresh()
 assertAtWarp("quest view, UI scale 0.8")
 
--- The old bug, stated at the same point: subtracting the button's GetLeft (already divided by
+-- The old bug, stated at the same quantity: subtracting the button's GetLeft (already divided by
 -- the button's 0.691) from the frame's GetLeft (divided by 0.8) mixes unit spaces. Compare the
--- naive and correct offsets for the SAME pin, so a small pin X cannot make this vacuous.
+-- naive offset against the CORRECT OFFSET only, not against expectedPoint, which adds the pin's
+-- own fraction term and would let the guard pass even when the two formulas agree.
+-- Both corners are already screen pixels, so the correct offset is their difference divided once
+-- by the frame's effective scale. The button's scale cancels out; that is the whole point.
+local function correctOffset()
+    local frameScale = WorldMapFrame:GetEffectiveScale()
+    return (WorldMapButton.screenLeft - WorldMapFrame.screenLeft) / frameScale
+end
 local naiveDx = (WorldMapButton:GetLeft() - WorldMapFrame:GetLeft())
     / WorldMapFrame:GetEffectiveScale()
-local correctDx = expectedPoint(warp.pin)
+local correctDx = correctOffset()
 assert(math.abs(naiveDx - correctDx) > 20,
     "the fixture must be far enough from the naive formula for the test to bite, got "
         .. naiveDx .. " vs " .. correctDx)
+-- And the difference is the unit mix, not a constant: at full map, where both scales are 1,
+-- the naive formula is the correct one.
+WorldMapFrame.scale = 1.0
+WorldMapFrame.screenLeft = 0
+WorldMapButton.scale = 1.0
+ns.Refresh()
+assert(math.abs((WorldMapButton:GetLeft() - WorldMapFrame:GetLeft())
+    / WorldMapFrame:GetEffectiveScale() - correctOffset()) < 0.01,
+    "a full-map view must make the naive formula agree, or the guard above is measuring "
+        .. "something other than the unit mix")
+WorldMapFrame.scale = 0.8
+WorldMapFrame.screenLeft = 40
+WorldMapButton.scale = 0.691
+ns.Refresh()
+assertAtWarp("quest view, back to 0.691")
 
 -- Windowed view, a size no test above uses.
 WorldMapButton.scale = 0.573
@@ -422,9 +444,13 @@ for _, name in ipairs({
     assertRefreshes(name)
 end
 -- Each map-moving path must REPOSITION the pins, not merely call Refresh: move the map between
--- invocations and assert the recorded anchor follows, so a hook replaced by a no-op fails.
+-- invocations and assert the recorded anchor follows, so a hook replaced by a no-op fails. The
+-- frame's own geometry moves, because most of these functions re-anchor or re-scale the map
+-- without touching the button's screen rect.
 for _, name in ipairs({
-    "WorldMapFrame_DisplayQuests", "WorldMapFrame_SetQuestMapView", "WorldMap_ToggleSizeUp",
+    "WorldMapFrame_Update", "WorldMapFrame_UpdateMap", "WorldMapFrame_OnShow",
+    "WorldMapFrame_DisplayQuests", "WorldMapFrame_SetQuestMapView",
+    "WorldMapFrame_SetFullMapView", "WorldMap_ToggleSizeUp", "WorldMap_ToggleSizeDown",
 }) do
     local anchor = warp.points[#warp.points]
     local beforeX = anchor[4]

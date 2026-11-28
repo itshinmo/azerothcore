@@ -126,9 +126,10 @@ list ADR-032 tried to draw.
   move the map is hooked. Each pin handler is wrapped in `pcall` and reports one line per failing
   site, because a player's addon hooking the same frames must not kill the layer.
 - Rule 1's zone visibility gained a curated parent per serviced city. Exact-zone matching left
-  every capital's own zone map empty; geometric containment is unusable because each city's
-  `WorldMapArea` rectangle overlaps three outdoor zones (Desolace genuinely contains Thunder
-  Bluff's pin) and Dalaran's coordinates are a micro-map inside Crystalsong Forest. Nine parents
+  every capital's own zone map empty; geometric containment is unusable because a city's
+  `WorldMapArea` rectangle overlaps its neighbours (the Undercity four, Orgrimmar four, Thunder
+  Bluff three of them) and because Desolace genuinely contains Thunder Bluff's pin, so a point is
+  no better than a rectangle. Dalaran's coordinates are a micro-map inside Crystalsong Forest. Nine parents
   are generated into each pin's `zones` list, and Dalaran deliberately has none. Each pin also
   carries a second fraction pair projected on the parent's rectangle: the city micro-map is about
   a fifth of its region's width, so reusing the city fractions drew the pin several hundred pixels

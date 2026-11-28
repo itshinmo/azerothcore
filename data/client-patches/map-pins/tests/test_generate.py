@@ -397,13 +397,18 @@ def write_taxi_dbc(path: Path, rows: list[tuple]) -> None:
 
 
 class ZoneParentTest(unittest.TestCase):
-    """The curated parents must be the only zones whose rectangle holds the city's pins.
+    """The curated parents follow the rectangle-coverage rule, and the pins land on them.
 
-    Box overlap alone is a rubber stamp: against the real DBC it passes The Barrens and Desolace
-    for Thunder Bluff, Silverpine and the Western Plaguelands for the Undercity, and Nagrand for
-    Shattrath, so it would accept a wrong parent. The discriminating property is the one the
-    addon depends on: project the city's own pin onto the candidate rectangle and it must land
-    inside the map. A wrong parent puts the pin in the sea.
+    Three separate properties, because each alone is a rubber stamp:
+    - Coverage: the curated parent must be a zone covering the most of the city's WorldMapArea
+      rectangle. This is what rejects Wetlands for Ironforge, Azshara for Orgrimmar, Silverpine
+      for the Undercity and Desolace for Thunder Bluff.
+    - Tie-breaks: two cities tie with a neighbour, and no DBC field decides between them, so the
+      pick is editorial and pinned here. Nagrand is a legitimate tie partner for Shattrath, not a
+      wrong answer this suite can rule out.
+    - Bounds: projecting the real pin onto the parent rectangle must land inside the map. That
+      proves the addon has a sensible position to draw, not that the parent is the right zone:
+      Wetlands contains Ironforge's pins too.
 
     These read the client's WorldMapArea, because the curated table is a claim about that DBC:
     the rectangles are what the addon draws on. They skip when ACORE_DATA is absent rather than
@@ -457,12 +462,9 @@ class ZoneParentTest(unittest.TestCase):
     def test_every_curated_parent_is_a_maximal_overlap_zone(self):
         # The rule the curated table follows, and the only geometric property that rejects a
         # plausible neighbour: the parent must be a zone covering the most of the city's
-        # WorldMapArea rectangle. Measured against the real DBC, bounds containment alone accepts
-        # Wetlands for Ironforge, The Barrens and Desolace for Thunder Bluff, Nagrand for
-        # Shattrath and Silverpine for the Undercity. Two cities tie (Thunder Bluff with The
-        # Barrens, Shattrath with Nagrand); the curated pick wins the tie by being the zone the
-        # city is actually inside, which no DBC field records (AreaTable.ParentAreaID is 0 for
-        # every capital), so a tie is allowed but a lower-coverage zone is not.
+        # WorldMapArea rectangle. Seven cities are decided uniquely by it. Thunder Bluff and
+        # Shattrath tie with a neighbour, and no DBC field breaks the tie (see TIE_BREAKS), so
+        # for those two this asserts membership in the tie set rather than a unique winner.
         maps = self.maps()
         by_key = {zone.key: zone for zone in maps.zones}
         for city, parent in generate.ZONE_PARENTS.items():
@@ -480,6 +482,7 @@ class ZoneParentTest(unittest.TestCase):
                 area = abs(city_zone.x_max - city_zone.x_min) * abs(city_zone.y_max - city_zone.y_min)
                 overlaps[zone.key] = (ox * oy) / area
             best = max(overlaps.values())
+            self.assertIn(parent, overlaps, f"{city} has no WorldMapArea row to measure")
             self.assertAlmostEqual(
                 overlaps[parent], best, places=6,
                 msg=f"{maps.map_zone_name(parent)} covers {overlaps[parent]:.0%} of "
@@ -487,10 +490,22 @@ class ZoneParentTest(unittest.TestCase):
                     f"{maps.map_zone_name(max(overlaps, key=overlaps.get))} covers {best:.0%}",
             )
 
+    def test_the_two_ties_are_pinned_to_their_editorial_choice(self):
+        # The coverage rule cannot decide these two, so the choice is recorded instead of implied.
+        # Without this, moving either parent to its tie partner would pass every other test.
+        self.assertEqual(
+            set(generate.TIE_BREAKS), {1638, 3703},
+            "every undecidable city must record its tie, or the choice is not reproducible",
+        )
+        for city, (chosen, other) in generate.TIE_BREAKS.items():
+            self.assertEqual(generate.ZONE_PARENTS[city], chosen)
+            self.assertNotEqual(chosen, other)
+
     def test_a_wrong_parent_is_less_covered_than_the_curated_one(self):
-        # Guards the coverage rule: each of these neighbours really contains the city's pins, so a
-        # bounds test cannot tell it from the curated parent, and each covers strictly less of the
-        # city rectangle. These are the mutations the old bounds-only test let through.
+        # Guards the coverage rule. Two of these are the cases a bounds test cannot catch
+        # (Wetlands holds Ironforge's pins, Desolace holds Thunder Bluff's); the other two are
+        # caught by both tests. Each covers strictly less of the city rectangle than the curated
+        # parent, which is the property the coverage assertion relies on.
         maps = self.maps()
         by_key = {zone.key: zone for zone in maps.zones}
 

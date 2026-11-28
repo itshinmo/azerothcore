@@ -188,6 +188,18 @@ PLACES = {
 # Plaguelands, and Thunder Bluff's spawn point falls in Desolace, so a naive rule puts city pins
 # on three maps. One curated parent per serviced city, chosen from WorldMapArea. A city with no
 # entry draws only on its own map, which is the safe default.
+#
+# The rule is "the zone covering the most of the city's WorldMapArea rectangle", and it decides
+# seven of the nine uniquely. Two cities tie with a neighbour because both rectangles contain the
+# whole city: Thunder Bluff with The Barrens, Shattrath with Nagrand. No DBC field breaks the tie
+# (AreaTable.ParentAreaID is 0 for every capital, WorldMapArea has no parent column), so the two
+# picks below are editorial: the region a player crosses to reach the city. The generator tests
+# assert the coverage rule and the exact set, and TIE_BREAKS records these two so a future edit
+# cannot quietly move them to the tie partner.
+TIE_BREAKS = {
+    1638: (215, 17),     # Thunder Bluff: Mulgore, not The Barrens
+    3703: (3519, 3518),  # Shattrath: Terokkar Forest, not Nagrand
+}
 ZONE_PARENTS = {
     1519: 12,     # Stormwind City     -> Elwynn Forest
     1537: 1,      # Ironforge          -> Dun Morogh
@@ -195,9 +207,9 @@ ZONE_PARENTS = {
     3557: 3524,   # The Exodar         -> Azuremyst Isle
     1637: 14,     # Orgrimmar          -> Durotar
     1497: 85,     # Undercity          -> Tirisfal Glades
-    1638: 215,    # Thunder Bluff      -> Mulgore
+    1638: 215,    # Thunder Bluff      -> Mulgore (tie with The Barrens, see TIE_BREAKS)
     3487: 3430,   # Silvermoon City    -> Eversong Woods
-    3703: 3519,   # Shattrath City     -> Terokkar Forest
+    3703: 3519,   # Shattrath City     -> Terokkar Forest (tie with Nagrand, see TIE_BREAKS)
     # Dalaran is its own micro-map inside Crystalsong Forest, so it has no parent zone map.
 }
 
