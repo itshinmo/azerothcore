@@ -497,9 +497,30 @@ class ZoneParentTest(unittest.TestCase):
             set(generate.TIE_BREAKS), {1638, 3703},
             "every undecidable city must record its tie, or the choice is not reproducible",
         )
+        maps = self.maps()
+        by_key = {zone.key: zone for zone in maps.zones}
+
+        def coverage(city: int, zone: int) -> float:
+            c, z = by_key[city], by_key[zone]
+            ox = max(0.0, min(max(c.x_min, c.x_max), max(z.x_min, z.x_max))
+                      - max(min(c.x_min, c.x_max), min(z.x_min, z.x_max)))
+            oy = max(0.0, min(max(c.y_min, c.y_max), max(z.y_min, z.y_max))
+                      - max(min(c.y_min, c.y_max), min(z.y_min, z.y_max)))
+            return (ox * oy) / (abs(c.x_max - c.x_min) * abs(c.y_max - c.y_min))
+
         for city, (chosen, other) in generate.TIE_BREAKS.items():
             self.assertEqual(generate.ZONE_PARENTS[city], chosen)
             self.assertNotEqual(chosen, other)
+            # The partner must really be a tie: equal coverage against the real DBC, otherwise a
+            # future edit can record an arbitrary zone and stay green.
+            self.assertIn(other, by_key, f"tie partner {other} is not in WorldMapArea")
+            self.assertIn(chosen, by_key, f"curated parent {chosen} is not in WorldMapArea")
+            self.assertAlmostEqual(
+                coverage(city, other), coverage(city, chosen), places=6,
+                msg=f"{maps.map_zone_name(other)} is not a real tie for "
+                    f"{maps.map_zone_name(city)}: it covers less than "
+                    f"{maps.map_zone_name(chosen)}",
+            )
 
     def test_a_wrong_parent_is_less_covered_than_the_curated_one(self):
         # Guards the coverage rule. Two of these are the cases a bounds test cannot catch

@@ -22,9 +22,10 @@ not place the station pins accurately.
 The portal rooms are the Shattrath City row (8 capital destinations), the Shattrath portal to the Isle
 of Quel'Danas, the Dalaran Silver Enclave (5), the Dalaran Sunreaver's Sanctuary (5) and one Blasted
 Lands portal per capital (8). The Blasted Lands rooms and the Quel'Danas room are named after the
-destination they serve, so their tooltips read `Portal - Blasted Lands` with no `To` line. Portals draw one pin per room, at the centroid of that room's portal
-objects, not per portal object: Shattrath's eight portals span about 145 by 103 yards, so per-object
-pins would overlap and only the top tooltip would ever open. Each room uses a faction icon: Stormwind
+destination they serve, so their tooltips read `Portal - Blasted Lands` with no `To` line. Portals
+draw one pin per room, at the centroid of that room's portal objects, not per portal object:
+Shattrath's eight portals span about 145 by 103 yards, so per-object pins would overlap and only
+the top tooltip would ever open. Each room uses a faction icon: Stormwind
 for the Alliance enclave, Orgrimmar for the Horde one, its own city icon for each capital's Blasted
 Lands portal, and `Spell_Arcane_PortalShattrath` for both Shattrath pins.
 
@@ -59,9 +60,10 @@ auction house (just past Durotar's eastern edge) stays allowed. That tolerance i
 check, not a parent check: neighbouring zones contain the pins too. The curated table is
 therefore verified by a coverage rule — the parent covers the most of the city's rectangle —
 which decides seven of the nine uniquely. Thunder Bluff and Shattrath tie with a neighbour, and no
-DBC field breaks the tie, so those two picks are editorial and recorded in `TIE_BREAKS`. The Orgrimmar Warpweaver stores `py = -0.0243`
-and draws about 16 pixels above Durotar's top edge, over the frame border; moving it would mean
-inventing a position the spawn does not have.
+DBC field breaks the tie, so those two picks are editorial and recorded in `TIE_BREAKS`.
+
+The Orgrimmar Warpweaver stores `py = -0.0243`, so it draws about 16 pixels above Durotar's top
+edge, over the frame border. Moving it would mean inventing a position the spawn does not have.
 
 ## Tooltip
 
