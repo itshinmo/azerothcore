@@ -61,6 +61,7 @@
 #include "SpellAuraDefines.h"
 #include "SpellAuraEffects.h"
 #include "SpellAuras.h"
+#include "SpellHistory.h"
 #include "SpellInfo.h"
 #include "SpellMgr.h"
 #include "TemporarySummon.h"
@@ -451,12 +452,18 @@ Unit::Unit() : WorldObject(),
     _isCombatDisallowed = false;
 
     _lastExtraAttackSpell = 0;
+
+    _spellHistory = new SpellHistory(this);
 }
 
 ////////////////////////////////////////////////////////////
 // Methods of class Unit
 Unit::~Unit()
 {
+    // A player base keeps its kit through RemoveFromWorld(), so a unit destroyed without it would leak it.
+    if (m_vehicleKit)
+        RemoveVehicleKit();
+
     // Detach any AbstractFollowers still targeting this unit (e.g. a summoned pet/guardian/totem's
     // FollowMovementGenerator) before it is destroyed. RemoveAllFollowers() is otherwise only called
     // from RemoveFromWorld(), itself skipped entirely if this unit was already out of world -- so a
@@ -478,6 +485,7 @@ Unit::~Unit()
     delete i_motionMaster;
     delete m_charmInfo;
     delete movespline;
+    delete _spellHistory;
 
     ASSERT(!m_duringRemoveFromWorld);
     ASSERT(!m_attacking);
@@ -546,6 +554,7 @@ void Unit::Update(uint32 p_time)
     }
 
     _UpdateSpells( p_time );
+    _spellHistory->Update();
 
     // update combat timer only for players and pets (only pets with PetAI)
     if (IsInCombat() && (IsPlayer() || ((IsPet() || HasUnitTypeMask(UNIT_MASK_CONTROLLABLE_GUARDIAN)) && IsControlledByPlayer())))
@@ -5088,12 +5097,36 @@ void Unit::RemoveAurasDueToSpellBySteal(uint32 spellId, ObjectGuid casterGUID, U
             // Cast duration to unsigned to prevent permanent aura's such as Righteous Fury being permanently added to caster
             uint32 dur = std::min(2u * MINUTE * IN_MILLISECONDS, uint32(aura->GetDuration()));
 
-            if (Aura* oldAura = stealer->GetAura(aura->GetId(), aura->GetCasterGUID()))
+            // Stolen copies are cast by the stealer, so this also finds its own cast of the spell. Only add a stack or
+            // charge to it: refreshing a non-stacking own cast (Ice Barrier, Arcane Intellect) would re-fill or shorten it
+            Aura* oldAura = nullptr;
+            if (stealCharge || aura->GetSpellInfo()->StackAmount > 1)
+                oldAura = stealer->GetAura(aura->GetId(), stealer->GetGUID());
+
+            if (oldAura)
             {
                 if (stealCharge)
                     oldAura->ModCharges(1);
                 else
+                {
+                    uint8 const oldStackAmount = oldAura->GetStackAmount();
+                    int32 oldAmount[MAX_SPELL_EFFECTS] = { };
+                    for (uint8 i = 0; i < MAX_SPELL_EFFECTS; ++i)
+                        if (AuraEffect* aurEff = oldAura->GetEffect(i))
+                            oldAmount[i] = aurEff->GetAmount();
+
                     oldAura->ModStackAmount(1);
+
+                    // The stack change recalculated amounts and max duration with the stealer as caster, keep the
+                    // original caster's ones like a newly stolen copy does
+                    bool const stacked = oldAura->GetStackAmount() > oldStackAmount;
+                    for (uint8 i = 0; i < MAX_SPELL_EFFECTS; ++i)
+                        if (AuraEffect* aurEff = oldAura->GetEffect(i))
+                            aurEff->ChangeAmount(oldAmount[i] + (stacked ? damage[i] : 0));
+
+                    oldAura->SetMaxDuration(aura->GetMaxDuration());
+                }
+
                 oldAura->SetDuration(int32(dur));
             }
             else
@@ -6370,7 +6403,7 @@ void Unit::AddGameObject(GameObject* gameObj)
         // Need disable spell use for owner
         if (createBySpell && createBySpell->IsCooldownStartedOnEvent())
             // note: item based cooldowns and cooldown spell mods with charges ignored (unknown existing cases)
-            ToPlayer()->AddSpellAndCategoryCooldowns(createBySpell, 0, nullptr, true);
+            GetSpellHistory()->StartCooldown(createBySpell, 0, nullptr, true);
     }
 }
 
@@ -6401,7 +6434,7 @@ void Unit::RemoveGameObject(GameObject* gameObj, bool del)
             // Need activate spell use for owner
             if (createBySpell && createBySpell->IsCooldownStartedOnEvent())
                 // note: item based cooldowns and cooldown spell mods with charges ignored (unknown existing cases)
-                ToPlayer()->SendCooldownEvent(createBySpell);
+                GetSpellHistory()->SendCooldownEvent(createBySpell);
         }
     }
 
@@ -7665,7 +7698,7 @@ void Unit::SetMinion(Minion* minion, bool apply)
             SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(minion->GetUInt32Value(UNIT_CREATED_BY_SPELL));
 
             if (spellInfo && spellInfo->IsCooldownStartedOnEvent())
-                ToPlayer()->AddSpellAndCategoryCooldowns(spellInfo, 0, nullptr, true);
+                GetSpellHistory()->StartCooldown(spellInfo, 0, nullptr, true);
         }
     }
     else
@@ -7709,7 +7742,7 @@ void Unit::SetMinion(Minion* minion, bool apply)
             SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(minion->GetUInt32Value(UNIT_CREATED_BY_SPELL));
             // Remove infinity cooldown
             if (spellInfo && spellInfo->IsCooldownStartedOnEvent())
-                ToPlayer()->SendCooldownEvent(spellInfo);
+                GetSpellHistory()->SendCooldownEvent(spellInfo);
 
             // xinef: clear spell book
             if (m_Controlled.empty())
@@ -9269,12 +9302,12 @@ uint32 Unit::SpellCriticalHealingBonus(Unit const* caster, SpellInfo const* spel
     return damage;
 }
 
-float Unit::SpellPctHealingModsDone(Unit* victim, SpellInfo const* spellProto, DamageEffectType damagetype, bool includeHealingDonePct)
+float Unit::SpellPctHealingModsDone(Unit* victim, SpellInfo const* spellProto, DamageEffectType damagetype)
 {
     // For totems get healing bonus from owner (statue isn't totem in fact)
     if (IsCreature() && IsTotem())
         if (Unit* owner = GetOwner())
-            return owner->SpellPctHealingModsDone(victim, spellProto, damagetype, includeHealingDonePct);
+            return owner->SpellPctHealingModsDone(victim, spellProto, damagetype);
 
     // Some spells don't benefit from done mods
     if (spellProto->HasAttribute(SPELL_ATTR3_IGNORE_CASTER_MODIFIERS))
@@ -9291,8 +9324,7 @@ float Unit::SpellPctHealingModsDone(Unit* victim, SpellInfo const* spellProto, D
     float DoneTotalMod = 1.0f;
 
     // Healing done percent
-    if (includeHealingDonePct)
-        DoneTotalMod *= GetTotalAuraMultiplier(SPELL_AURA_MOD_HEALING_DONE_PERCENT);
+    DoneTotalMod *= GetTotalAuraMultiplier(SPELL_AURA_MOD_HEALING_DONE_PERCENT);
 
     // done scripted mod (take it from owner)
     Unit* owner = GetOwner() ? GetOwner() : this;
@@ -9433,7 +9465,7 @@ uint32 Unit::SpellHealingBonusDone(Unit* victim, SpellInfo const* spellProto, ui
     {
         // No bonus healing for SPELL_DAMAGE_CLASS_NONE class spells by default
         if (spellProto->DmgClass == SPELL_DAMAGE_CLASS_NONE)
-            return healamount;
+            return uint32(std::max(healamount * DoneTotalMod, 0.0f));
     }
 
     // Default calculation
@@ -12225,8 +12257,14 @@ void Unit::RemoveFromWorld()
         if (IsAIEnabled)
             GetAI()->OnDespawn();
 
+        // A player base keeps its kit (and passengers) across the map change; a creature base keeps the teardown.
         if (IsVehicle())
-            RemoveVehicleKit();
+        {
+            if (IsPlayer() && GetVehicleKit())
+                GetVehicleKit()->DetachAccessories();
+            else
+                RemoveVehicleKit();
+        }
 
         RemoveCharmAuras();
         RemoveBindSightAuras();
@@ -15302,6 +15340,18 @@ void Unit::EnterVehicleUnattackable(Unit* base, int8 seatId)
     CastCustomSpell(67830, SPELLVALUE_BASE_POINT0, seatId + 1, base, true);
 }
 
+void Unit::EnterVehicleBeforeCreate(Vehicle* vehicle, int8 seatId)
+{
+    // AddPassenger claims the seat before it bails out for a base outside the world.
+    if (!vehicle || m_vehicle || !vehicle->GetBase()->IsInWorld())
+        return;
+
+    m_vehicle = vehicle;
+
+    if (!vehicle->AddPassenger(this, seatId, true))
+        m_vehicle = nullptr;
+}
+
 void Unit::_EnterVehicle(Vehicle* vehicle, int8 seatId, AuraApplication const* aurApp)
 {
     // Must be called only from aura handler
@@ -15471,14 +15521,14 @@ void Unit::_ExitVehicle(Position const* exitPosition)
                     pos = vehicleBase->GetPosition();
             }
             else if (seatAddon->ExitParameter == VehicleExitParameters::VehicleExitParamDest)
-            {
                 pos.Relocate({ seatAddon->ExitParameterX, seatAddon->ExitParameterY, seatAddon->ExitParameterZ, seatAddon->ExitParameterO });
-
-                float floorZ = GetMapHeight(pos.GetPositionX(), pos.GetPositionY(), pos.GetPositionZ());
-                if (pos.GetPositionZ() < floorZ)
-                    pos.m_positionZ = floorZ + 0.1f;
-            }
         }
+
+        // The vehicle can stand slightly under the floor (Pilgrim's Bounty chairs share their table's spawn Z, some
+        // tables spawn a few tenths under the ground); an exit spline ending there drops the passenger through it
+        float floorZ = GetMapHeight(pos.GetPositionX(), pos.GetPositionY(), pos.GetPositionZ());
+        if (pos.GetPositionZ() < floorZ)
+            pos.m_positionZ = floorZ + 0.1f;
     }
 
     AddUnitState(UNIT_STATE_MOVE);
@@ -15495,6 +15545,18 @@ void Unit::_ExitVehicle(Position const* exitPosition)
     if (!vehicleInfo || vehicleInfo->m_ID != 341)
     {
         Movement::MoveSplineInit init(this);
+
+        // A corpse leaving a flying vehicle has to drop to the ground instead of hanging at the seat's height
+        if (player && !IsAlive())
+        {
+            float groundZ = GetMapHeight(pos.GetPositionX(), pos.GetPositionY(), pos.GetPositionZ(), true, MAX_FALL_DISTANCE);
+            if (groundZ > INVALID_HEIGHT && pos.GetPositionZ() > groundZ)
+            {
+                pos.m_positionZ = groundZ;
+                init.SetFall();
+            }
+        }
+
         init.MoveTo(pos.GetPositionX(), pos.GetPositionY(), pos.GetPositionZ());
         init.SetFacing(vehicleBase->GetOrientation());
         init.SetTransportExit();

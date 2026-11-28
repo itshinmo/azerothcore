@@ -268,7 +268,6 @@ void WorldConfig::BuildConfigCache()
 
     SetConfigValue<bool>(CONFIG_INSTANCE_IGNORE_LEVEL, "Instance.IgnoreLevel", false);
     SetConfigValue<bool>(CONFIG_INSTANCE_IGNORE_RAID, "Instance.IgnoreRaid", false);
-    SetConfigValue<bool>(CONFIG_INSTANCE_GMSUMMON_PLAYER, "Instance.GMSummonPlayer", false);
     SetConfigValue<bool>(CONFIG_INSTANCE_SHARED_ID, "Instance.SharedNormalHeroicId", true);
 
     SetConfigValue<uint32>(CONFIG_INSTANCE_RESET_TIME_HOUR, "Instance.ResetTimeHour", 4);
@@ -400,7 +399,7 @@ void WorldConfig::BuildConfigCache()
 
     SetConfigValue<bool>(CONFIG_DETECT_POS_COLLISION, "DetectPosCollision", true);
 
-    SetConfigValue<bool>(CONFIG_RESTRICTED_LFG_CHANNEL, "Channel.RestrictedLfg", true);
+    SetConfigValue<bool>(CONFIG_RESTRICTED_LFG_CHANNEL, "Channel.RestrictedLfg", false);
     SetConfigValue<bool>(CONFIG_SILENTLY_GM_JOIN_TO_CHANNEL, "Channel.SilentlyGMJoin", false);
 
     SetConfigValue<bool>(CONFIG_TALENTS_INSPECTING, "TalentsInspecting", true);

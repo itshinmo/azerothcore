@@ -82,6 +82,9 @@ Read the matching doc(s) BEFORE starting the task:
 - Creating or modifying SQL → `.agents/docs/sql-guidelines.md` and
   `runbook/operation/apply-sql-update.md`.
   - SmartAI work (`smart_scripts` data) → also `.agents/docs/cpp-scripts.md`.
+  - Anything under `data/sql/updates/pending_db_world/` or any `smart_scripts` SQL → also
+    `.agents/docs/retail-evidence.md`: the change must cite the retail evidence it rests on.
+- Editing any `*.conf.dist` → `.agents/docs/systems/config.md`.
 - Querying or editing the database → `runbook/database/schema-guide.md` and
   `.ai/skills/db-query-and-edit/SKILL.md`.
 - Using a database client (DBeaver) → `runbook/database/dbeaver.md`.

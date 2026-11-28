@@ -31,6 +31,7 @@
 #include "ScriptedGossip.h"
 #include "SpellAuraEffects.h"
 #include "SpellAuras.h"
+#include "SpellHistory.h"
 #include "SpellScript.h"
 #include "SpellScriptLoader.h"
 #include "TaskScheduler.h"
@@ -102,7 +103,7 @@ struct npc_brewfest_keg_reciver : public ScriptedAI
                 player->DestroyItemCount(ITEM_PORTABLE_BREWFEST_KEG, 1, true);
 
                 // Additional Work
-                uint32 spellCooldown = player->GetSpellCooldownDelay(SPELL_COOLDOWN_CHECKER) / IN_MILLISECONDS;
+                uint32 spellCooldown = player->GetSpellHistory()->GetRemainingCooldown(SPELL_COOLDOWN_CHECKER) / IN_MILLISECONDS;
                 if (spellCooldown > (HOUR * 18 - 900)) // max aproximated time - 12 minutes
                 {
                     if (Aura* aur = player->GetAura(SPELL_RAM_AURA))
@@ -124,7 +125,7 @@ struct npc_brewfest_keg_reciver : public ScriptedAI
         if (uiSender == GOSSIP_NEIL || uiSender == GOSSIP_RAY)
         {
             player->CastSpell(player, SPELL_COOLDOWN_CHECKER, true);
-            player->AddSpellCooldown(SPELL_COOLDOWN_CHECKER, 0, 18 * HOUR * IN_MILLISECONDS);
+            player->GetSpellHistory()->AddCooldown(SPELL_COOLDOWN_CHECKER, 0, 18h);
         }
 
         if (uiAction != 4)
@@ -1460,7 +1461,6 @@ enum DirebrewMisc
     GOSSIP_OPTION_APOLOGIZE             = 1,
     DATA_TARGET_GUID                    = 1,
     MAX_ANTAGONISTS                     = 3,
-    DATA_COREN                          = 33,
     GO_MACHINE_SUMMONER                 = 188508
 };
 
@@ -1744,28 +1744,6 @@ private:
     TaskScheduler _scheduler;
 };
 
-struct npc_direbrew_minion : public ScriptedAI
-{
-    npc_direbrew_minion(Creature* creature) : ScriptedAI(creature), _instance(creature->GetInstanceScript()) {}
-
-    void Reset() override
-    {
-        me->SetFaction(FACTION_GOBLIN_DARK_IRON_BAR_PATRON);
-        DoZoneInCombat();
-    }
-
-    void IsSummonedBy(WorldObject* /*summoner*/) override
-    {
-        if (Creature* coren = ObjectAccessor::GetCreature(*me, _instance->GetGuidData(DATA_COREN)))
-        {
-            coren->AI()->JustSummoned(me);
-        }
-    }
-
-private:
-    InstanceScript* _instance;
-};
-
 struct npc_direbrew_antagonist : public ScriptedAI
 {
     npc_direbrew_antagonist(Creature* creature) : ScriptedAI(creature) {}
@@ -2030,7 +2008,6 @@ void AddSC_event_brewfest_scripts()
     // Coren Direbrew
     RegisterCreatureAI(npc_coren_direbrew);
     RegisterCreatureAI(npc_coren_direbrew_sisters);
-    RegisterCreatureAI(npc_direbrew_minion);
     RegisterCreatureAI(npc_direbrew_antagonist);
     new go_direbrew_mole_machine();
     RegisterSpellScript(spell_direbrew_summon_mole_machine_target_picker);
