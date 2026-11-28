@@ -85,6 +85,7 @@
 #include "QueryResult.h"
 #include "QuestDef.h"
 #include "SpellInfo.h"
+#include "SpellHistory.h"
 #include "SpellMgr.h"
 #include "StringFormat.h"
 #include "Timer.h"
@@ -2260,7 +2261,7 @@ namespace Journal::Collections
         // longer than the item's. The item cooldown only fills a spell that has none.
         if (spellInfo->RecoveryTime > 0 || spellInfo->CategoryRecoveryTime > 0)
             return;
-        player->SendCooldownEvent(spellInfo, itr->second, nullptr, true);
+        player->GetSpellHistory()->SendCooldownEvent(spellInfo, itr->second, nullptr, true);
     }
 
     // Account-wide toybox (ADR-025, owner decision 2026-11-21): a toy stays
