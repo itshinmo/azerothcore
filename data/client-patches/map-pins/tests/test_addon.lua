@@ -365,36 +365,35 @@ local function assertAtWarp(label, pin, fx, fy)
 end
 
 -- Real nesting, from the shipped WorldMapFrame.xml: WorldMapDetailFrame and WorldMapButton are
--- SIBLINGS under WorldMapFrame. The button is only anchored to the detail frame, and the client
--- scales each of them independently (0.691 quest, 0.573 windowed, 1.0 full map), so the button's
--- effective scale is 0.691 in the quest view, not 0.4775.
-WorldMapDetailFrame = Frame()
-WorldMapDetailFrame.parent = WorldMapFrame
-WorldMapDetailFrame.screenLeft = 120
-WorldMapDetailFrame.screenTop = 700
+-- SIBLINGS under WorldMapFrame. Only the button carries the map, so the detail frame is not
+-- re-created here; the client's UI scale lives on the parent chain instead.
 WorldMapButton.parent = WorldMapFrame
 
 assertAtWarp("full map")
 
--- Quest view: both frames scaled 0.691, but independently. Only the button carries the map.
-WorldMapDetailFrame.scale = 0.691
+-- A non-1 UI scale, which is the case the old formula's frame-side term got wrong and the old
+-- fixture could not surface because WorldMapFrame.scale stayed 1 and its offset stayed 0.
+WorldMapFrame.scale = 0.8
+WorldMapFrame.screenLeft = 40
+WorldMapFrame.screenTop = 900
 WorldMapButton.scale = 0.691
 -- The button's screen rect moves because it is scaled about its own anchor, so model that too.
 WorldMapButton.screenLeft = 145
 WorldMapButton.screenTop = 640
 ns.Refresh()
-assertAtWarp("quest view, 0.691 each")
+assertAtWarp("quest view, UI scale 0.8")
 
--- The old bug: subtracting the button's GetLeft (already divided by the button's 0.691) from the
--- frame's GetLeft (divided by 1.0) mixes unit spaces. Assert the naive formula really is far off,
--- so this test cannot silently stop exercising the fix.
-local naiveDx = (WorldMapButton:GetLeft() - WorldMapFrame:GetLeft()) / WorldMapFrame:GetEffectiveScale()
+-- The old bug, stated at the same point: subtracting the button's GetLeft (already divided by
+-- the button's 0.691) from the frame's GetLeft (divided by 0.8) mixes unit spaces. Compare the
+-- naive and correct offsets for the SAME pin, so a small pin X cannot make this vacuous.
+local naiveDx = (WorldMapButton:GetLeft() - WorldMapFrame:GetLeft())
+    / WorldMapFrame:GetEffectiveScale()
 local correctDx = expectedPoint(warp.pin)
 assert(math.abs(naiveDx - correctDx) > 20,
-    "the quest-view fixture must be far enough from the naive formula for the test to bite, got "
+    "the fixture must be far enough from the naive formula for the test to bite, got "
         .. naiveDx .. " vs " .. correctDx)
 
--- Windowed view, a size no test above uses, then an addon that scales only one frame.
+-- Windowed view, a size no test above uses.
 WorldMapButton.scale = 0.573
 ns.Refresh()
 assertAtWarp("windowed view, 0.573")
@@ -402,10 +401,11 @@ WorldMapButton.scale = 0.5
 ns.Refresh()
 assertAtWarp("button scaled 0.5 alone")
 WorldMapButton.scale = 1.0
+WorldMapFrame.scale = 1.0
+WorldMapFrame.screenLeft = 40
+WorldMapFrame.screenTop = 900
 ns.Refresh()
 assertAtWarp("full map again")
-WorldMapDetailFrame.scale = 1.0
-ns.Refresh()
 
 -- The objectives checkbox re-scales the map through WorldMapFrame_DisplayQuests, which never
 -- calls WorldMapFrame_Update. Hooking only Update left the pins at the previous view's offsets,
@@ -421,11 +421,20 @@ for _, name in ipairs({
 }) do
     assertRefreshes(name)
 end
+-- Each map-moving path must REPOSITION the pins, not merely call Refresh: move the map between
+-- invocations and assert the recorded anchor follows, so a hook replaced by a no-op fails.
 for _, name in ipairs({
     "WorldMapFrame_DisplayQuests", "WorldMapFrame_SetQuestMapView", "WorldMap_ToggleSizeUp",
 }) do
+    local anchor = warp.points[#warp.points]
+    local beforeX = anchor[4]
+    WorldMapButton.screenLeft = WorldMapButton.screenLeft + 60
     hooks[name][1]()
-    assert(#visible() > 0, name .. " must reposition the pins, not only re-level them")
+    anchor = warp.points[#warp.points]
+    assert(math.abs(anchor[4] - beforeX) > 1,
+        name .. " must reposition the pins when the map moves, not only re-level them")
+    WorldMapButton.screenLeft = WorldMapButton.screenLeft - 60
+    ns.Refresh()
 end
 
 -- PlaceLevel runs on every refresh, not only at creation: the client re-levels its own map

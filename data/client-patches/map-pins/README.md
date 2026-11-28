@@ -55,7 +55,12 @@ The region rectangle is several times the city's, so each pin carries a second f
 (`px`/`py`) projected on the parent's bounds, and the addon picks that pair when the parent is the
 displayed zone. Reusing `mx`/`my` there drew every city pin hundreds of pixels off its region map,
 in the sea. The generator rejects a fraction outside 3% of the rectangle, which is how Orgrimmar's
-auction house (just past Durotar's eastern edge) stays allowed while a wrong parent does not.
+auction house (just past Durotar's eastern edge) stays allowed. That tolerance is a proximity
+check, not a parent check: neighbouring zones contain the pins too, so the curated table is
+verified by the coverage rule in the generator tests (the parent must be a zone covering the most
+of the city's rectangle), not by geometry alone. The Orgrimmar Warpweaver stores `py = -0.0243`
+and draws about 16 pixels above Durotar's top edge, over the frame border; moving it would mean
+inventing a position the spawn does not have.
 
 ## Tooltip
 
@@ -181,7 +186,7 @@ Continent index order is the client's, not the map id order: **1 Kalimdor, 2 Eas
 | Dalaran pin fractions | `Data/patch-M.mpq` `DungeonMap.dbc` row 27 | `aa31db35a2266694d8318c410712a18540d86469e3d6134eb648a1d9694f21f5` |
 | FrameXML canary | `Data/enUS/patch-enUS-3.MPQ` (source archive) | `e05b75b212cdda98f86beef35eb024aa1ff416a7164d08873c49b7ae1f3105c8` |
 | Cooldown nil guard | `Data/enUS/locale-enUS.MPQ` (source archive) | `7b93af66d6f5bb0aaaed35202a376c5e2a75df0daea8e0c6c117ab2bfbde77b5` |
-| Built archive | `dist/patch-Z.MPQ`, 38,062 bytes | `3ef25f55028a7b25f451a9b7769bb938b6d40264c7e10dc520726397c9268ae2` |
+| Built archive | `dist/patch-Z.MPQ`, 38,131 bytes | `f86b3f25cabd11504f99cf431cd9d11d97bd1b788a4c8d982b09e91d3b00ca18` |
 
 `manifest.json` carries the per-entry hashes and is the audit record; this table names the DBC
 sources the fractions were computed from. The built archive row is the current checked-in pair;

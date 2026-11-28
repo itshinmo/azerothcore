@@ -300,10 +300,11 @@ local function Hook(name, handler)
 end
 
 -- The objectives checkbox and the size toggle re-scale and re-anchor the map, then call
--- WorldMapFrame_DisplayQuests or WorldMap_ToggleSizeUp/Down. None of those calls
--- WorldMapFrame_Update, which is where the client itself repositions its POIs, so hooking only
--- Update/OnShow left the pins at the previous view's offsets. Hook every path that can move the
--- map, plus the two events the client redraws on.
+-- WorldMapFrame_DisplayQuests or WorldMap_ToggleSizeUp/Down. Neither calls WorldMapFrame_Update,
+-- which is where the client itself repositions its POIs, so hooking only Update/OnShow left the
+-- pins at the previous view's offsets. Hook every function that can move the map. UpdateMap and
+-- DisplayQuests call Update, so a zone change refreshes twice; at 73 pins that is free and it
+-- keeps the list robust against a client build that stops calling one of them.
 Hook("WorldMapFrame_Update", Refresh)
 Hook("WorldMapFrame_UpdateMap", Refresh)
 Hook("WorldMapFrame_OnShow", Refresh)

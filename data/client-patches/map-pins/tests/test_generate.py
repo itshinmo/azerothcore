@@ -437,6 +437,8 @@ class ZoneParentTest(unittest.TestCase):
                              "a city and its parent must share a map")
 
     def test_every_curated_parent_holds_the_city_pins(self):
+        # A bounds check, not a parent test: it proves the pin lands on the named map, not that
+        # the named map is the right one (Wetlands contains Ironforge's pins too).
         maps = self.maps()
         pins = self.pins_by_zone()
         by_key = {zone.key: zone for zone in maps.zones}
@@ -451,6 +453,62 @@ class ZoneParentTest(unittest.TestCase):
                     f"the {maps.map_zone_name(city)} pin at {x},{y} falls off "
                     f"{maps.map_zone_name(parent)} at ({px:.3f}, {py:.3f})",
                 )
+
+    def test_every_curated_parent_is_a_maximal_overlap_zone(self):
+        # The rule the curated table follows, and the only geometric property that rejects a
+        # plausible neighbour: the parent must be a zone covering the most of the city's
+        # WorldMapArea rectangle. Measured against the real DBC, bounds containment alone accepts
+        # Wetlands for Ironforge, The Barrens and Desolace for Thunder Bluff, Nagrand for
+        # Shattrath and Silverpine for the Undercity. Two cities tie (Thunder Bluff with The
+        # Barrens, Shattrath with Nagrand); the curated pick wins the tie by being the zone the
+        # city is actually inside, which no DBC field records (AreaTable.ParentAreaID is 0 for
+        # every capital), so a tie is allowed but a lower-coverage zone is not.
+        maps = self.maps()
+        by_key = {zone.key: zone for zone in maps.zones}
+        for city, parent in generate.ZONE_PARENTS.items():
+            city_zone = by_key[city]
+            overlaps = {}
+            for zone in maps.zones:
+                if not zone.key or zone.key == city or not zone.valid:
+                    continue
+                if zone.map_id != city_zone.map_id:
+                    continue
+                ox = max(0.0, min(max(city_zone.x_min, city_zone.x_max), max(zone.x_min, zone.x_max))
+                          - max(min(city_zone.x_min, city_zone.x_max), min(zone.x_min, zone.x_max)))
+                oy = max(0.0, min(max(city_zone.y_min, city_zone.y_max), max(zone.y_min, zone.y_max))
+                          - max(min(city_zone.y_min, city_zone.y_max), min(zone.y_min, zone.y_max)))
+                area = abs(city_zone.x_max - city_zone.x_min) * abs(city_zone.y_max - city_zone.y_min)
+                overlaps[zone.key] = (ox * oy) / area
+            best = max(overlaps.values())
+            self.assertAlmostEqual(
+                overlaps[parent], best, places=6,
+                msg=f"{maps.map_zone_name(parent)} covers {overlaps[parent]:.0%} of "
+                    f"{maps.map_zone_name(city)} but "
+                    f"{maps.map_zone_name(max(overlaps, key=overlaps.get))} covers {best:.0%}",
+            )
+
+    def test_a_wrong_parent_is_less_covered_than_the_curated_one(self):
+        # Guards the coverage rule: each of these neighbours really contains the city's pins, so a
+        # bounds test cannot tell it from the curated parent, and each covers strictly less of the
+        # city rectangle. These are the mutations the old bounds-only test let through.
+        maps = self.maps()
+        by_key = {zone.key: zone for zone in maps.zones}
+
+        def coverage(city, zone):
+            c, z = by_key[city], by_key[zone]
+            ox = max(0.0, min(max(c.x_min, c.x_max), max(z.x_min, z.x_max))
+                      - max(min(c.x_min, c.x_max), min(z.x_min, z.x_max)))
+            oy = max(0.0, min(max(c.y_min, c.y_max), max(z.y_min, z.y_max))
+                      - max(min(c.y_min, c.y_max), min(z.y_min, z.y_max)))
+            return (ox * oy) / (abs(c.x_max - c.x_min) * abs(c.y_max - c.y_min))
+
+        for city, wrong in ((1537, 11), (1637, 16), (1497, 130), (1638, 405)):
+            parent = generate.ZONE_PARENTS[city]
+            self.assertLess(
+                coverage(city, wrong), coverage(city, parent),
+                f"{maps.map_zone_name(wrong)} must cover less of {maps.map_zone_name(city)} "
+                f"than the curated {maps.map_zone_name(parent)}, or the rule cannot reject it",
+            )
 
     def test_a_wrong_parent_puts_the_pin_off_the_region(self):
         # Guards the test above: a neighbouring zone must NOT hold the pin, or the projection

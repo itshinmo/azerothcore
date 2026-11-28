@@ -17,7 +17,7 @@ and [ADR-020](../../decisions/ADR-020-collections-transmog-stack.md).
 | patch-S.MPQ | Project Reforged v1.5.8 | **removed 2026-11-21 (owner)** — caused client performance issues in Orgrimmar; all other Reforged parts stay |
 | patch-X.MPQ | project item data (client-patch branch) | active — the only `DBFilesClient\Item.dbc` carrier; SHA256 `9ddd80c9fda95647c393a00fb2c0d2db706185b59c05364ce00d3899e95c1d50` |
 | patch-Y.MPQ | project white-model restore (client-patch branch) | active — stock goblin male model, skins and 32 animations; SHA256 `b236c1c35d2714a0e6423e87a934256fbace13168951d2c5144b0ca30016f524` |
-| patch-Z.MPQ | project map/UI (client-patch branch) | active — `WorldMapPins` addon, `WorldMapFrame.lua` canary and `Cooldown.lua` nil guard; SHA256 `3ef25f55028a7b25f451a9b7769bb938b6d40264c7e10dc520726397c9268ae2` |
+| patch-Z.MPQ | project map/UI (client-patch branch) | active — `WorldMapPins` addon, `WorldMapFrame.lua` canary and `Cooldown.lua` nil guard; SHA256 `f86b3f25cabd11504f99cf431cd9d11d97bd1b788a4c8d982b09e91d3b00ca18` |
 | Transmog addon | `modules/mod-transmog-plus/addon/Transmog` | active — in-game transmog UI + collections |
 | Journal addon | `modules/mod-forever-journal/addon/Journal` | active — the Collections journal (Mounts, Pets, Toys, Appearances) |
 | GM Helper | `tools/gm-addon/` | active — testing addon |
@@ -29,7 +29,7 @@ Project patch family, separate from the vendor bundle:
 |---------|-------|-------|--------|
 | `patch-X.MPQ` | `data/client-patches/item-data/` | installed in `~/Games/wotlk-clean/Data` | `9ddd80c9fda95647c393a00fb2c0d2db706185b59c05364ce00d3899e95c1d50` |
 | `patch-Y.MPQ` | `data/client-patches/white-boss-models/` | installed in `~/Games/wotlk-clean/Data` | `b236c1c35d2714a0e6423e87a934256fbace13168951d2c5144b0ca30016f524` |
-| `patch-Z.MPQ` | `data/client-patches/map-pins/` | installed in `~/Games/wotlk-clean/Data` | `3ef25f55028a7b25f451a9b7769bb938b6d40264c7e10dc520726397c9268ae2` |
+| `patch-Z.MPQ` | `data/client-patches/map-pins/` | installed in `~/Games/wotlk-clean/Data` | `f86b3f25cabd11504f99cf431cd9d11d97bd1b788a4c8d982b09e91d3b00ca18` |
 | `patch-V.MPQ` | `data/client-patches/race-class-combos/` | **proposal, not installed** | `50e4477b93678272ad35089bfbbd6c8fa7f884c98d1d3171491b29da49d4731c` |
 
 X = item data, Y = white models, Z = map/UI; X < Y < Z, all after Reforged `patch-U`. `patch-V`,
