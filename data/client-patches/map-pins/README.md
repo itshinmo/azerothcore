@@ -40,15 +40,31 @@ nodes to the same stack. Zone maps separate most of them. Every tooltip title na
 service, so the reachable pin is still identifiable; this is the same rule the owner chose for the
 Warpweaver and Call Board pairs.
 
-Pins show on their own zone map and on the continent map, at the exact spawn position. No stack
-fan-out, no fake offsets.
+Pins show on their own zone map, on their city's region zone map, and on the continent map, at the
+exact spawn position. No stack fan-out, no fake offsets.
+
+A city's own `WorldMapArea` is a micro-map: the Thunder Bluff pins store zone 1638, so opening
+Mulgore (215) matched nothing and the region map was empty. Each serviced capital has one curated
+parent zone, attached to its pins at generation time as a `zones` list, so the addon does no lookup.
+Orgrimmar's parent is Durotar even though half its rectangle overlaps; its auction house stands on
+Durotar's eastern edge. Dalaran is its own micro-map inside Crystalsong Forest and deliberately has
+no parent, or its pins would draw twice.
 
 ## Tooltip
 
 Each pin is a 24x24 button parented to `WorldMapFrame`, at the frame's own strata and frame level
-plus 7, with the mouse enabled. That is the arrangement Questie uses in this client; HandyNotes uses
-`+6`. A pin parented to `WorldMapButton` at `WORLDMAP_POI_FRAMELEVEL + 50` drew correctly but never
+plus 8, with the mouse enabled. Questie uses `+7` for its own pins and HandyNotes `+6`, so one level
+higher means our tooltip and click survive every addon load order. The cost is that our 24x24 button
+covers a Questie pin within 24 pixels of it. A pin parented to `WorldMapButton` at `WORLDMAP_POI_FRAMELEVEL + 50` drew correctly but never
 received a mouse event, which is why hover and click both failed in the 2026-11-27 playtest.
+
+Pin offsets come from the map's live screen rectangle, divided by
+`WorldMapFrame:GetEffectiveScale()`, never from a scale constant. The quest view scales
+`WorldMapDetailFrame` and `WorldMapButton` by `0.691` each, so the effective scale is `0.4775`;
+`GetScale()` reports only one frame's own scale and left every offset 44.7% too large, which slid
+the pins toward the top-left while "Show Quest Objectives" was on. Live rects also follow a
+third-party addon that resizes the map. Each handler runs inside `pcall` and reports one line per
+failing site, so an addon erroring on the same frames cannot kill the layer.
 
 Hovering shows the pin's lines on `WorldMapTooltip`, the client's own map tooltip:
 
@@ -79,9 +95,11 @@ then `To <destination>`. Vessel names are not shown.
 
 Clicking forwards to `WorldMapButton_OnClick`, so the stock map ping still works.
 
-`/wmp` (or `/worldmappins`) prints the pin count, the open map zone index and the name of the frame
-under the cursor. Use it when a hover does not open the tooltip: it says whether a pin, the client
-quest POI layer, or something else owns the mouse.
+`/wmp` (or `/worldmappins`) prints the pin count, the open map zone index, the pin level offset, the
+map's screen rectangle, the effective scale, and the frame under the cursor. Use it when a hover does
+not open the tooltip: it says whether a pin, the client quest POI layer, or something else owns the
+mouse. A wrong rectangle or a surprising scale is the signature of an addon resizing the map; a
+"handlers that failed" line names the site that a third-party addon broke.
 
 ## Generated data
 
@@ -90,7 +108,7 @@ map bounds from the client DBC, then writes one file per pin kind under `src/Wor
 
 | File | Source |
 |------|--------|
-| `zones.lua` | `AreaTable.dbc` names for the zones that hold a pin |
+| `zones.lua` | `AreaTable.dbc` names for the zones that hold a pin, including each city's parent zone |
 | `bosses.lua` | the seven outdoor world boss spawns |
 | `services.lua` | `collections_npc_spawns.sql` and `call_boards.sql` |
 
@@ -144,11 +162,11 @@ Continent index order is the client's, not the map id order: **1 Kalimdor, 2 Eas
 
 | Input | Source | SHA256 |
 |-------|--------|--------|
-| Zone and continent pin fractions | `Data/patch-M.mpq` `WorldMapArea.dbc` | `8d119e9591fae47e191ee9740ec6dabc36541f566679e43b3337b7a5ac8e1925` |
-| Dalaran pin fractions | `Data/patch-M.mpq` `DungeonMap.dbc` row 27 | `8d119e9591fae47e191ee9740ec6dabc36541f566679e43b3337b7a5ac8e1925` |
-| FrameXML canary | `Data/enUS/patch-enUS-3.MPQ` (source archive) | `8d119e9591fae47e191ee9740ec6dabc36541f566679e43b3337b7a5ac8e1925` |
-| Cooldown nil guard | `Data/enUS/locale-enUS.MPQ` (source archive) | `8d119e9591fae47e191ee9740ec6dabc36541f566679e43b3337b7a5ac8e1925` |
-| Built archive | `dist/patch-Z.MPQ`, 36,056 bytes | `8d119e9591fae47e191ee9740ec6dabc36541f566679e43b3337b7a5ac8e1925` |
+| Zone and continent pin fractions | `Data/patch-M.mpq` `WorldMapArea.dbc` | `90e1ec678c8226c76f4dd9f7904f05a4cb0a58c8b4d386719b24949bd55925bb` |
+| Dalaran pin fractions | `Data/patch-M.mpq` `DungeonMap.dbc` row 27 | `aa31db35a2266694d8318c410712a18540d86469e3d6134eb648a1d9694f21f5` |
+| FrameXML canary | `Data/enUS/patch-enUS-3.MPQ` (source archive) | `e05b75b212cdda98f86beef35eb024aa1ff416a7164d08873c49b7ae1f3105c8` |
+| Cooldown nil guard | `Data/enUS/locale-enUS.MPQ` (source archive) | `7b93af66d6f5bb0aaaed35202a376c5e2a75df0daea8e0c6c117ab2bfbde77b5` |
+| Built archive | `dist/patch-Z.MPQ`, 37,455 bytes | `34e704a0f50a752fee20a00154201c60e568bbb2a2195768182fb421a9c0a381` |
 
 `manifest.json` carries the per-entry hashes and is the audit record; this table names the DBC
 sources the fractions were computed from. The built archive row is the current checked-in pair;

@@ -105,7 +105,24 @@ list ADR-032 tried to draw.
 
 ## Amendments
 
-**2026-11-27, second amendment (this one).**
+**2026-11-28, third amendment (this one).**
+
+- Rule 5's level moved from `WorldMapFrame + 7` to `+ 8`, and placement now derives from live
+  screen geometry instead of a scale constant. Two playtest defects: a pin sat under Questie's
+  pins on load order, and every pin slid toward the top-left as soon as "Show Quest Objectives"
+  scaled the map. The quest view scales `WorldMapDetailFrame` and `WorldMapButton` by `0.691`
+  each, so the effective scale is `0.4775`; reading only `WorldMapButton:GetScale()` left every
+  offset 44.7% too large. `MapRect()` now divides the live rects by
+  `WorldMapFrame:GetEffectiveScale()`, which also follows any third-party addon that resizes or
+  re-anchors the panel. Each pin handler is wrapped in `pcall` and reports one line per failing
+  site, because a player's addon hooking the same frames must not kill the layer.
+- Rule 1's zone visibility gained a curated parent per serviced city. Exact-zone matching left
+  every capital's own zone map empty; geometric containment is unusable because each city's
+  `WorldMapArea` rectangle overlaps three outdoor zones and Dalaran's coordinates are a micro-map
+  inside Crystalsong Forest. Nine parents are generated into each pin's `zones` list, and Dalaran
+  deliberately has none.
+
+**2026-11-27, second amendment.**
 
 - Rule 1 gained the hub portal network and the player transport stations, with the exception
   rationale above. Rule 2 was relaxed from "custom content only" to "custom content plus the two
