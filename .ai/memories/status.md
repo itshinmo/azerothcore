@@ -1,7 +1,7 @@
 ---
 description: Current project status, last verified commit, known issues, open decisions, and next tasks. Read after overview on any task.
-last-verified: 2026-11-27 (local-server-setup; round-3 map pin fixes merged: continent offsets,
-  generated pin data, hover; owner in-client hover test pending)
+last-verified: 2026-11-28 (fix/map-pins-zone-and-scale; round-4 playtest fixes: region maps,
+  view scaling, portal tooltip; owner in-client test pending after reinstall)
 ---
 
 # Status
@@ -20,6 +20,44 @@ last-verified: 2026-11-27 (local-server-setup; round-3 map pin fixes merged: con
 - Website work has not started and is not part of the current phase. Custom content and shop work
   remain out of scope until the base game is done.
 - Branch: `local-server-setup` is the integration branch. Confirm with `git status`.
+
+## Session record — 2026-11-28 (playtest round 4: region maps, view scaling, portal text)
+
+- **City pins were missing on their region map.** Pins matched the displayed zone by exact id. The
+  Thunder Bluff pins store zone 1638, so opening Mulgore (215) matched nothing and the city map was
+  empty; every capital had the same hole, and only the continent map worked because it matches the
+  continent instead. Nine curated parents now attach to each pin at generation time as a `zones`
+  list. Geometric containment is not the rule: a city rectangle overlaps up to four neighbours and
+  Desolace contains Thunder Bluff's pin, so the rule is "the zone covering the most of the city
+  rectangle". That decides seven of the nine; Thunder Bluff (The Barrens) and Shattrath (Nagrand)
+  tie, and no DBC field breaks the tie (`AreaTable.ParentAreaID` is 0 for every capital), so the
+  two picks are recorded in `TIE_BREAKS`. Dalaran deliberately has none.
+- **Region pins needed their own fractions.** A city micro-map is about a fifth of its region's
+  width, so reusing `mx/my` drew every capital pin hundreds of pixels into the sea on the map the
+  report was about. The generator now emits `px/py` against the parent rectangle and the addon
+  picks that pair.
+- **All pins shifted when "Show Quest Objectives" was toggled**, two independent causes. First,
+  `GetLeft`/`GetTop` already divide by the frame's own effective scale, and `WorldMapButton` and
+  `WorldMapDetailFrame` are siblings each scaled independently (1.0 full, 0.691 quest, 0.573
+  windowed), so subtracting their rects mixed unit spaces; `MapRect()` scales each corner to screen
+  pixels and divides once. Second, the checkbox moves the map through `WorldMapFrame_DisplayQuests`
+  and the size toggle through `WorldMap_ToggleSizeUp`/`Down`, and neither calls
+  `WorldMapFrame_Update`, so hooking only `Update`/`OnShow` left the pins at the previous view's
+  offsets. All eight map-moving paths are hooked.
+- **Blasted Lands tooltips said their destination twice** (`Portal to Blasted Lands`, then
+  `To Blasted Lands`). Destination-named rooms now read `Portal - Blasted Lands` and list no line;
+  the Shattrath `Portal - Isle of Quel'Danas` follows the same form.
+- **Hardening.** Pins sit at `WorldMapFrame + 8`, one above Questie's 7, so load order cannot take
+  the mouse. Each handler runs inside `pcall` and reports one line per failing site. `/wmp` prints
+  the map rect, effective scale, cursor frame and failed handler sites.
+- **Review.** Three reviewer passes; the first two found real bugs in the fixes themselves (a unit
+  mix in `MapRect`, region pins drawn with city fractions, a missed hook) and a rubber-stamp
+  generator test that accepted Wetlands for Ironforge. Every assertion is mutation-tested. Tests
+  that need the client DBC skip when `ACORE_DATA` is absent.
+- **Patch-Z.** `data/client-patches/map-pins/dist/patch-Z.MPQ`, sha256
+  `f86b3f25cabd11504f99cf431cd9d11d97bd1b788a4c8d982b09e91d3b00ca18`, 38,131 bytes, 73 pins.
+  **The owner's installed copy is still the pre-branch `f712a0e4…`, so all three defects stay
+  visible until it is reinstalled.**
 
 ## Session record — 2026-11-27 (playtest round 3: map pin offsets, hover, generated data)
 

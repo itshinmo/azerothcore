@@ -9,7 +9,7 @@ Project client artifacts for the supported 3.3.5a client. Contract:
 | Patch | File | Contents | SHA256 | DBC files |
 |-------|------|----------|--------|-----------|
 | [item-data](item-data/README.md) | `item-data/dist/patch-X.MPQ` | `DBFilesClient\Item.dbc` with custom item rows; `dist/Item.dbc` for the server | `9ddd80c9fda95647c393a00fb2c0d2db706185b59c05364ce00d3899e95c1d50` | 1 |
-| [map-pins](map-pins/README.md) | `map-pins/dist/patch-Z.MPQ` | `WorldMapPins` addon (pin kinds per ADR-037; data generated from tracked SQL and client DBC) + FrameXML canary + `Cooldown.lua` nil guard | `f712a0e435d22b73ecd4d812a1aae5ef8e21a36371c9f5de03de461b05f46cdb` | 0 |
+| [map-pins](map-pins/README.md) | `map-pins/dist/patch-Z.MPQ` | `WorldMapPins` addon (pin kinds per ADR-037; data generated from tracked SQL and client DBC) + FrameXML canary + `Cooldown.lua` nil guard | `f86b3f25cabd11504f99cf431cd9d11d97bd1b788a4c8d982b09e91d3b00ca18` | 0 |
 | [race-class-combos](race-class-combos/README.md) (proposal) | `race-class-combos/dist/patch-V.MPQ` | whole-file `CharBaseInfo.dbc` 62 -> 67 rows and `CharStartOutfit.dbc` 126 -> 134 rows for the proposed race/class pairs; not installed until approved | `50e4477b93678272ad35089bfbbd6c8fa7f884c98d1d3171491b29da49d4731c` | 2 |
 | [white-boss-models](white-boss-models/README.md) | `white-boss-models/dist/patch-Y.MPQ` | stock goblin male model/skins/anims over the Ascension HD conversion | `b236c1c35d2714a0e6423e87a934256fbace13168951d2c5144b0ca30016f524` | 0 |
 

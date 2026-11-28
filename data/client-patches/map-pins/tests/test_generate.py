@@ -1,13 +1,17 @@
 """Offline checks for the map-pin generator's pure parts.
 
 The DBC and SQL parsing is exercised against synthetic bytes, so these tests run without a
-client and without the world database.
+client and without the world database. The one exception is ZoneParentTest, which checks the
+curated ZONE_PARENTS table against the real WorldMapArea and skips when no client is present
+(its assertions are claims about that DBC, not about our parser).
 
 Run: python3 -m unittest discover -s data/client-patches/map-pins/tests -v
 """
 
 from __future__ import annotations
 
+import os
+import re
 import struct
 import sys
 import tempfile
@@ -392,6 +396,190 @@ def write_taxi_dbc(path: Path, rows: list[tuple]) -> None:
     write_dbc(path, packed, [""])
 
 
+class ZoneParentTest(unittest.TestCase):
+    """The curated parents follow the rectangle-coverage rule, and the pins land on them.
+
+    Three separate properties, because each alone is a rubber stamp:
+    - Coverage: the curated parent must be a zone covering the most of the city's WorldMapArea
+      rectangle. This is what rejects Wetlands for Ironforge, Azshara for Orgrimmar, Silverpine
+      for the Undercity and Desolace for Thunder Bluff.
+    - Tie-breaks: two cities tie with a neighbour, and no DBC field decides between them, so the
+      pick is editorial and pinned here. Nagrand is a legitimate tie partner for Shattrath, not a
+      wrong answer this suite can rule out.
+    - Bounds: projecting the real pin onto the parent rectangle must land inside the map. That
+      proves the addon has a sensible position to draw, not that the parent is the right zone:
+      Wetlands contains Ironforge's pins too.
+
+    These read the client's WorldMapArea, because the curated table is a claim about that DBC:
+    the rectangles are what the addon draws on. They skip when ACORE_DATA is absent rather than
+    fail on a machine without a client, and still run in the documented location.
+    """
+
+    def maps(self):
+        path = Path(os.environ.get("ACORE_DATA", os.path.expanduser("~/wow/Data/dbc")))
+        if not (path / "WorldMapArea.dbc").is_file():
+            self.skipTest(f"no client DBC at {path}; set ACORE_DATA to run the geometry checks")
+        return generate.Maps(path)
+
+    def pins_by_zone(self) -> dict:
+        pins = {}
+        for name in ("services", "portals", "transports"):
+            data = (Path(__file__).resolve().parents[1] / "src" / "WorldMapPins" / "data" /
+                    f"{name}.lua").read_text()
+            for zone, x, y in re.findall(
+                r'zone = (\d+).*?x = (-?[\d.]+), y = (-?[\d.]+)', data, re.S
+            ):
+                pins.setdefault(int(zone), []).append((float(x), float(y)))
+        return pins
+
+    def test_curated_parents_are_real_zones(self):
+        maps = self.maps()
+        by_key = {zone.key: zone for zone in maps.zones}
+        for city, parent in generate.ZONE_PARENTS.items():
+            self.assertIn(city, by_key, f"city zone {city} is not in WorldMapArea")
+            self.assertIn(parent, by_key, f"parent zone {parent} is not in WorldMapArea")
+            self.assertEqual(by_key[city].map_id, by_key[parent].map_id,
+                             "a city and its parent must share a map")
+
+    def test_every_curated_parent_holds_the_city_pins(self):
+        # A bounds check, not a parent test: it proves the pin lands on the named map, not that
+        # the named map is the right one (Wetlands contains Ironforge's pins too).
+        maps = self.maps()
+        pins = self.pins_by_zone()
+        by_key = {zone.key: zone for zone in maps.zones}
+        for city, parent in generate.ZONE_PARENTS.items():
+            coords = pins.get(city)
+            self.assertTrue(coords, f"no generated pin carries zone {city}")
+            map_id = by_key[city].map_id
+            for x, y in coords:
+                px, py = maps.fractions_in(parent, map_id, x, y, f"{city} {x},{y}")
+                self.assertTrue(
+                    -0.03 <= px <= 1.03 and -0.03 <= py <= 1.03,
+                    f"the {maps.map_zone_name(city)} pin at {x},{y} falls off "
+                    f"{maps.map_zone_name(parent)} at ({px:.3f}, {py:.3f})",
+                )
+
+    def test_every_curated_parent_is_a_maximal_overlap_zone(self):
+        # The rule the curated table follows, and the only geometric property that rejects a
+        # plausible neighbour: the parent must be a zone covering the most of the city's
+        # WorldMapArea rectangle. Seven cities are decided uniquely by it. Thunder Bluff and
+        # Shattrath tie with a neighbour, and no DBC field breaks the tie (see TIE_BREAKS), so
+        # for those two this asserts membership in the tie set rather than a unique winner.
+        maps = self.maps()
+        by_key = {zone.key: zone for zone in maps.zones}
+        for city, parent in generate.ZONE_PARENTS.items():
+            city_zone = by_key[city]
+            overlaps = {}
+            for zone in maps.zones:
+                if not zone.key or zone.key == city or not zone.valid:
+                    continue
+                if zone.map_id != city_zone.map_id:
+                    continue
+                ox = max(0.0, min(max(city_zone.x_min, city_zone.x_max), max(zone.x_min, zone.x_max))
+                          - max(min(city_zone.x_min, city_zone.x_max), min(zone.x_min, zone.x_max)))
+                oy = max(0.0, min(max(city_zone.y_min, city_zone.y_max), max(zone.y_min, zone.y_max))
+                          - max(min(city_zone.y_min, city_zone.y_max), min(zone.y_min, zone.y_max)))
+                area = abs(city_zone.x_max - city_zone.x_min) * abs(city_zone.y_max - city_zone.y_min)
+                overlaps[zone.key] = (ox * oy) / area
+            best = max(overlaps.values())
+            self.assertIn(parent, overlaps, f"{city} has no WorldMapArea row to measure")
+            self.assertAlmostEqual(
+                overlaps[parent], best, places=6,
+                msg=f"{maps.map_zone_name(parent)} covers {overlaps[parent]:.0%} of "
+                    f"{maps.map_zone_name(city)} but "
+                    f"{maps.map_zone_name(max(overlaps, key=overlaps.get))} covers {best:.0%}",
+            )
+
+    def test_the_two_ties_are_pinned_to_their_editorial_choice(self):
+        # The coverage rule cannot decide these two, so the choice is recorded instead of implied.
+        # Without this, moving either parent to its tie partner would pass every other test.
+        self.assertEqual(
+            set(generate.TIE_BREAKS), {1638, 3703},
+            "every undecidable city must record its tie, or the choice is not reproducible",
+        )
+        maps = self.maps()
+        by_key = {zone.key: zone for zone in maps.zones}
+
+        def coverage(city: int, zone: int) -> float:
+            c, z = by_key[city], by_key[zone]
+            ox = max(0.0, min(max(c.x_min, c.x_max), max(z.x_min, z.x_max))
+                      - max(min(c.x_min, c.x_max), min(z.x_min, z.x_max)))
+            oy = max(0.0, min(max(c.y_min, c.y_max), max(z.y_min, z.y_max))
+                      - max(min(c.y_min, c.y_max), min(z.y_min, z.y_max)))
+            return (ox * oy) / (abs(c.x_max - c.x_min) * abs(c.y_max - c.y_min))
+
+        for city, (chosen, other) in generate.TIE_BREAKS.items():
+            self.assertEqual(generate.ZONE_PARENTS[city], chosen)
+            self.assertNotEqual(chosen, other)
+            # The partner must really be a tie: equal coverage against the real DBC, otherwise a
+            # future edit can record an arbitrary zone and stay green.
+            self.assertIn(other, by_key, f"tie partner {other} is not in WorldMapArea")
+            self.assertIn(chosen, by_key, f"curated parent {chosen} is not in WorldMapArea")
+            self.assertAlmostEqual(
+                coverage(city, other), coverage(city, chosen), places=6,
+                msg=f"{maps.map_zone_name(other)} is not a real tie for "
+                    f"{maps.map_zone_name(city)}: it covers less than "
+                    f"{maps.map_zone_name(chosen)}",
+            )
+
+    def test_a_wrong_parent_is_less_covered_than_the_curated_one(self):
+        # Guards the coverage rule. Two of these are the cases a bounds test cannot catch
+        # (Wetlands holds Ironforge's pins, Desolace holds Thunder Bluff's); the other two are
+        # caught by both tests. Each covers strictly less of the city rectangle than the curated
+        # parent, which is the property the coverage assertion relies on.
+        maps = self.maps()
+        by_key = {zone.key: zone for zone in maps.zones}
+
+        def coverage(city, zone):
+            c, z = by_key[city], by_key[zone]
+            ox = max(0.0, min(max(c.x_min, c.x_max), max(z.x_min, z.x_max))
+                      - max(min(c.x_min, c.x_max), min(z.x_min, z.x_max)))
+            oy = max(0.0, min(max(c.y_min, c.y_max), max(z.y_min, z.y_max))
+                      - max(min(c.y_min, c.y_max), min(z.y_min, z.y_max)))
+            return (ox * oy) / (abs(c.x_max - c.x_min) * abs(c.y_max - c.y_min))
+
+        for city, wrong in ((1537, 11), (1637, 16), (1497, 130), (1638, 405)):
+            parent = generate.ZONE_PARENTS[city]
+            self.assertLess(
+                coverage(city, wrong), coverage(city, parent),
+                f"{maps.map_zone_name(wrong)} must cover less of {maps.map_zone_name(city)} "
+                f"than the curated {maps.map_zone_name(parent)}, or the rule cannot reject it",
+            )
+
+    def test_a_wrong_parent_puts_the_pin_off_the_region(self):
+        # Guards the test above: a neighbouring zone must NOT hold the pin, or the projection
+        # cannot tell a curated parent from a wrong one. Azshara and Teldrassil both reject the
+        # Thunder Bluff spawn; Desolace genuinely contains it, which is why the parent is curated
+        # rather than derived.
+        maps = self.maps()
+        x, y = self.pins_by_zone()[1638][0]          # Thunder Bluff
+        for wrong in (16, 141):                      # Azshara, Teldrassil
+            with self.assertRaises(generate.GenerateError,
+                                   msg=f"zone {wrong} must not hold the Thunder Bluff pin"):
+                maps.fractions_in(wrong, 1, x, y, "mutation")
+
+    def test_every_serviced_city_has_a_parent(self):
+        # The pins that need a parent are the cities the project actually services. Comparing the
+        # exact set stops a deleted entry from silently passing every other assertion.
+        self.assertEqual(
+            set(generate.ZONE_PARENTS),
+            {1519, 1497, 1537, 1637, 1638, 1657, 3487, 3557, 3703},
+            "every serviced capital must have a curated parent zone",
+        )
+
+    def test_dalaran_has_no_parent(self):
+        self.assertNotIn(4395, generate.ZONE_PARENTS,
+                         "Dalaran is its own micro-map and must not draw on a Northrend zone")
+
+    def test_every_parent_zone_is_generated_into_zones_lua(self):
+        # The addon resolves a parent id through zones.lua, so a missing name means a pin that
+        # never draws on the region map.
+        text = (Path(__file__).resolve().parents[1] / "src" / "WorldMapPins" / "data" / "zones.lua")
+        generated = text.read_text()
+        for parent in generate.ZONE_PARENTS.values():
+            self.assertIn(f"[{parent}] =", generated, f"zone {parent} is missing from zones.lua")
+
+
 class PortalRoomsTest(unittest.TestCase):
     def test_twelve_rooms_with_icons_and_destinations(self):
         self.assertEqual(len(generate.PORTAL_ROOMS), 12)
@@ -399,7 +587,19 @@ class PortalRoomsTest(unittest.TestCase):
             self.assertTrue(title and subtitle, "every room names a city and a place")
             self.assertTrue(zone > 0, "every room has a zone id")
             self.assertTrue(icon.startswith("Spell_Arcane_Portal"), icon)
-            self.assertGreaterEqual(len(destinations), 1, subtitle)
+            # A room named after its destination lists none, or the tooltip says it twice.
+            if subtitle.startswith("Portal - "):
+                self.assertEqual(destinations, (), subtitle)
+            else:
+                self.assertGreaterEqual(len(destinations), 1, subtitle)
+
+    def test_a_destination_named_room_uses_the_dash_form(self):
+        # "Portal to Blasted Lands" plus "To Blasted Lands" was the duplicate the owner saw.
+        named = {room[0]: room[1] for room in generate.PORTAL_ROOMS
+                 if room[1].startswith("Portal - ")}
+        self.assertEqual(len(named), 9, named)
+        self.assertTrue(named["Stormwind City"] == "Portal - Blasted Lands", named)
+        self.assertTrue(named["Shattrath City"] == "Portal - Isle of Quel'Danas", named)
 
     def test_the_shattrath_room_lists_eight_capitals(self):
         room = next(room for room in generate.PORTAL_ROOMS if room[1] == "Terrace of Light")

@@ -42,7 +42,9 @@ list ADR-032 tried to draw.
      Portal pins use the stock `Spell_Arcane_Portal*` icons, one per room by faction: Stormwind for
      the Alliance enclave, Orgrimmar for the Horde enclave, the city's own icon for each capital's
      Blasted Lands portal, and the Shattrath icon for both Shattrath pins. The tooltip is the city,
-     the room, then every destination as `To <city>`;
+     the room, then every destination as `To <city>`. A room that is named after its own
+     destination reads `Portal - Blasted Lands` and lists nothing: repeating it as
+     `To Blasted Lands` was the duplicate the owner saw on 2026-11-28;
    - **ship and zeppelin station pins**, one pin per station node from the 15 player boat and
      zeppelin routes in `acore_world.transports`. The two Icecrown gunships, the two Northrend
      turtles and Garvan's Reef stay out. There is **no distance merging**: the owner wants every
@@ -78,10 +80,11 @@ list ADR-032 tried to draw.
 5. **Hover must work, and the parent frame decides it.** A pin parented to `WorldMapButton` at
    `WORLDMAP_POI_FRAMELEVEL + 50` draws but receives no mouse event at all: no tooltip, and the
    click does not reach the map either. The working arrangement, proven by Questie in the same
-   client, is a 24x24 button parented to `WorldMapFrame` at `GetFrameLevel() + 7`, with the frame's
-   strata and the mouse enabled. `OnEnter` opens `WorldMapTooltip` with the place as the title and
-   the service on the second line, and sets `WorldMapPOIFrame.allowBlobTooltip = false` while the
-   pin is hovered; `OnLeave` and `HideAll` restore it.
+   client, is a 24x24 button parented to `WorldMapFrame` at `GetFrameLevel() + 8`, with the frame's
+   strata and the mouse enabled. The third amendment raised it from `+ 7` and explains why.
+   `OnEnter` opens `WorldMapTooltip` with the place as the title and the service on the second
+   line, and sets `WorldMapPOIFrame.allowBlobTooltip = false` while the pin is hovered; `OnLeave`
+   and `HideAll` restore it.
    `OnClick` forwards to `WorldMapButton_OnClick`, so the stock map ping still works. Warpweaver
    uses the `INV_NetherPortal` icon: a dark void portal, matching the ethereal transmogrifier.
    The title carries the city because a capital's Warpweaver and Call Board sit 1 to 7 pixels apart
@@ -105,7 +108,34 @@ list ADR-032 tried to draw.
 
 ## Amendments
 
-**2026-11-27, second amendment (this one).**
+**2026-11-28, third amendment (this one).**
+
+- Rule 5's level moved from `WorldMapFrame + 7` to `+ 8`, and placement now derives from live
+  screen geometry instead of a scale constant. Two playtest defects: a pin sat under Questie's
+  pins on load order, and every pin slid toward the top-left as soon as "Show Quest Objectives"
+  scaled the map. Two separate causes, and the first fix attempt addressed neither properly.
+  `WorldMapButton` and `WorldMapDetailFrame` are siblings under `WorldMapFrame` in the shipped
+  `WorldMapFrame.xml`; the client scales each one independently (`1.0` full map, `0.691` quest,
+  `0.573` windowed), and `GetLeft`/`GetTop` already divide by the frame's own effective scale.
+  Subtracting a button rect from a frame rect therefore mixed two unit spaces. `MapRect()` scales
+  each corner to screen pixels and divides once, which also follows any third-party addon that
+  resizes the panel.
+  Separately, the objectives checkbox moves the map through `WorldMapFrame_DisplayQuests` and the
+  size toggle through `WorldMap_ToggleSizeUp`/`Down`, and neither calls `WorldMapFrame_Update`.
+  Hooking only `Update`/`OnShow` left the pins at the previous view's offsets. Every path that can
+  move the map is hooked. Each pin handler is wrapped in `pcall` and reports one line per failing
+  site, because a player's addon hooking the same frames must not kill the layer.
+- Rule 1's zone visibility gained a curated parent per serviced city. Exact-zone matching left
+  every capital's own zone map empty; geometric containment is unusable because a city's
+  `WorldMapArea` rectangle overlaps its neighbours (the Undercity four, Orgrimmar four, Thunder
+  Bluff three of them) and because Desolace genuinely contains Thunder Bluff's pin, so a point is
+  no better than a rectangle. Dalaran's coordinates are a micro-map inside Crystalsong Forest. Nine parents
+  are generated into each pin's `zones` list, and Dalaran deliberately has none. Each pin also
+  carries a second fraction pair projected on the parent's rectangle: the city micro-map is about
+  a fifth of its region's width, so reusing the city fractions drew the pin several hundred pixels
+  into the sea, on the very map the report was about.
+
+**2026-11-27, second amendment.**
 
 - Rule 1 gained the hub portal network and the player transport stations, with the exception
   rationale above. Rule 2 was relaxed from "custom content only" to "custom content plus the two
@@ -118,6 +148,11 @@ list ADR-032 tried to draw.
   `WorldMapFrame + 7` arrangement. The old level was chosen on the belief that the pin had to sit
   above the quest POI frame. Playtest evidence: the pin drew and received no mouse event at all.
 - Rule 7 gained the map-530 `WorldMapTransforms` offset, which rule 7 previously omitted.
+- Rule 1's portal tooltip rule gained the destination-named room form. A Blasted Lands portal read
+  `Portal to Blasted Lands` and then `To Blasted Lands`; the owner reported the duplicate. The
+  room line became `Portal - Blasted Lands` and the room lists no destination, which is the same
+  rule applied to the Shattrath `Portal - Isle of Quel'Danas`, the only other room named after
+  what it serves.
 
 **2026-11-27, first amendment (same day, earlier).** ADR-032 was withdrawn and the layer was
 replaced: the 1,128-marker stock POI layer became 7 world bosses plus the custom services, with no

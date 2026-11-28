@@ -53,9 +53,9 @@ PORTAL_ROOMS = [
          "Thunder Bluff", "Silvermoon City"),
     ),
     (
-        "Shattrath City", "Portal to the Isle of Quel'Danas", 530, -1839.9, 5500.6, 3703,
+        "Shattrath City", "Portal - Isle of Quel'Danas", 530, -1839.9, 5500.6, 3703,
         "Spell_Arcane_PortalShattrath",
-        ("the Isle of Quel'Danas",),
+        (),
     ),
     (
         "Dalaran", "Silver Enclave", 571, 5707.0, 731.0, 4395,
@@ -67,22 +67,25 @@ PORTAL_ROOMS = [
         "Spell_Arcane_PortalOrgrimmar",
         ("Orgrimmar", "Undercity", "Thunder Bluff", "Silvermoon City", "Shattrath City"),
     ),
-    ("Stormwind City", "Portal to Blasted Lands", 0, -9007.6, 871.9, 1519,
-     "Spell_Arcane_PortalStormWind", ("Blasted Lands",)),
-    ("Ironforge", "Portal to Blasted Lands", 0, -4606.4, -929.0, 1537,
-     "Spell_Arcane_PortalIronForge", ("Blasted Lands",)),
-    ("Darnassus", "Portal to Blasted Lands", 1, 9661.8, 2509.6, 1657,
-     "Spell_Arcane_PortalDarnassus", ("Blasted Lands",)),
-    ("The Exodar", "Portal to Blasted Lands", 530, -4037.8, -11555.5, 3557,
-     "Spell_Arcane_PortalExodar", ("Blasted Lands",)),
-    ("Undercity", "Portal to Blasted Lands", 0, 1768.8, 55.4, 1497,
-     "Spell_Arcane_PortalUnderCity", ("Blasted Lands",)),
-    ("Orgrimmar", "Portal to Blasted Lands", 1, 1472.6, -4215.7, 1637,
-     "Spell_Arcane_PortalOrgrimmar", ("Blasted Lands",)),
-    ("Thunder Bluff", "Portal to Blasted Lands", 1, -944.1, 274.9, 1638,
-     "Spell_Arcane_PortalThunderBluff", ("Blasted Lands",)),
-    ("Silvermoon City", "Portal to Blasted Lands", 530, 9984.3, -7107.6, 3487,
-     "Spell_Arcane_PortalSilvermoon", ("Blasted Lands",)),
+    # These rooms are named after the destination they serve, so the tooltip says
+    # "Portal - <destination>" and lists no line: a "To <destination>" line under it read twice,
+    # which the owner saw on the Blasted Lands portals.
+    ("Stormwind City", "Portal - Blasted Lands", 0, -9007.6, 871.9, 1519,
+     "Spell_Arcane_PortalStormWind", ()),
+    ("Ironforge", "Portal - Blasted Lands", 0, -4606.4, -929.0, 1537,
+     "Spell_Arcane_PortalIronForge", ()),
+    ("Darnassus", "Portal - Blasted Lands", 1, 9661.8, 2509.6, 1657,
+     "Spell_Arcane_PortalDarnassus", ()),
+    ("The Exodar", "Portal - Blasted Lands", 530, -4037.8, -11555.5, 3557,
+     "Spell_Arcane_PortalExodar", ()),
+    ("Undercity", "Portal - Blasted Lands", 0, 1768.8, 55.4, 1497,
+     "Spell_Arcane_PortalUnderCity", ()),
+    ("Orgrimmar", "Portal - Blasted Lands", 1, 1472.6, -4215.7, 1637,
+     "Spell_Arcane_PortalOrgrimmar", ()),
+    ("Thunder Bluff", "Portal - Blasted Lands", 1, -944.1, 274.9, 1638,
+     "Spell_Arcane_PortalThunderBluff", ()),
+    ("Silvermoon City", "Portal - Blasted Lands", 530, 9984.3, -7107.6, 3487,
+     "Spell_Arcane_PortalSilvermoon", ()),
 ]
 
 # Player transport routes from acore_world.transports, keyed by the taxi path id their transport
@@ -178,6 +181,36 @@ PLACES = {
     3557: "The Exodar",
     3703: "Shattrath City",
     4395: "Dalaran",
+}
+
+# A pin draws on its own zone map and on the curated region zone map of its city. Geometric
+# containment is not usable: the Undercity bounds touch Silverpine Forest and the Western
+# Plaguelands, and Thunder Bluff's spawn point falls in Desolace, so a naive rule puts city pins
+# on three maps. One curated parent per serviced city, chosen from WorldMapArea. A city with no
+# entry draws only on its own map, which is the safe default.
+#
+# The rule is "the zone covering the most of the city's WorldMapArea rectangle", and it decides
+# seven of the nine uniquely. Two cities tie with a neighbour because both rectangles contain the
+# whole city: Thunder Bluff with The Barrens, Shattrath with Nagrand. No DBC field breaks the tie
+# (AreaTable.ParentAreaID is 0 for every capital, WorldMapArea has no parent column), so the two
+# picks below are editorial: the region a player crosses to reach the city. The generator tests
+# assert the coverage rule and the exact set, and TIE_BREAKS records these two so a future edit
+# cannot quietly move them to the tie partner.
+TIE_BREAKS = {
+    1638: (215, 17),     # Thunder Bluff: Mulgore, not The Barrens
+    3703: (3519, 3518),  # Shattrath: Terokkar Forest, not Nagrand
+}
+ZONE_PARENTS = {
+    1519: 12,     # Stormwind City     -> Elwynn Forest
+    1537: 1,      # Ironforge          -> Dun Morogh
+    1657: 141,    # Darnassus          -> Teldrassil
+    3557: 3524,   # The Exodar         -> Azuremyst Isle
+    1637: 14,     # Orgrimmar          -> Durotar
+    1497: 85,     # Undercity          -> Tirisfal Glades
+    1638: 215,    # Thunder Bluff      -> Mulgore (tie with The Barrens, see TIE_BREAKS)
+    3487: 3430,   # Silvermoon City    -> Eversong Woods
+    3703: 3519,   # Shattrath City     -> Terokkar Forest (tie with Nagrand, see TIE_BREAKS)
+    # Dalaran is its own micro-map inside Crystalsong Forest, so it has no parent zone map.
 }
 
 # A spawn that sits in a named sub-zone a player would use instead of the zone name.
@@ -406,6 +439,26 @@ class Maps:
             "cy": cy,
         }
 
+    def fractions_in(self, region_key: int, map_id: int, x: float, y: float, label: str) -> tuple:
+        """The same point projected on a region map's own WorldMapArea rectangle.
+
+        A pin stores the fractions of its own zone map. Drawing those on the parent map is wrong:
+        the city rectangle is a micro-map about 1,000 yards wide inside a region about 5,000 wide,
+        so the point lands in the sea a few hundred pixels away. The addon picks this pair when the
+        parent zone is displayed.
+        """
+        region = self.zone_for(map_id, x, y, region_key)
+        bounds = self.bounds_for(region)
+        px = (bounds.y_max - y) / (bounds.y_max - bounds.y_min)
+        py = (bounds.x_max - x) / (bounds.x_max - bounds.x_min)
+        for name, value in (("px", px), ("py", py)):
+            if not -0.001 <= value <= 1.001:
+                # Orgrimmar's auction house stands just outside Durotar, so a point may sit a
+                # hair outside the curated region; anything further is a wrong parent.
+                if not -0.03 <= value <= 1.03:
+                    raise GenerateError(f"{label}: {name} = {value:.4f} is off {region_key}")
+        return round(px, 4), round(py, 4)
+
 
 def sql_spawns(path: Path, expected: int) -> list[tuple[int, int, int, float, float]]:
     """(guid, zoneId, map, x, y) for every spawn row in a tracked SQL file's INSERT.
@@ -487,6 +540,13 @@ def render(key: str, header: str, pins: list[dict], dbc_hashes: dict[str, str]) 
             f'mx = {pin["mx"]:.4f}, my = {pin["my"]:.4f},'
         )
         lines.append(f'      cont = {pin["cont"]}, cx = {pin["cx"]:.4f}, cy = {pin["cy"]:.4f},')
+        extra_zones = pin.get("zones") or []
+        if extra_zones:
+            joined = ", ".join(str(z) for z in extra_zones)
+            lines.append(f"      zones = {{ {joined} }},")
+            # The same point on the region map, because the parent's rectangle is much larger
+            # than the city's micro-map.
+            lines.append(f'      px = {pin["px"]:.4f}, py = {pin["py"]:.4f},')
         destinations = pin.get("lines") or []
         if destinations:
             lines.append("      lines = {")
@@ -677,9 +737,22 @@ def build(maps: Maps) -> dict[str, str]:
             )
         )
 
+    zone_map = {zone.key: zone.map_id for zone in maps.zones}
+    for pin in bosses + services + portals + transports:
+        parent = ZONE_PARENTS.get(pin["zone"])
+        pin["zones"] = [parent] if parent else []
+        if parent:
+            # The region-map fractions, so the pin lands on the region instead of the city's
+            # micro-map. Emitted rather than computed at runtime, like every other fraction.
+            pin["px"], pin["py"] = maps.fractions_in(
+                parent, zone_map[pin["zone"]], pin["x"], pin["y"], pin["label"]
+            )
+
     portals.sort(key=lambda pin: (pin["cont"], pin["zone"], pin["subtitle"]))
     transports.sort(key=lambda pin: (pin["kind"], pin["cont"], pin["place"], pin["lines"][0]))
+    # The parent zone names must be in zones.lua too, or the addon cannot match them.
     zone_ids = {pin["zone"] for pin in bosses + services + portals + transports}
+    zone_ids |= {zone for pin in bosses + services + portals + transports for zone in pin["zones"]}
     hashes = {
         name: hashlib.sha256((maps.dbc / name).read_bytes()).hexdigest()
         for name in (

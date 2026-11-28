@@ -21,6 +21,9 @@ local function Frame()
         level = 90,
         scale = 1,
         strata = "MEDIUM",
+        -- Screen pixels of the frame's own top-left corner, as the client's anchors resolve them.
+        screenLeft = 0,
+        screenTop = 0,
         shown = true,
         mouse = false,
         scripts = {},
@@ -44,6 +47,18 @@ local function Frame()
     function frame:Show() self.shown = true end
     function frame:Hide() self.shown = false end
     function frame:IsShown() return self.shown end
+    function frame:GetName() return self.name end
+    -- WoW geometry. GetEffectiveScale is the product of the parent chain; GetLeft and GetTop
+    -- return the screen position divided by the frame's OWN effective scale, which is why
+    -- subtracting two frames' GetLeft() mixes units whenever their scales differ. The client
+    -- divides a raw cursor by GetEffectiveScale before comparing it to GetCenter (see
+    -- WorldMapButton_OnClick and WorldMapBlobFrame_CalculateHitTranslations), so the mock must
+    -- divide too or the unit mix cannot surface.
+    function frame:GetEffectiveScale()
+        return self.scale * (self.parent and self.parent:GetEffectiveScale() or 1)
+    end
+    function frame:GetLeft() return self.screenLeft / self:GetEffectiveScale() end
+    function frame:GetTop() return self.screenTop / self:GetEffectiveScale() end
     function frame:CreateTexture()
         local texture = { shown = true }
         function texture:SetWidth() end
@@ -101,8 +116,14 @@ function hooksecurefunc(name, handler)
 end
 
 function WorldMapFrame_Update() end
+function WorldMapFrame_UpdateMap() end
 function WorldMapFrame_OnShow() end
 function WorldMapFrame_OnHide() end
+function WorldMapFrame_DisplayQuests() end
+function WorldMapFrame_SetQuestMapView() end
+function WorldMapFrame_SetFullMapView() end
+function WorldMap_ToggleSizeUp() end
+function WorldMap_ToggleSizeDown() end
 function WorldMapButton_OnClick()
     mapClicks = mapClicks + 1
 end
@@ -201,8 +222,10 @@ end, "Stormwind Blasted Lands portal")
 -- Icon names must match the client's own spelling, because tools/icon-browser/IconBrowserIcons.lua
 -- is the list we choose from and it is case-sensitive there.
 assert(blasted.icon == "Interface\\Icons\\Spell_Arcane_PortalStormWind", blasted.icon)
-assert(blasted.subtitle == "Portal to Blasted Lands", blasted.subtitle)
-assert(blasted.lines[1] == "To Blasted Lands", blasted.lines[1])
+-- The room's name is the destination, so the pin carries no extra destination line.
+assert(blasted.subtitle == "Portal - Blasted Lands", blasted.subtitle)
+assert(blasted.lines == nil, "Blasted Lands must not repeat its name, got "
+    .. tostring(blasted.lines and blasted.lines[1]))
 
 -- Transport pins: one per station node, no merging, station as title, destination as one line.
 local harbor = find(function(pin)
@@ -230,10 +253,13 @@ assert(blastedFrame.icon.texture == blastedFrame.pin.icon,
 blastedFrame.scripts.OnEnter(blastedFrame)
 assert(WorldMapTooltip.lines[1] == "Stormwind City",
     "portal tooltip title, got " .. tostring(WorldMapTooltip.lines[1]))
-assert(WorldMapTooltip.lines[2] == "Portal to Blasted Lands",
+-- The room is already named after the destination, so the tooltip must not repeat it as "To
+-- Blasted Lands" on the next line. One mention of the destination per tooltip.
+assert(WorldMapTooltip.lines[2] == "Portal - Blasted Lands",
     "portal tooltip room, got " .. tostring(WorldMapTooltip.lines[2]))
-assert(WorldMapTooltip.lines[3] == "To Blasted Lands",
-    "portal tooltip destination, got " .. tostring(WorldMapTooltip.lines[3]))
+assert(WorldMapTooltip.lines[3] == nil,
+    "the Blasted Lands room must not repeat its destination, got "
+        .. tostring(WorldMapTooltip.lines[3]))
 blastedFrame.scripts.OnLeave(blastedFrame)
 
 -- Shattrath shows two portal pins and lists every capital.
@@ -301,8 +327,9 @@ for _, frame in ipairs(stormwind) do
     if frame.pin.label == "Warpweaver" then warp = frame end
     -- Questie's arrangement: WorldMapFrame level + 7, and the frame's own strata. A child of
     -- WorldMapButton at POI_FRAMELEVEL + 50 drew but never received a mouse event.
-    assert(frame.level == WorldMapFrame:GetFrameLevel() + 7,
-        "pin must sit above the map frame, got " .. frame.level)
+    -- 8 is one above Questie's 7, so a player's map addon cannot win the mouse on load order.
+    assert(frame.level == WorldMapFrame:GetFrameLevel() + 8,
+        "pin must sit one level above Questie's pins, got " .. frame.level)
     assert(frame.strata == WorldMapFrame:GetFrameStrata(), "pin must copy the map strata")
     -- The parent is what broke hover: a child of WorldMapButton drew but got no mouse event.
     assert(frame.parent == WorldMapFrame, "pin must be a child of WorldMapFrame")
@@ -313,31 +340,138 @@ end
 assert(warp, "Warpweaver pin missing")
 assert(warp.icon.texture == "Interface\\Icons\\INV_NetherPortal",
     "Warpweaver must use the void portal icon")
-local point = warp.points[#warp.points]
-assert(math.abs(point[4] - warp.pin.mx * WorldMapButton:GetWidth()) < 0.01, "pin X must be exact")
-assert(math.abs(point[5] + warp.pin.my * WorldMapButton:GetHeight()) < 0.01, "pin Y must be exact")
+-- The expectation is derived from raw screen pixels and the addon's documented anchor contract
+-- (CENTER of the pin at the map's fraction, anchored to WorldMapFrame TOPLEFT). It deliberately
+-- does NOT reuse MapRect's arithmetic: a mirror of the implementation asserts only that the code
+-- equals itself and would pass with the unit mix that caused the drift.
+local function expectedPoint(pin, fx, fy)
+    local frameScale = WorldMapFrame:GetEffectiveScale()
+    local buttonScale = WorldMapButton:GetEffectiveScale()
+    local mapLeft = WorldMapButton.screenLeft
+    local mapTop = WorldMapButton.screenTop
+    local screenX = mapLeft + (fx or pin.mx) * WorldMapButton:GetWidth() * buttonScale
+    local screenY = mapTop - (fy or pin.my) * WorldMapButton:GetHeight() * buttonScale
+    return (screenX - WorldMapFrame.screenLeft) / frameScale,
+        (screenY - WorldMapFrame.screenTop) / frameScale
+end
+local function assertAtWarp(label, pin, fx, fy)
+    local point = warp.points[#warp.points]
+    local input = pin or warp.pin
+    local ex, ey = expectedPoint(input, fx, fy)
+    assert(point[1] == "CENTER" and point[2] == WorldMapFrame and point[3] == "TOPLEFT",
+        label .. ": pin must be anchored to WorldMapFrame TOPLEFT")
+    assert(math.abs(point[4] - ex) < 0.01, label .. ": pin X is off, got " .. point[4] .. " want " .. ex)
+    assert(math.abs(point[5] - ey) < 0.01, label .. ": pin Y is off, got " .. point[5] .. " want " .. ey)
+end
 
--- The map scales WorldMapButton; the pin is anchored in the unscaled WorldMapFrame, so the
--- offset must follow the displayed size. A missed scale puts every pin in the wrong place.
+-- Real nesting, from the shipped WorldMapFrame.xml: WorldMapDetailFrame and WorldMapButton are
+-- SIBLINGS under WorldMapFrame. Only the button carries the map, so the detail frame is not
+-- re-created here; the client's UI scale lives on the parent chain instead.
+WorldMapButton.parent = WorldMapFrame
+
+assertAtWarp("full map")
+
+-- A non-1 UI scale, which is the case the old formula's frame-side term got wrong and the old
+-- fixture could not surface because WorldMapFrame.scale stayed 1 and its offset stayed 0.
+WorldMapFrame.scale = 0.8
+WorldMapFrame.screenLeft = 40
+WorldMapFrame.screenTop = 900
+WorldMapButton.scale = 0.691
+-- The button's screen rect moves because it is scaled about its own anchor, so model that too.
+WorldMapButton.screenLeft = 145
+WorldMapButton.screenTop = 640
+ns.Refresh()
+assertAtWarp("quest view, UI scale 0.8")
+
+-- The old bug, stated at the same quantity: subtracting the button's GetLeft (already divided by
+-- the button's 0.691) from the frame's GetLeft (divided by 0.8) mixes unit spaces. Compare the
+-- naive offset against the CORRECT OFFSET only, not against expectedPoint, which adds the pin's
+-- own fraction term and would let the guard pass even when the two formulas agree.
+-- Both corners are already screen pixels, so the correct offset is their difference divided once
+-- by the frame's effective scale. The button's scale cancels out; that is the whole point.
+local function correctOffset()
+    local frameScale = WorldMapFrame:GetEffectiveScale()
+    return (WorldMapButton.screenLeft - WorldMapFrame.screenLeft) / frameScale
+end
+local naiveDx = (WorldMapButton:GetLeft() - WorldMapFrame:GetLeft())
+    / WorldMapFrame:GetEffectiveScale()
+local correctDx = correctOffset()
+assert(math.abs(naiveDx - correctDx) > 20,
+    "the fixture must be far enough from the naive formula for the test to bite, got "
+        .. naiveDx .. " vs " .. correctDx)
+-- And the difference is the unit mix, not a constant: at full map, where both scales are 1,
+-- the naive formula is the correct one.
+WorldMapFrame.scale = 1.0
+WorldMapFrame.screenLeft = 0
+WorldMapButton.scale = 1.0
+ns.Refresh()
+assert(math.abs((WorldMapButton:GetLeft() - WorldMapFrame:GetLeft())
+    / WorldMapFrame:GetEffectiveScale() - correctOffset()) < 0.01,
+    "a full-map view must make the naive formula agree, or the guard above is measuring "
+        .. "something other than the unit mix")
+WorldMapFrame.scale = 0.8
+WorldMapFrame.screenLeft = 40
 WorldMapButton.scale = 0.691
 ns.Refresh()
-point = warp.points[#warp.points]
-assert(math.abs(point[4] - warp.pin.mx * WorldMapButton:GetWidth() * 0.691) < 0.01,
-    "pin X must follow the map scale")
-assert(math.abs(point[5] + warp.pin.my * WorldMapButton:GetHeight() * 0.691) < 0.01,
-    "pin Y must follow the map scale")
-WorldMapButton.scale = 1
+assertAtWarp("quest view, back to 0.691")
+
+-- Windowed view, a size no test above uses.
+WorldMapButton.scale = 0.573
 ns.Refresh()
+assertAtWarp("windowed view, 0.573")
+WorldMapButton.scale = 0.5
+ns.Refresh()
+assertAtWarp("button scaled 0.5 alone")
+WorldMapButton.scale = 1.0
+WorldMapFrame.scale = 1.0
+WorldMapFrame.screenLeft = 40
+WorldMapFrame.screenTop = 900
+ns.Refresh()
+assertAtWarp("full map again")
+
+-- The objectives checkbox re-scales the map through WorldMapFrame_DisplayQuests, which never
+-- calls WorldMapFrame_Update. Hooking only Update left the pins at the previous view's offsets,
+-- which was the defect the owner reported, so every path that moves the map must refresh.
+local function assertRefreshes(name)
+    assert(hooks[name] and #hooks[name] > 0, name .. " must trigger a pin refresh")
+end
+for _, name in ipairs({
+    "WorldMapFrame_Update", "WorldMapFrame_UpdateMap", "WorldMapFrame_OnShow",
+    "WorldMapFrame_DisplayQuests", "WorldMapFrame_SetQuestMapView",
+    "WorldMapFrame_SetFullMapView", "WorldMap_ToggleSizeUp", "WorldMap_ToggleSizeDown",
+    "WorldMapFrame_OnHide",
+}) do
+    assertRefreshes(name)
+end
+-- Each map-moving path must REPOSITION the pins, not merely call Refresh: move the map between
+-- invocations and assert the recorded anchor follows, so a hook replaced by a no-op fails. The
+-- frame's own geometry moves, because most of these functions re-anchor or re-scale the map
+-- without touching the button's screen rect.
+for _, name in ipairs({
+    "WorldMapFrame_Update", "WorldMapFrame_UpdateMap", "WorldMapFrame_OnShow",
+    "WorldMapFrame_DisplayQuests", "WorldMapFrame_SetQuestMapView",
+    "WorldMapFrame_SetFullMapView", "WorldMap_ToggleSizeUp", "WorldMap_ToggleSizeDown",
+}) do
+    local anchor = warp.points[#warp.points]
+    local beforeX = anchor[4]
+    WorldMapButton.screenLeft = WorldMapButton.screenLeft + 60
+    hooks[name][1]()
+    anchor = warp.points[#warp.points]
+    assert(math.abs(anchor[4] - beforeX) > 1,
+        name .. " must reposition the pins when the map moves, not only re-level them")
+    WorldMapButton.screenLeft = WorldMapButton.screenLeft - 60
+    ns.Refresh()
+end
 
 -- PlaceLevel runs on every refresh, not only at creation: the client re-levels its own map
 -- frames on show, so a pin that is only leveled once can fall behind.
 local before = warp.level
 WorldMapFrame.level = 120
 ns.Refresh()
-assert(warp.level == 127, "refresh must re-level the pin, got " .. warp.level)
-WorldMapFrame.level = before - 7
+assert(warp.level == 128, "refresh must re-level the pin, got " .. warp.level)
+WorldMapFrame.level = before - 8
 ns.Refresh()
-assert(warp.level == before, "refresh must follow the frame level back")
+assert(warp.level == before, "refresh must follow the frame level back, got " .. warp.level)
 
 -- Hiding the map while hovered must restore the quest blob tooltip.
 WorldMapPOIFrame.allowBlobTooltip = false
@@ -362,6 +496,27 @@ assert(WorldMapPOIFrame.allowBlobTooltip == true, "leave must restore the blob t
 warp.scripts.OnClick(warp, "LeftButtonUp")
 assert(mapClicks == 1, "pin click must forward to WorldMapButton_OnClick")
 
+-- A third-party addon can make a handler raise. The layer must survive it, and report it once.
+local setText = WorldMapTooltip.SetText
+WorldMapTooltip.SetText = function() error("third-party tooltip broke") end
+local errors = {}
+local realPrintError = print
+print = function(text) errors[#errors + 1] = text end
+warp.scripts.OnEnter(warp)
+warp.scripts.OnEnter(warp)
+print = realPrintError
+WorldMapTooltip.SetText = setText
+assert(ns.GuardErrors and ns.GuardErrors.enter == 2,
+    "a failing handler must be counted, got " .. tostring(ns.GuardErrors and ns.GuardErrors.enter))
+assert(#errors == 1 and errors[1]:find("enter handler failed"),
+    "a failing handler must be reported once, got " .. #errors .. " lines")
+assert(WorldMapTooltip.shown ~= true, "a failed handler must not leave a broken tooltip up")
+-- The same pin still works once the other addon stops erroring.
+WorldMapPOIFrame.allowBlobTooltip = true
+warp.scripts.OnEnter(warp)
+assert(WorldMapTooltip.shown == true, "the pin must still work after a failed handler")
+warp.scripts.OnLeave(warp)
+
 -- A boss zone shows only that boss.
 continent, mapZoneIndex, zoneName = 1, 1, "Duskwood"
 ns.Refresh()
@@ -372,6 +527,51 @@ assert(duskwood[1].pin.label == "Taerar", "wrong Duskwood pin")
 duskwood[1].scripts.OnEnter(duskwood[1])
 assert(WorldMapTooltip.lines[1] == "Taerar", "boss tooltip title is the boss name")
 assert(WorldMapTooltip.lines[2] == "Classic world boss - Duskwood", "boss tooltip names kind and zone")
+
+-- A city's pins must also draw on the zone map that contains it. Thunder Bluff stores zone 1638
+-- (the city) and Mulgore is 215, so matching the id alone left the Mulgore map empty.
+local function zonePins(name)
+    continent, mapZoneIndex, zoneName = 1, 1, name
+    ns.Refresh()
+    return visible()
+end
+local function titles(list)
+    local out = {}
+    for _, frame in ipairs(list) do
+        out[frame.pin.title or frame.pin.label .. "|" .. frame.pin.place] = true
+    end
+    return out
+end
+local function firstOf(list, key)
+    for _, frame in ipairs(list) do
+        if (frame.pin.title or frame.pin.label .. "|" .. frame.pin.place) == key then
+            return frame
+        end
+    end
+end
+local tbCity = titles(zonePins("Thunder Bluff"))
+assert(tbCity["Thunder Bluff"], "the Thunder Bluff city map must draw its own pins")
+local tbMulgore = zonePins("Mulgore")
+assert(titles(tbMulgore)["Thunder Bluff"],
+    "the Mulgore map must draw the Thunder Bluff pins; a city's pins draw on their region map")
+-- The region map is about five times the width of the city micro-map, so drawing the city's
+-- mx/my there parks every pin in the sea. The pin carries px/py for exactly this case.
+local tbOnRegion = firstOf(tbMulgore, "Thunder Bluff")
+assert(tbOnRegion and tbOnRegion.pin.px, "the Thunder Bluff pins must carry region fractions")
+local tbPoint = tbOnRegion.points[#tbOnRegion.points]
+local tbEx, tbEy = expectedPoint(tbOnRegion.pin, tbOnRegion.pin.px, tbOnRegion.pin.py)
+assert(math.abs(tbPoint[4] - tbEx) < 0.01 and math.abs(tbPoint[5] - tbEy) < 0.01,
+    "the Thunder Bluff pin must land on its region fraction on the Mulgore map")
+local cityEx, cityEy = expectedPoint(tbOnRegion.pin, tbOnRegion.pin.mx, tbOnRegion.pin.my)
+assert(math.abs(tbPoint[4] - cityEx) > 20 or math.abs(tbPoint[5] - cityEy) > 20,
+    "the region position must differ from the city position, or the fixture proves nothing")
+local elwynn = titles(zonePins("Elwynn Forest"))
+assert(elwynn["Stormwind City"], "the Elwynn Forest map must draw the Stormwind pins")
+-- A zone with no pin of its own and no city inside it stays empty.
+assert(#zonePins("Westfall") == 0, "Westfall has no pin and no city, so it must stay empty")
+-- The parent rule must not leak pins to unrelated zones.
+local strangle = titles(zonePins("Stranglethorn Vale"))
+assert(not strangle["Stormwind City"], "Stormwind pins must not appear in Stranglethorn")
 
 -- A zone without pins shows none.
 continent, mapZoneIndex, zoneName = 1, 1, "Westfall"
@@ -385,10 +585,10 @@ ns.Refresh()
 assert(#visible() == 25, "Eastern Kingdoms must show 25 pins, got " .. #visible())
 local first = visible()[1]
 local cpoint = first.points[#first.points]
-assert(math.abs(cpoint[4] - first.pin.cx * WorldMapButton:GetWidth()) < 0.01,
-    "continent pin X must be exact")
-assert(math.abs(cpoint[5] + first.pin.cy * WorldMapButton:GetHeight()) < 0.01,
-    "continent pin Y must be exact")
+local cex, cey = expectedPoint({ mx = first.pin.cx, my = first.pin.cy })
+assert(cpoint[2] == WorldMapFrame, "continent pin must be anchored to WorldMapFrame")
+assert(math.abs(cpoint[4] - cex) < 0.01, "continent pin X must be exact, got " .. cpoint[4])
+assert(math.abs(cpoint[5] - cey) < 0.01, "continent pin Y must be exact, got " .. cpoint[5])
 
 continent, mapZoneIndex = 1, 0
 ns.Refresh()
@@ -441,7 +641,13 @@ local realPrint = print
 print = function(text) printed[#printed + 1] = text end
 SlashCmdList["WORLDMAPPINS"]()
 print = realPrint
-assert(#printed == 1 and printed[1]:find("^WorldMapPins: 73 pins"), printed[1] or "no output")
+-- The diagnostic must name the geometry the owner needs to report a misplaced pin: the map
+-- rect, the effective scale, and the frame under the mouse. A one-line "73 pins" cannot tell a
+-- scale bug from a data bug.
+assert(printed[1] and printed[1]:find("^WorldMapPins: 73 pins"), printed[1] or "no output")
+assert(printed[2] and printed[2]:find("^  pin level 8 above frame, map rect ") and printed[2]:find(","),
+    printed[2] or "no map rect line")
+assert(printed[3] and printed[3]:find("^  mouse over "), printed[3] or "no mouse line")
 
 -- The zone list resolver handles the "The"/"City" spelling differences.
 zoneName = "Stormwind City"

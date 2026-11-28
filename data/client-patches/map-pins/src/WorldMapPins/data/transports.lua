@@ -85,6 +85,8 @@ ns.PinTransports = {
       title = "Stormwind Harbor",
       x = -8650.7, y = 1346.1, mx = 0.2169, my = 0.5654,
       cont = 2, cx = 0.4130, cy = 0.7303,
+      zones = { 12 },
+      px = 0.0545, py = 0.3072,
       lines = {
           "To Auberdine",
       } },
@@ -93,6 +95,8 @@ ns.PinTransports = {
       title = "Stormwind Harbor",
       x = -8288.8, y = 1424.7, mx = 0.1716, my = 0.2529,
       cont = 2, cx = 0.4111, cy = 0.7170,
+      zones = { 12 },
+      px = 0.0319, py = 0.1509,
       lines = {
           "To Valiance Keep",
       } },
@@ -173,6 +177,8 @@ ns.PinTransports = {
       title = "Thunder Bluff",
       x = -1026.9, y = 375.8, mx = 0.1350, my = 0.2542,
       cont = 1, cx = 0.4536, cy = 0.5636,
+      zones = { 215 },
+      px = 0.3255, py = 0.2201,
       lines = {
           "To Orgrimmar",
       } },

@@ -1,6 +1,6 @@
 {
   "archive": "patch-Z.MPQ",
-  "built_at": "2026-11-27T20:44:05+00:00",
+  "built_at": "2026-11-28T16:06:02+00:00",
   "compression": "zlib",
   "dbc_files": 0,
   "entries": [
@@ -12,38 +12,38 @@
       "verify_flags": 80
     },
     {
-      "compressed_size": 1550,
+      "compressed_size": 1657,
       "path": "Interface\\AddOns\\WorldMapPins\\data\\portals.lua",
-      "sha256": "ab0f90f7e6a0aa71742f77fc86e85848125adb6a4e781792db2c2727e4e67a32",
-      "size": 5834,
+      "sha256": "203278157b9e0689724143900671aedf909cf57a9db45a96e564a8af59f03424",
+      "size": 5916,
       "verify_flags": 80
     },
     {
-      "compressed_size": 1811,
+      "compressed_size": 2094,
       "path": "Interface\\AddOns\\WorldMapPins\\data\\services.lua",
-      "sha256": "f7ff4a9e49e39dda3766f8d9c41c6103978ae65ab5a107f929057309c0aa18ca",
-      "size": 6407,
+      "sha256": "9c797ee7b9583da8fd20a7c2ae3488b90761fdc6879c71d4d7b7053ee5fb0449",
+      "size": 7394,
       "verify_flags": 80
     },
     {
-      "compressed_size": 2331,
+      "compressed_size": 2409,
       "path": "Interface\\AddOns\\WorldMapPins\\data\\transports.lua",
-      "sha256": "361124f9f734135b786787a908cde208972219d32e29840dd4e53de0c853c9f7",
-      "size": 8898,
+      "sha256": "dc2dcb670dd674c15bb3e9bd47c1db4af6e81cd3048fd2afb3f816346c96d2fa",
+      "size": 9061,
       "verify_flags": 80
     },
     {
-      "compressed_size": 835,
+      "compressed_size": 892,
       "path": "Interface\\AddOns\\WorldMapPins\\data\\zones.lua",
-      "sha256": "49ef4aeea2a63d352137c2e6c24167733ae7ce3dfcb3f20142c21ab25fde2253",
-      "size": 1525,
+      "sha256": "769a4a14b40f4a91111c7cd7971fd6ebc91ea757c48f5b35e0639edd41a23233",
+      "size": 1663,
       "verify_flags": 80
     },
     {
-      "compressed_size": 4128,
+      "compressed_size": 6155,
       "path": "Interface\\AddOns\\WorldMapPins\\WorldMapPins.lua",
-      "sha256": "e796d29fd713e5711d09d8afa1ad8b4d015cbe2e89c394859a6e76d8ae94d4c0",
-      "size": 10144,
+      "sha256": "5375073add6e337a641b38574f5838d756bcd8cbf3670350acab3ecaca86dae4",
+      "size": 15019,
       "verify_flags": 80
     },
     {
@@ -97,12 +97,12 @@
     ]
   },
   "schema": 1,
-  "sha256": "f712a0e435d22b73ecd4d812a1aae5ef8e21a36371c9f5de03de461b05f46cdb",
-  "size": 35580,
+  "sha256": "f86b3f25cabd11504f99cf431cd9d11d97bd1b788a4c8d982b09e91d3b00ca18",
+  "size": 38131,
   "sources": [
     {
       "path": "Interface\\AddOns\\WorldMapPins\\WorldMapPins.lua",
-      "sha256": "e796d29fd713e5711d09d8afa1ad8b4d015cbe2e89c394859a6e76d8ae94d4c0",
+      "sha256": "5375073add6e337a641b38574f5838d756bcd8cbf3670350acab3ecaca86dae4",
       "source": "data/client-patches/map-pins/src/WorldMapPins/WorldMapPins.lua"
     },
     {
@@ -117,22 +117,22 @@
     },
     {
       "path": "Interface\\AddOns\\WorldMapPins\\data\\portals.lua",
-      "sha256": "ab0f90f7e6a0aa71742f77fc86e85848125adb6a4e781792db2c2727e4e67a32",
+      "sha256": "203278157b9e0689724143900671aedf909cf57a9db45a96e564a8af59f03424",
       "source": "data/client-patches/map-pins/src/WorldMapPins/data/portals.lua"
     },
     {
       "path": "Interface\\AddOns\\WorldMapPins\\data\\services.lua",
-      "sha256": "f7ff4a9e49e39dda3766f8d9c41c6103978ae65ab5a107f929057309c0aa18ca",
+      "sha256": "9c797ee7b9583da8fd20a7c2ae3488b90761fdc6879c71d4d7b7053ee5fb0449",
       "source": "data/client-patches/map-pins/src/WorldMapPins/data/services.lua"
     },
     {
       "path": "Interface\\AddOns\\WorldMapPins\\data\\transports.lua",
-      "sha256": "361124f9f734135b786787a908cde208972219d32e29840dd4e53de0c853c9f7",
+      "sha256": "dc2dcb670dd674c15bb3e9bd47c1db4af6e81cd3048fd2afb3f816346c96d2fa",
       "source": "data/client-patches/map-pins/src/WorldMapPins/data/transports.lua"
     },
     {
       "path": "Interface\\AddOns\\WorldMapPins\\data\\zones.lua",
-      "sha256": "49ef4aeea2a63d352137c2e6c24167733ae7ce3dfcb3f20142c21ab25fde2253",
+      "sha256": "769a4a14b40f4a91111c7cd7971fd6ebc91ea757c48f5b35e0639edd41a23233",
       "source": "data/client-patches/map-pins/src/WorldMapPins/data/zones.lua"
     },
     {

@@ -67,19 +67,38 @@ local function Tooltip()
     return WorldMapTooltip or GameTooltip
 end
 
--- Pins are children of WorldMapFrame at its frame level + 7, with the frame's strata copied.
--- That is the arrangement Questie uses in this client (HandyNotes uses +6) and it is the one
--- proven to receive hover and click. The previous build was a child of WorldMapButton at
--- WORLDMAP_POI_FRAMELEVEL + 50: it drew, but no mouse event ever reached it.
+-- Pins are children of WorldMapFrame at its frame level plus PIN_LEVEL_OFFSET, with the frame's
+-- strata copied. That is the arrangement Questie uses in this client (HandyNotes uses +6) and it
+-- is the one proven to receive hover and click. The previous build was a child of WorldMapButton
+-- at WORLDMAP_POI_FRAMELEVEL + 50: it drew, but no mouse event ever reached it.
 --
--- Level 94 is below the quest POI frame (100) on purpose. `WorldMapPOIFrame` itself is not
--- mouse-enabled, so it does not block the pin. Only its child quest icons do, and a pin that
--- lands exactly on one loses the mouse there. Raising the level would break the arrangement
--- that is known to work in this client.
+-- PIN_LEVEL_OFFSET is 8, one above the 7 that Questie uses for its own map pins and two above
+-- HandyNotes' 6. A player's map addon is not something this layer can negotiate with: at the same
+-- level whichever addon loaded last wins the mouse, so sitting one higher means our tooltip and
+-- click survive every load order. The cost is that our 24x24 button covers a Questie pin drawn
+-- within 24 pixels of ours, which is the trade the owner chose over losing our own features.
+--
+-- The concrete levels, from WorldMapFrame_ResetFrameLevels: WorldMapFrame 87, so a pin is 95,
+-- still below WorldMapPOIFrame's 100. That is deliberate. POIFrame is not mouse-enabled and
+-- never blocks a pin; only its child quest icons do, and the pin loses the mouse only where it
+-- lands exactly on one. Raising it above 100 would put the layer over the quest icons instead.
+local PIN_LEVEL_OFFSET = 8
+
 local function PlaceLevel(button)
     if WorldMapFrame then
         button:SetFrameStrata(WorldMapFrame:GetFrameStrata())
-        button:SetFrameLevel(WorldMapFrame:GetFrameLevel() + 7)
+        button:SetFrameLevel(WorldMapFrame:GetFrameLevel() + PIN_LEVEL_OFFSET)
+    end
+end
+
+-- One line per failing site, never more: a broken interaction repeats every frame, and a chat
+-- flood is itself a bug. The message names the site so a report says which addon to blame.
+ns.GuardErrors = {}
+function ns.GuardError(site, err)
+    ns.GuardErrors[site] = (ns.GuardErrors[site] or 0) + 1
+    if ns.GuardErrors[site] == 1 then
+        print("|cffff5555WorldMapPins|r " .. site .. " handler failed (another addon may be "
+            .. "involved): " .. tostring(err))
     end
 end
 
@@ -99,7 +118,19 @@ local function CreatePin(pin)
     button.icon = icon
     button.pin = pin
 
-    button:SetScript("OnEnter", function(self)
+    -- Every script is wrapped: a third-party addon that hooks the same frames can raise inside
+    -- the handler chain, and an unwrapped error there would leave our tooltip stuck or the pin
+    -- dead for the rest of the session. ns.Guard keeps the layer drawing and reports once.
+    local function Guard(label, handler)
+        return function(self, ...)
+            local ok, err = pcall(handler, self, ...)
+            if not ok then
+                ns.GuardError(label, err)
+            end
+        end
+    end
+
+    button:SetScript("OnEnter", Guard("enter", function(self)
         local tip = Tooltip()
         if not tip then
             return
@@ -131,8 +162,8 @@ local function CreatePin(pin)
             tip:AddLine(line, 0.85, 0.85, 0.85)
         end
         tip:Show()
-    end)
-    button:SetScript("OnLeave", function()
+    end))
+    button:SetScript("OnLeave", Guard("leave", function()
         local tip = Tooltip()
         if tip then
             tip:Hide()
@@ -140,8 +171,8 @@ local function CreatePin(pin)
         if WorldMapPOIFrame then
             WorldMapPOIFrame.allowBlobTooltip = true
         end
-    end)
-    button:SetScript("OnClick", function(self, mouseButton)
+    end))
+    button:SetScript("OnClick", Guard("click", function(self, mouseButton)
         local tip = Tooltip()
         if tip then
             tip:Hide()
@@ -150,7 +181,7 @@ local function CreatePin(pin)
         if WorldMapButton_OnClick then
             WorldMapButton_OnClick(WorldMapButton, mouseButton)
         end
-    end)
+    end))
     return button
 end
 
@@ -168,6 +199,22 @@ local function HideAll()
     end
 end
 
+-- A pin draws on its own zone map and on the curated region map of its city. The Thunder Bluff
+-- pins store zone 1638, so matching the id alone left the Mulgore map empty. The region map is
+-- also much larger than the city's micro-map, so the pin carries a second fraction pair (px/py)
+-- generated against the region rectangle; reusing mx/my drew the pin in the sea.
+local function PinFractions(pin, zone)
+    if pin.zone == zone then
+        return pin.mx, pin.my
+    end
+    for _, parent in ipairs(pin.zones or {}) do
+        if parent == zone then
+            return pin.px, pin.py
+        end
+    end
+    return nil
+end
+
 local function DisplayedZone(continent, index)
     if not continent or continent < 1 or continent > 4 or not index or index == 0
         or not GetMapZones then
@@ -178,6 +225,29 @@ local function DisplayedZone(continent, index)
         return nil
     end
     return ZONE_BY_NAME[Normalize(name)]
+end
+
+-- The pin is a child of WorldMapFrame, but the map is drawn by WorldMapButton, which the client
+-- scales independently (0.691 in the quest view, 0.573 windowed, 1.0 full). GetLeft and GetTop
+-- return screen pixels divided by the frame's OWN effective scale, so subtracting a button rect
+-- from a frame rect mixes two unit spaces and is only right when both scales are equal. Scale
+-- each rect to screen pixels first, then divide once by the frame's scale. The width and height
+-- terms were already right, which is why pins drifted instead of shrinking.
+local function MapRect()
+    local frameScale = WorldMapFrame:GetEffectiveScale()
+    if not frameScale or frameScale == 0 then
+        return nil
+    end
+    local buttonScale = WorldMapButton:GetEffectiveScale() or 1
+    local left, top = WorldMapButton:GetLeft(), WorldMapButton:GetTop()
+    local frameLeft, frameTop = WorldMapFrame:GetLeft(), WorldMapFrame:GetTop()
+    if not left or not top or not frameLeft or not frameTop then
+        return nil
+    end
+    return (left * buttonScale - frameLeft * frameScale) / frameScale,
+        (top * buttonScale - frameTop * frameScale) / frameScale,
+        WorldMapButton:GetWidth() * buttonScale / frameScale,
+        WorldMapButton:GetHeight() * buttonScale / frameScale
 end
 
 local function Refresh()
@@ -192,11 +262,11 @@ local function Refresh()
     local index = GetCurrentMapZone and GetCurrentMapZone()
     local zone = DisplayedZone(continent, index)
     local onContinent = index == 0 and continent ~= nil and continent >= 1 and continent <= 4
-    -- The pins are children of WorldMapFrame, which is not scaled. WorldMapButton is scaled
-    -- to the current map size, so the offsets must use its displayed size, not its raw size.
-    local scale = WorldMapButton:GetScale() or 1
-    local width = WorldMapButton:GetWidth() * scale
-    local height = WorldMapButton:GetHeight() * scale
+    local dx, dy, width, height = MapRect()
+    if not dx then
+        HideAll()
+        return
+    end
 
     for i, pin in ipairs(ns.Pins) do
         local button = Frame.pins[i]
@@ -205,15 +275,17 @@ local function Refresh()
             Frame.pins[i] = button
         end
         local x, y
-        if zone and pin.zone == zone then
-            x, y = pin.mx, pin.my
-        elseif onContinent and pin.cont == continent then
+        if zone then
+            x, y = PinFractions(pin, zone)
+        end
+        if not x and onContinent and pin.cont == continent then
             x, y = pin.cx, pin.cy
         end
         if x then
             PlaceLevel(button)
             button:ClearAllPoints()
-            button:SetPoint("CENTER", WorldMapButton, "TOPLEFT", x * width, -y * height)
+            button:SetPoint("CENTER", WorldMapFrame, "TOPLEFT",
+                dx + x * width, dy - y * height)
             button:Show()
         else
             button:Hide()
@@ -227,23 +299,56 @@ local function Hook(name, handler)
     end
 end
 
+-- The objectives checkbox and the size toggle re-scale and re-anchor the map, then call
+-- WorldMapFrame_DisplayQuests or WorldMap_ToggleSizeUp/Down. Neither calls WorldMapFrame_Update,
+-- which is where the client itself repositions its POIs, so hooking only Update/OnShow left the
+-- pins at the previous view's offsets. Hook every function that can move the map. UpdateMap and
+-- DisplayQuests call Update, so a zone change refreshes twice; at 73 pins that is free and it
+-- keeps the list robust against a client build that stops calling one of them.
 Hook("WorldMapFrame_Update", Refresh)
+Hook("WorldMapFrame_UpdateMap", Refresh)
 Hook("WorldMapFrame_OnShow", Refresh)
+Hook("WorldMapFrame_DisplayQuests", Refresh)
+Hook("WorldMapFrame_SetQuestMapView", Refresh)
+Hook("WorldMapFrame_SetFullMapView", Refresh)
+Hook("WorldMap_ToggleSizeUp", Refresh)
+Hook("WorldMap_ToggleSizeDown", Refresh)
 Hook("WorldMapFrame_OnHide", HideAll)
 
 -- `/wmp` prints the frame under the cursor and the pin count. When a hover does not open the
 -- tooltip this says whether a pin, the client quest POI layer, or something else owns the
 -- mouse, without a debugger.
+local function DescribeFrame(frame)
+    if not frame then
+        return "nothing"
+    end
+    if frame.pin then
+        return "pin: " .. tostring(frame.pin.title or frame.pin.label)
+    end
+    return tostring(frame:GetName() or frame)
+end
+
 local function Diagnose()
     local out = "WorldMapPins: " .. #ns.Pins .. " pins"
     if not WorldMapFrame or not WorldMapFrame:IsShown() then
         print(out .. ", map closed")
         return
     end
-    local frame = GetMouseFocus and GetMouseFocus()
-    local name = frame and (frame:GetName() or frame.pin and "pin: " .. frame.pin.label)
-    print(out .. ", map open, zone index " .. tostring(GetCurrentMapZone and GetCurrentMapZone())
-        .. ", mouse over " .. tostring(name or "nothing"))
+    local dx, dy, width, height = MapRect()
+    print(out .. ", map open, zone index " .. tostring(GetCurrentMapZone and GetCurrentMapZone()))
+    print("  pin level " .. tostring(PIN_LEVEL_OFFSET) .. " above frame, map rect "
+        .. tostring(dx) .. "," .. tostring(dy) .. " " .. tostring(width) .. "x" .. tostring(height)
+        .. ", effective scale " .. tostring(WorldMapFrame:GetEffectiveScale()))
+    if GetMouseFocus then
+        print("  mouse over " .. DescribeFrame(GetMouseFocus()))
+    end
+    local failed = {}
+    for site, count in pairs(ns.GuardErrors) do
+        failed[#failed + 1] = site .. " x" .. count
+    end
+    if #failed > 0 then
+        print("  handlers that failed: " .. table.concat(failed, ", "))
+    end
 end
 
 SLASH_WORLDMAPPINS1 = "/wmp"
