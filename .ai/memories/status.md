@@ -1,7 +1,7 @@
 ---
 description: Current project status, last verified commit, known issues, open decisions, and next tasks. Read after overview on any task.
-last-verified: 2026-11-28 (local-server-setup @ 9449ccf7d; round-4 map pin fixes merged,
-  installed and owner-verified in client: region maps, view scaling, portal tooltip all PASS)
+last-verified: 2026-11-28 (local-server-setup; upstream 41831dd11 merged and verified: build,
+  verify-cpp, verify-sql, verify-docs, verify-smoke all green)
 ---
 
 # Status
@@ -20,6 +20,44 @@ last-verified: 2026-11-28 (local-server-setup @ 9449ccf7d; round-4 map pin fixes
 - Website work has not started and is not part of the current phase. Custom content and shop work
   remain out of scope until the base game is done.
 - Branch: `local-server-setup` is the integration branch. Confirm with `git status`.
+
+## Session record — 2026-11-28 (upstream sync: 169 commits)
+
+- **Merge.** `upstream/master` `41831dd11`, 169 commits from base `f22f09672`. One textual conflict,
+  `AGENTS.md`: the fork's governing doc is kept whole and upstream's two new triggers are absorbed
+  (`.agents/docs/retail-evidence.md` for `pending_db_world`/`smart_scripts` work, and
+  `.agents/docs/systems/config.md` for `*.conf.dist` edits).
+- **What upstream changed.** 98 fix, 48 chore, 11 docs, 8 refactor, 3 feat, 1 test. By area: 68 DB,
+  55 Scripts, 31 Core, 11 Agents, 3 CI, 1 e2e. Trial of the Crusader dominates with 24 commits and
+  is effectively rebuilt from sniffs (Twin Val'kyr control spells, Anub'arak submerge/emerge/spheres,
+  Northrend Beasts timings, Jaraxxus Spellsteal). Ulduar 6, Naxxramas 5.
+- **Schema migration.** Cooldown bookkeeping moved from `Player` to `SpellHistory` (#28578):
+  `character_spell_cooldown` gains `categoryEnd` and drops `needSend`, `pet_spell_cooldown` gains
+  `categoryEnd`, and `character_pet_autocast` is new (#28561). `CharacterDatabase.cpp` query strings
+  changed with it. We touch none of those tables and no module references them.
+- **One build break, in our own module.** `mod-forever-journal` called `Player::SendCooldownEvent`,
+  removed by that port. Fixed to `player->GetSpellHistory()->SendCooldownEvent(...)` plus an
+  explicit `SpellHistory.h` include, because `Unit.h` only forward-declares the class; that is also
+  how the core now calls it (`Spell.cpp`, `Totem.cpp`, `SpellAuras.cpp`). Every other upstream-removed
+  symbol was swept against all 17 modules and the GM addon: no other call site.
+- **Command rework.** `.groupsummon` became `.group summon` (#28534) and `Instance.GMSummonPlayer`
+  was removed. The generated command index was stale and `make verify-docs` failed until regenerated.
+- **Conflicts checked beyond text.** No file upstream deleted was modified here; no `modules/` file
+  was touched upstream; the single SQL row overlap (Sapphiron `smart_scripts` `entryorguid` 30956)
+  carries identical values on both sides, only quote escaping differs; no creature GUID collision
+  (ours 8, theirs 596); no custom-ID or RBAC collision.
+- **Verification.** `make build` clean. `make verify-cpp` EXIT 0: codestyle pass, cppcheck clean,
+  6,042 unit tests passed and 0 failed (5,479 skipped, perf/profiling). `make verify-sql` and
+  `make verify-docs` green. `make verify-smoke` EXIT 0. Migration applied: `categoryEnd` present,
+  `needSend` gone, `character_pet_autocast` created. World updates 1105 → 1154 released.
+- **Two pre-existing warnings, not from this merge.** Five modules ship only a `.conf.dist` and log
+  `Config::LoadFile: Failed open` (`AncestralWisdom`, `arena_3v3_solo_queue`, `DungeonXp`,
+  `PersonalArenaTeams`, `XpBonus`); the pre-merge log has 90 of the same lines. `Errors.log` holds 8
+  `trainer_spell ... which is a talent` lines from upstream data. 6,083 `GCDA corrupt arc tag` lines
+  in `verify-cpp` are stale gcov artifacts in `build-verify`, not failures.
+- **The 4 `rev_*` files in `pending_db_world` are already applied**, hashes and 2026-11-14
+  timestamps match `acore_world.updates`, so `make doctor` keeps reporting them as pending. They
+  must stay for a fresh database. Recorded here so the warning is not re-investigated.
 
 ## Session record — 2026-11-28 (playtest round 4: region maps, view scaling, portal text)
 
@@ -925,7 +963,8 @@ happen between phases.
 
 Standing rituals, started 2026-11-17:
 
-- Weekly upstream sync with `make sync-upstream`; first sync executed (31 upstream commits merged).
+- Weekly upstream sync with `make sync-upstream`; 2026-11-28 synced 169 upstream commits
+  (`41831dd11`). One module break, fixed in the same merge.
 - Player bug reports: triage `acore_characters.bugreport` per
   [runbook/operation/bug-reports.md](../../runbook/operation/bug-reports.md).
 
