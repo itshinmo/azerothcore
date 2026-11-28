@@ -67,20 +67,21 @@ local function Tooltip()
     return WorldMapTooltip or GameTooltip
 end
 
--- Pins are children of WorldMapFrame at its frame level + 7, with the frame's strata copied.
--- That is the arrangement Questie uses in this client (HandyNotes uses +6) and it is the one
--- proven to receive hover and click. The previous build was a child of WorldMapButton at
--- WORLDMAP_POI_FRAMELEVEL + 50: it drew, but no mouse event ever reached it.
+-- Pins are children of WorldMapFrame at its frame level plus PIN_LEVEL_OFFSET, with the frame's
+-- strata copied. That is the arrangement Questie uses in this client (HandyNotes uses +6) and it
+-- is the one proven to receive hover and click. The previous build was a child of WorldMapButton
+-- at WORLDMAP_POI_FRAMELEVEL + 50: it drew, but no mouse event ever reached it.
 --
--- Level 94 is below the quest POI frame (100) on purpose. `WorldMapPOIFrame` itself is not
--- mouse-enabled, so it does not block the pin. Only its child quest icons do, and a pin that
--- lands exactly on one loses the mouse there. Raising the level would break the arrangement
--- that is known to work in this client.
 -- PIN_LEVEL_OFFSET is 8, one above the 7 that Questie uses for its own map pins and two above
 -- HandyNotes' 6. A player's map addon is not something this layer can negotiate with: at the same
 -- level whichever addon loaded last wins the mouse, so sitting one higher means our tooltip and
 -- click survive every load order. The cost is that our 24x24 button covers a Questie pin drawn
 -- within 24 pixels of ours, which is the trade the owner chose over losing our own features.
+--
+-- The concrete levels, from WorldMapFrame_ResetFrameLevels: WorldMapFrame 87, so a pin is 95,
+-- still below WorldMapPOIFrame's 100. That is deliberate. POIFrame is not mouse-enabled and
+-- never blocks a pin; only its child quest icons do, and the pin loses the mouse only where it
+-- lands exactly on one. Raising it above 100 would put the layer over the quest icons instead.
 local PIN_LEVEL_OFFSET = 8
 
 local function PlaceLevel(button)
@@ -198,20 +199,20 @@ local function HideAll()
     end
 end
 
--- A pin draws on its own zone map and on the zone maps that contain it. The Thunder Bluff pins
--- store zone 1638, so matching the id alone would leave the Mulgore map empty; the generator
--- attaches the curated parent zone to each pin instead of guessing geometrically, because the
--- city bounds overlap three outdoor zones apiece.
-local function OnZoneMap(pin, zone)
+-- A pin draws on its own zone map and on the curated region map of its city. The Thunder Bluff
+-- pins store zone 1638, so matching the id alone left the Mulgore map empty. The region map is
+-- also much larger than the city's micro-map, so the pin carries a second fraction pair (px/py)
+-- generated against the region rectangle; reusing mx/my drew the pin in the sea.
+local function PinFractions(pin, zone)
     if pin.zone == zone then
-        return true
+        return pin.mx, pin.my
     end
     for _, parent in ipairs(pin.zones or {}) do
         if parent == zone then
-            return true
+            return pin.px, pin.py
         end
     end
-    return false
+    return nil
 end
 
 local function DisplayedZone(continent, index)
@@ -226,25 +227,25 @@ local function DisplayedZone(continent, index)
     return ZONE_BY_NAME[Normalize(name)]
 end
 
--- The pin is a child of WorldMapFrame, but the map is drawn by WorldMapButton, which is nested
--- inside WorldMapDetailFrame and is scaled twice in the quest view (0.691 * 0.691 = 0.4775).
--- Derive the map rectangle from live screen geometry instead of any scale constant: GetScale()
--- only reports a frame's own scale, so the old code was 44.7% too wide whenever the quest panel
--- was open, which slid every pin toward the top-left. Live rects also follow any addon that
--- resizes the panel or re-anchors the map.
+-- The pin is a child of WorldMapFrame, but the map is drawn by WorldMapButton, which the client
+-- scales independently (0.691 in the quest view, 0.573 windowed, 1.0 full). GetLeft and GetTop
+-- return screen pixels divided by the frame's OWN effective scale, so subtracting a button rect
+-- from a frame rect mixes two unit spaces and is only right when both scales are equal. Scale
+-- each rect to screen pixels first, then divide once by the frame's scale. The width and height
+-- terms were already right, which is why pins drifted instead of shrinking.
 local function MapRect()
     local frameScale = WorldMapFrame:GetEffectiveScale()
     if not frameScale or frameScale == 0 then
         return nil
     end
+    local buttonScale = WorldMapButton:GetEffectiveScale() or 1
     local left, top = WorldMapButton:GetLeft(), WorldMapButton:GetTop()
     local frameLeft, frameTop = WorldMapFrame:GetLeft(), WorldMapFrame:GetTop()
     if not left or not top or not frameLeft or not frameTop then
         return nil
     end
-    local buttonScale = WorldMapButton:GetEffectiveScale() or 1
-    return (left - frameLeft) / frameScale,
-        (top - frameTop) / frameScale,
+    return (left * buttonScale - frameLeft * frameScale) / frameScale,
+        (top * buttonScale - frameTop * frameScale) / frameScale,
         WorldMapButton:GetWidth() * buttonScale / frameScale,
         WorldMapButton:GetHeight() * buttonScale / frameScale
 end
@@ -263,6 +264,7 @@ local function Refresh()
     local onContinent = index == 0 and continent ~= nil and continent >= 1 and continent <= 4
     local dx, dy, width, height = MapRect()
     if not dx then
+        HideAll()
         return
     end
 
@@ -273,9 +275,10 @@ local function Refresh()
             Frame.pins[i] = button
         end
         local x, y
-        if zone and OnZoneMap(pin, zone) then
-            x, y = pin.mx, pin.my
-        elseif onContinent and pin.cont == continent then
+        if zone then
+            x, y = PinFractions(pin, zone)
+        end
+        if not x and onContinent and pin.cont == continent then
             x, y = pin.cx, pin.cy
         end
         if x then
@@ -296,8 +299,19 @@ local function Hook(name, handler)
     end
 end
 
+-- The objectives checkbox and the size toggle re-scale and re-anchor the map, then call
+-- WorldMapFrame_DisplayQuests or WorldMap_ToggleSizeUp/Down. None of those calls
+-- WorldMapFrame_Update, which is where the client itself repositions its POIs, so hooking only
+-- Update/OnShow left the pins at the previous view's offsets. Hook every path that can move the
+-- map, plus the two events the client redraws on.
 Hook("WorldMapFrame_Update", Refresh)
+Hook("WorldMapFrame_UpdateMap", Refresh)
 Hook("WorldMapFrame_OnShow", Refresh)
+Hook("WorldMapFrame_DisplayQuests", Refresh)
+Hook("WorldMapFrame_SetQuestMapView", Refresh)
+Hook("WorldMapFrame_SetFullMapView", Refresh)
+Hook("WorldMap_ToggleSizeUp", Refresh)
+Hook("WorldMap_ToggleSizeDown", Refresh)
 Hook("WorldMapFrame_OnHide", HideAll)
 
 -- `/wmp` prints the frame under the cursor and the pin count. When a hover does not open the

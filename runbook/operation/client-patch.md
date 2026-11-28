@@ -200,7 +200,8 @@ DB write.
 | Custom item shows a red `?` | Item.dbc row missing, DisplayInfoID missing, or `patch-X` not loaded | Run `item_dbc.py inspect --archive ... --ids <id>`; confirm `which Item.dbc` is `patch-X`; check ItemDisplayInfo.dbc. |
 | `Item.dbc` header rejected | Not 8 fields / 32-byte rows | Use the client's 3.3.5a Item.dbc, not a Cataclysm or later table. |
 | Item.dbc conflict | `patch-Y` or `patch-Z` also carries Item.dbc | Remove the other carrier; X must be the only one. |
-| Pin tooltip absent | Wrong parent, or the pin is under the client quest POI layer | Parent to `WorldMapFrame` at `GetFrameLevel() + 7` with the frame's strata, `EnableMouse(true)`, hover via `WorldMapTooltip`, and set `WorldMapPOIFrame.allowBlobTooltip = false`. `/wmp` prints the frame under the cursor. |
+| Pin tooltip absent | Wrong parent, the pin is under the client quest POI layer, or another map addon outranks it | Parent to `WorldMapFrame` at `GetFrameLevel() + 8` with the frame's strata, `EnableMouse(true)`, hover via `WorldMapTooltip`, and set `WorldMapPOIFrame.allowBlobTooltip = false`. `/wmp` prints the frame under the cursor. |
+| Pins drift toward a corner | A frame scale read where an effective scale was needed, or an addon resized the map | The pin offset comes from the map's live rect divided by `WorldMapFrame:GetEffectiveScale()`. `/wmp` prints that rect and scale; compare with the panel the client draws. |
 
 ## References
 

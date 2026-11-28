@@ -80,10 +80,11 @@ list ADR-032 tried to draw.
 5. **Hover must work, and the parent frame decides it.** A pin parented to `WorldMapButton` at
    `WORLDMAP_POI_FRAMELEVEL + 50` draws but receives no mouse event at all: no tooltip, and the
    click does not reach the map either. The working arrangement, proven by Questie in the same
-   client, is a 24x24 button parented to `WorldMapFrame` at `GetFrameLevel() + 7`, with the frame's
-   strata and the mouse enabled. `OnEnter` opens `WorldMapTooltip` with the place as the title and
-   the service on the second line, and sets `WorldMapPOIFrame.allowBlobTooltip = false` while the
-   pin is hovered; `OnLeave` and `HideAll` restore it.
+   client, is a 24x24 button parented to `WorldMapFrame` at `GetFrameLevel() + 8`, with the frame's
+   strata and the mouse enabled. The third amendment raised it from `+ 7` and explains why.
+   `OnEnter` opens `WorldMapTooltip` with the place as the title and the service on the second
+   line, and sets `WorldMapPOIFrame.allowBlobTooltip = false` while the pin is hovered; `OnLeave`
+   and `HideAll` restore it.
    `OnClick` forwards to `WorldMapButton_OnClick`, so the stock map ping still works. Warpweaver
    uses the `INV_NetherPortal` icon: a dark void portal, matching the ethereal transmogrifier.
    The title carries the city because a capital's Warpweaver and Call Board sit 1 to 7 pixels apart
@@ -112,17 +113,26 @@ list ADR-032 tried to draw.
 - Rule 5's level moved from `WorldMapFrame + 7` to `+ 8`, and placement now derives from live
   screen geometry instead of a scale constant. Two playtest defects: a pin sat under Questie's
   pins on load order, and every pin slid toward the top-left as soon as "Show Quest Objectives"
-  scaled the map. The quest view scales `WorldMapDetailFrame` and `WorldMapButton` by `0.691`
-  each, so the effective scale is `0.4775`; reading only `WorldMapButton:GetScale()` left every
-  offset 44.7% too large. `MapRect()` now divides the live rects by
-  `WorldMapFrame:GetEffectiveScale()`, which also follows any third-party addon that resizes or
-  re-anchors the panel. Each pin handler is wrapped in `pcall` and reports one line per failing
+  scaled the map. Two separate causes, and the first fix attempt addressed neither properly.
+  `WorldMapButton` and `WorldMapDetailFrame` are siblings under `WorldMapFrame` in the shipped
+  `WorldMapFrame.xml`; the client scales each one independently (`1.0` full map, `0.691` quest,
+  `0.573` windowed), and `GetLeft`/`GetTop` already divide by the frame's own effective scale.
+  Subtracting a button rect from a frame rect therefore mixed two unit spaces. `MapRect()` scales
+  each corner to screen pixels and divides once, which also follows any third-party addon that
+  resizes the panel.
+  Separately, the objectives checkbox moves the map through `WorldMapFrame_DisplayQuests` and the
+  size toggle through `WorldMap_ToggleSizeUp`/`Down`, and neither calls `WorldMapFrame_Update`.
+  Hooking only `Update`/`OnShow` left the pins at the previous view's offsets. Every path that can
+  move the map is hooked. Each pin handler is wrapped in `pcall` and reports one line per failing
   site, because a player's addon hooking the same frames must not kill the layer.
 - Rule 1's zone visibility gained a curated parent per serviced city. Exact-zone matching left
   every capital's own zone map empty; geometric containment is unusable because each city's
-  `WorldMapArea` rectangle overlaps three outdoor zones and Dalaran's coordinates are a micro-map
-  inside Crystalsong Forest. Nine parents are generated into each pin's `zones` list, and Dalaran
-  deliberately has none.
+  `WorldMapArea` rectangle overlaps three outdoor zones (Desolace genuinely contains Thunder
+  Bluff's pin) and Dalaran's coordinates are a micro-map inside Crystalsong Forest. Nine parents
+  are generated into each pin's `zones` list, and Dalaran deliberately has none. Each pin also
+  carries a second fraction pair projected on the parent's rectangle: the city micro-map is about
+  a fifth of its region's width, so reusing the city fractions drew the pin several hundred pixels
+  into the sea, on the very map the report was about.
 
 **2026-11-27, second amendment.**
 

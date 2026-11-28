@@ -1,7 +1,9 @@
 """Offline checks for the map-pin generator's pure parts.
 
 The DBC and SQL parsing is exercised against synthetic bytes, so these tests run without a
-client and without the world database.
+client and without the world database. The one exception is ZoneParentTest, which checks the
+curated ZONE_PARENTS table against the real WorldMapArea and skips when no client is present
+(its assertions are claims about that DBC, not about our parser).
 
 Run: python3 -m unittest discover -s data/client-patches/map-pins/tests -v
 """
@@ -9,6 +11,7 @@ Run: python3 -m unittest discover -s data/client-patches/map-pins/tests -v
 from __future__ import annotations
 
 import os
+import re
 import struct
 import sys
 import tempfile
@@ -394,18 +397,35 @@ def write_taxi_dbc(path: Path, rows: list[tuple]) -> None:
 
 
 class ZoneParentTest(unittest.TestCase):
-    """Every curated parent must really overlap its city on the same map.
+    """The curated parents must be the only zones whose rectangle holds the city's pins.
 
-    Geometric containment is not the rule (each city's bounds overlap three outdoor zones), so
-    this asserts the curated pair differently: the parent must be on the same map, it must cover
-    most of the city rectangle, and the city must not fall entirely outside it. Orgrimmar is the
-    reason a tolerance is needed at all: its auction house stands on Durotar's eastern edge, where
-    only half the city rectangle overlaps the zone.
+    Box overlap alone is a rubber stamp: against the real DBC it passes The Barrens and Desolace
+    for Thunder Bluff, Silverpine and the Western Plaguelands for the Undercity, and Nagrand for
+    Shattrath, so it would accept a wrong parent. The discriminating property is the one the
+    addon depends on: project the city's own pin onto the candidate rectangle and it must land
+    inside the map. A wrong parent puts the pin in the sea.
+
+    These read the client's WorldMapArea, because the curated table is a claim about that DBC:
+    the rectangles are what the addon draws on. They skip when ACORE_DATA is absent rather than
+    fail on a machine without a client, and still run in the documented location.
     """
 
     def maps(self):
         path = Path(os.environ.get("ACORE_DATA", os.path.expanduser("~/wow/Data/dbc")))
+        if not (path / "WorldMapArea.dbc").is_file():
+            self.skipTest(f"no client DBC at {path}; set ACORE_DATA to run the geometry checks")
         return generate.Maps(path)
+
+    def pins_by_zone(self) -> dict:
+        pins = {}
+        for name in ("services", "portals", "transports"):
+            data = (Path(__file__).resolve().parents[1] / "src" / "WorldMapPins" / "data" /
+                    f"{name}.lua").read_text()
+            for zone, x, y in re.findall(
+                r'zone = (\d+).*?x = (-?[\d.]+), y = (-?[\d.]+)', data, re.S
+            ):
+                pins.setdefault(int(zone), []).append((float(x), float(y)))
+        return pins
 
     def test_curated_parents_are_real_zones(self):
         maps = self.maps()
@@ -416,23 +436,33 @@ class ZoneParentTest(unittest.TestCase):
             self.assertEqual(by_key[city].map_id, by_key[parent].map_id,
                              "a city and its parent must share a map")
 
-    def test_every_parent_overlaps_most_of_its_city(self):
+    def test_every_curated_parent_holds_the_city_pins(self):
         maps = self.maps()
+        pins = self.pins_by_zone()
         by_key = {zone.key: zone for zone in maps.zones}
         for city, parent in generate.ZONE_PARENTS.items():
-            zone, city_zone = by_key[parent], by_key[city]
-            ox = max(0.0, min(max(city_zone.x_min, city_zone.x_max), max(zone.x_min, zone.x_max))
-                      - max(min(city_zone.x_min, city_zone.x_max), min(zone.x_min, zone.x_max)))
-            oy = max(0.0, min(max(city_zone.y_min, city_zone.y_max), max(zone.y_min, zone.y_max))
-                      - max(min(city_zone.y_min, city_zone.y_max), min(zone.y_min, zone.y_max)))
-            city_area = abs(city_zone.x_max - city_zone.x_min) * abs(city_zone.y_max - city_zone.y_min)
-            self.assertGreater(city_area, 0, f"{city} has zero bounds")
-            coverage = (ox * oy) / city_area
-            self.assertGreater(
-                coverage, 0.4,
-                f"{maps.map_zone_name(city)} overlaps only {coverage:.0%} of "
-                f"{maps.map_zone_name(parent)}",
-            )
+            coords = pins.get(city)
+            self.assertTrue(coords, f"no generated pin carries zone {city}")
+            map_id = by_key[city].map_id
+            for x, y in coords:
+                px, py = maps.fractions_in(parent, map_id, x, y, f"{city} {x},{y}")
+                self.assertTrue(
+                    -0.03 <= px <= 1.03 and -0.03 <= py <= 1.03,
+                    f"the {maps.map_zone_name(city)} pin at {x},{y} falls off "
+                    f"{maps.map_zone_name(parent)} at ({px:.3f}, {py:.3f})",
+                )
+
+    def test_a_wrong_parent_puts_the_pin_off_the_region(self):
+        # Guards the test above: a neighbouring zone must NOT hold the pin, or the projection
+        # cannot tell a curated parent from a wrong one. Azshara and Teldrassil both reject the
+        # Thunder Bluff spawn; Desolace genuinely contains it, which is why the parent is curated
+        # rather than derived.
+        maps = self.maps()
+        x, y = self.pins_by_zone()[1638][0]          # Thunder Bluff
+        for wrong in (16, 141):                      # Azshara, Teldrassil
+            with self.assertRaises(generate.GenerateError,
+                                   msg=f"zone {wrong} must not hold the Thunder Bluff pin"):
+                maps.fractions_in(wrong, 1, x, y, "mutation")
 
     def test_every_serviced_city_has_a_parent(self):
         # The pins that need a parent are the cities the project actually services. Comparing the

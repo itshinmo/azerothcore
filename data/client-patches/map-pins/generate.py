@@ -183,11 +183,11 @@ PLACES = {
     4395: "Dalaran",
 }
 
-# A pin draws on its own zone map and on every zone map that CONTAINS it. Geometric containment
-# is not usable: the Undercity bounds touch Silverpine Forest and the Western Plaguelands, and
-# Thunder Bluff's spawn point falls in Desolace, so a naive rule puts city pins on three maps.
-# One curated parent per city, from WorldMapArea, asserted against the city's own spawn point in
-# the generator tests. A city with no entry draws only on its own map, which is the safe default.
+# A pin draws on its own zone map and on the curated region zone map of its city. Geometric
+# containment is not usable: the Undercity bounds touch Silverpine Forest and the Western
+# Plaguelands, and Thunder Bluff's spawn point falls in Desolace, so a naive rule puts city pins
+# on three maps. One curated parent per serviced city, chosen from WorldMapArea. A city with no
+# entry draws only on its own map, which is the safe default.
 ZONE_PARENTS = {
     1519: 12,     # Stormwind City     -> Elwynn Forest
     1537: 1,      # Ironforge          -> Dun Morogh
@@ -427,6 +427,26 @@ class Maps:
             "cy": cy,
         }
 
+    def fractions_in(self, region_key: int, map_id: int, x: float, y: float, label: str) -> tuple:
+        """The same point projected on a region map's own WorldMapArea rectangle.
+
+        A pin stores the fractions of its own zone map. Drawing those on the parent map is wrong:
+        the city rectangle is a micro-map about 1,000 yards wide inside a region about 5,000 wide,
+        so the point lands in the sea a few hundred pixels away. The addon picks this pair when the
+        parent zone is displayed.
+        """
+        region = self.zone_for(map_id, x, y, region_key)
+        bounds = self.bounds_for(region)
+        px = (bounds.y_max - y) / (bounds.y_max - bounds.y_min)
+        py = (bounds.x_max - x) / (bounds.x_max - bounds.x_min)
+        for name, value in (("px", px), ("py", py)):
+            if not -0.001 <= value <= 1.001:
+                # Orgrimmar's auction house stands just outside Durotar, so a point may sit a
+                # hair outside the curated region; anything further is a wrong parent.
+                if not -0.03 <= value <= 1.03:
+                    raise GenerateError(f"{label}: {name} = {value:.4f} is off {region_key}")
+        return round(px, 4), round(py, 4)
+
 
 def sql_spawns(path: Path, expected: int) -> list[tuple[int, int, int, float, float]]:
     """(guid, zoneId, map, x, y) for every spawn row in a tracked SQL file's INSERT.
@@ -512,6 +532,9 @@ def render(key: str, header: str, pins: list[dict], dbc_hashes: dict[str, str]) 
         if extra_zones:
             joined = ", ".join(str(z) for z in extra_zones)
             lines.append(f"      zones = {{ {joined} }},")
+            # The same point on the region map, because the parent's rectangle is much larger
+            # than the city's micro-map.
+            lines.append(f'      px = {pin["px"]:.4f}, py = {pin["py"]:.4f},')
         destinations = pin.get("lines") or []
         if destinations:
             lines.append("      lines = {")
@@ -702,8 +725,16 @@ def build(maps: Maps) -> dict[str, str]:
             )
         )
 
+    zone_map = {zone.key: zone.map_id for zone in maps.zones}
     for pin in bosses + services + portals + transports:
-        pin["zones"] = [ZONE_PARENTS[pin["zone"]]] if pin["zone"] in ZONE_PARENTS else []
+        parent = ZONE_PARENTS.get(pin["zone"])
+        pin["zones"] = [parent] if parent else []
+        if parent:
+            # The region-map fractions, so the pin lands on the region instead of the city's
+            # micro-map. Emitted rather than computed at runtime, like every other fraction.
+            pin["px"], pin["py"] = maps.fractions_in(
+                parent, zone_map[pin["zone"]], pin["x"], pin["y"], pin["label"]
+            )
 
     portals.sort(key=lambda pin: (pin["cont"], pin["zone"], pin["subtitle"]))
     transports.sort(key=lambda pin: (pin["kind"], pin["cont"], pin["place"], pin["lines"][0]))

@@ -51,21 +51,33 @@ Orgrimmar's parent is Durotar even though half its rectangle overlaps; its aucti
 Durotar's eastern edge. Dalaran is its own micro-map inside Crystalsong Forest and deliberately has
 no parent, or its pins would draw twice.
 
+The region rectangle is several times the city's, so each pin carries a second fraction pair
+(`px`/`py`) projected on the parent's bounds, and the addon picks that pair when the parent is the
+displayed zone. Reusing `mx`/`my` there drew every city pin hundreds of pixels off its region map,
+in the sea. The generator rejects a fraction outside 3% of the rectangle, which is how Orgrimmar's
+auction house (just past Durotar's eastern edge) stays allowed while a wrong parent does not.
+
 ## Tooltip
 
 Each pin is a 24x24 button parented to `WorldMapFrame`, at the frame's own strata and frame level
 plus 8, with the mouse enabled. Questie uses `+7` for its own pins and HandyNotes `+6`, so one level
 higher means our tooltip and click survive every addon load order. The cost is that our 24x24 button
-covers a Questie pin within 24 pixels of it. A pin parented to `WorldMapButton` at `WORLDMAP_POI_FRAMELEVEL + 50` drew correctly but never
-received a mouse event, which is why hover and click both failed in the 2026-11-27 playtest.
+covers a Questie pin within 24 pixels of it. A pin parented to `WorldMapButton` at
+`WORLDMAP_POI_FRAMELEVEL + 50` drew correctly but never received a mouse event, which is why hover
+and click both failed in the 2026-11-27 playtest.
 
-Pin offsets come from the map's live screen rectangle, divided by
-`WorldMapFrame:GetEffectiveScale()`, never from a scale constant. The quest view scales
-`WorldMapDetailFrame` and `WorldMapButton` by `0.691` each, so the effective scale is `0.4775`;
-`GetScale()` reports only one frame's own scale and left every offset 44.7% too large, which slid
-the pins toward the top-left while "Show Quest Objectives" was on. Live rects also follow a
-third-party addon that resizes the map. Each handler runs inside `pcall` and reports one line per
-failing site, so an addon erroring on the same frames cannot kill the layer.
+Pin offsets come from the map's live screen rectangle, never from a scale constant. `WorldMapButton`
+and `WorldMapDetailFrame` are siblings under `WorldMapFrame` in the shipped `WorldMapFrame.xml`, and
+the client scales each of them independently: `1.0` full map, `0.691` quest view, `0.573` windowed.
+The client's own `GetLeft`/`GetTop` already divide by the frame's own effective scale, so
+subtracting a button rect from a frame rect mixes two unit spaces; `MapRect()` scales each corner to
+screen pixels and divides once. Live rects also follow a third-party addon that resizes the map.
+
+Pins are re-placed on every path that can move the map, not only on `WorldMapFrame_Update`: the
+objectives checkbox goes through `WorldMapFrame_DisplayQuests` and the size toggle through
+`WorldMap_ToggleSizeUp`/`Down`, and neither calls `Update`. Hooking only `Update` left the pins at
+the previous view's offsets, which is the shift the owner saw. Each handler runs inside `pcall` and
+reports one line per failing site, so an addon erroring on the same frames cannot kill the layer.
 
 Hovering shows the pin's lines on `WorldMapTooltip`, the client's own map tooltip:
 
@@ -169,7 +181,7 @@ Continent index order is the client's, not the map id order: **1 Kalimdor, 2 Eas
 | Dalaran pin fractions | `Data/patch-M.mpq` `DungeonMap.dbc` row 27 | `aa31db35a2266694d8318c410712a18540d86469e3d6134eb648a1d9694f21f5` |
 | FrameXML canary | `Data/enUS/patch-enUS-3.MPQ` (source archive) | `e05b75b212cdda98f86beef35eb024aa1ff416a7164d08873c49b7ae1f3105c8` |
 | Cooldown nil guard | `Data/enUS/locale-enUS.MPQ` (source archive) | `7b93af66d6f5bb0aaaed35202a376c5e2a75df0daea8e0c6c117ab2bfbde77b5` |
-| Built archive | `dist/patch-Z.MPQ`, 37,445 bytes | `93c09e04add2924dd00f4c69bf0985ac812119e1d04289345e2e1e2aac2a5fea` |
+| Built archive | `dist/patch-Z.MPQ`, 38,062 bytes | `3ef25f55028a7b25f451a9b7769bb938b6d40264c7e10dc520726397c9268ae2` |
 
 `manifest.json` carries the per-entry hashes and is the audit record; this table names the DBC
 sources the fractions were computed from. The built archive row is the current checked-in pair;
