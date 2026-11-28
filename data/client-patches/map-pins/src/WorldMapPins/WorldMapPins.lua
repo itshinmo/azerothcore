@@ -168,6 +168,22 @@ local function HideAll()
     end
 end
 
+-- A pin draws on its own zone map and on the zone maps that contain it. The Thunder Bluff pins
+-- store zone 1638, so matching the id alone would leave the Mulgore map empty; the generator
+-- attaches the curated parent zone to each pin instead of guessing geometrically, because the
+-- city bounds overlap three outdoor zones apiece.
+local function OnZoneMap(pin, zone)
+    if pin.zone == zone then
+        return true
+    end
+    for _, parent in ipairs(pin.zones or {}) do
+        if parent == zone then
+            return true
+        end
+    end
+    return false
+end
+
 local function DisplayedZone(continent, index)
     if not continent or continent < 1 or continent > 4 or not index or index == 0
         or not GetMapZones then
@@ -205,7 +221,7 @@ local function Refresh()
             Frame.pins[i] = button
         end
         local x, y
-        if zone and pin.zone == zone then
+        if zone and OnZoneMap(pin, zone) then
             x, y = pin.mx, pin.my
         elseif onContinent and pin.cont == continent then
             x, y = pin.cx, pin.cy

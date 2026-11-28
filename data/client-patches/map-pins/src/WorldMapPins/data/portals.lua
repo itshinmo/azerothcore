@@ -14,6 +14,7 @@ ns.PinPortals = {
       icon = "Interface\\Icons\\Spell_Arcane_PortalOrgrimmar",
       x = 1472.6, y = -4215.7, mx = 0.3815, my = 0.8566,
       cont = 1, cx = 0.5783, cy = 0.4617,
+      zones = { 14 },
       lines = {
           "To Blasted Lands",
       } },
@@ -23,6 +24,7 @@ ns.PinPortals = {
       icon = "Interface\\Icons\\Spell_Arcane_PortalThunderBluff",
       x = -944.1, y = 274.9, mx = 0.2316, my = 0.1352,
       cont = 1, cx = 0.4563, cy = 0.5602,
+      zones = { 215 },
       lines = {
           "To Blasted Lands",
       } },
@@ -32,6 +34,7 @@ ns.PinPortals = {
       icon = "Interface\\Icons\\Spell_Arcane_PortalDarnassus",
       x = 9661.8, y = 2509.6, mx = 0.4051, my = 0.8169,
       cont = 1, cx = 0.3956, cy = 0.1279,
+      zones = { 141 },
       lines = {
           "To Blasted Lands",
       } },
@@ -41,6 +44,7 @@ ns.PinPortals = {
       icon = "Interface\\Icons\\Spell_Arcane_PortalExodar",
       x = -4037.8, y = -11555.5, mx = 0.4629, my = 0.6075,
       cont = 1, cx = 0.2995, cy = 0.2733,
+      zones = { 3524 },
       lines = {
           "To Blasted Lands",
       } },
@@ -50,6 +54,7 @@ ns.PinPortals = {
       icon = "Interface\\Icons\\Spell_Arcane_PortalUnderCity",
       x = 1768.8, y = 55.4, mx = 0.8524, my = 0.1705,
       cont = 2, cx = 0.4447, cy = 0.3465,
+      zones = { 85 },
       lines = {
           "To Blasted Lands",
       } },
@@ -59,6 +64,7 @@ ns.PinPortals = {
       icon = "Interface\\Icons\\Spell_Arcane_PortalStormWind",
       x = -9007.6, y = 871.9, mx = 0.4898, my = 0.8735,
       cont = 2, cx = 0.4246, cy = 0.7434,
+      zones = { 12 },
       lines = {
           "To Blasted Lands",
       } },
@@ -68,6 +74,7 @@ ns.PinPortals = {
       icon = "Interface\\Icons\\Spell_Arcane_PortalIronForge",
       x = -4606.4, y = -929.0, mx = 0.2725, my = 0.0704,
       cont = 2, cx = 0.4688, cy = 0.5813,
+      zones = { 1 },
       lines = {
           "To Blasted Lands",
       } },
@@ -77,6 +84,7 @@ ns.PinPortals = {
       icon = "Interface\\Icons\\Spell_Arcane_PortalSilvermoon",
       x = 9984.3, y = -7107.6, mx = 0.5835, my = 0.2100,
       cont = 2, cx = 0.5616, cy = 0.1323,
+      zones = { 3430 },
       lines = {
           "To Blasted Lands",
       } },
@@ -86,6 +94,7 @@ ns.PinPortals = {
       icon = "Interface\\Icons\\Spell_Arcane_PortalShattrath",
       x = -1839.9, y = 5500.6, mx = 0.4859, my = 0.4202,
       cont = 3, cx = 0.4292, cy = 0.6580,
+      zones = { 3519 },
       lines = {
           "To the Isle of Quel'Danas",
       } },
@@ -95,6 +104,7 @@ ns.PinPortals = {
       icon = "Interface\\Icons\\Spell_Arcane_PortalShattrath",
       x = -1869.6, y = 5412.5, mx = 0.5533, my = 0.4543,
       cont = 3, cx = 0.4342, cy = 0.6606,
+      zones = { 3519 },
       lines = {
           "To Stormwind",
           "To Ironforge",

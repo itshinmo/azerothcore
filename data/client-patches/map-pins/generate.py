@@ -180,6 +180,24 @@ PLACES = {
     4395: "Dalaran",
 }
 
+# A pin draws on its own zone map and on every zone map that CONTAINS it. Geometric containment
+# is not usable: the Undercity bounds touch Silverpine Forest and the Western Plaguelands, and
+# Thunder Bluff's spawn point falls in Desolace, so a naive rule puts city pins on three maps.
+# One curated parent per city, from WorldMapArea, asserted against the city's own spawn point in
+# the generator tests. A city with no entry draws only on its own map, which is the safe default.
+ZONE_PARENTS = {
+    1519: 12,     # Stormwind City     -> Elwynn Forest
+    1537: 1,      # Ironforge          -> Dun Morogh
+    1657: 141,    # Darnassus          -> Teldrassil
+    3557: 3524,   # The Exodar         -> Azuremyst Isle
+    1637: 14,     # Orgrimmar          -> Durotar
+    1497: 85,     # Undercity          -> Tirisfal Glades
+    1638: 215,    # Thunder Bluff      -> Mulgore
+    3487: 3430,   # Silvermoon City    -> Eversong Woods
+    3703: 3519,   # Shattrath City     -> Terokkar Forest
+    # Dalaran is its own micro-map inside Crystalsong Forest, so it has no parent zone map.
+}
+
 # A spawn that sits in a named sub-zone a player would use instead of the zone name.
 PLACE_OVERRIDES = {
     5714535: "Ratchet",  # Call Board on the Ratchet dock, zone "The Barrens"
@@ -487,6 +505,10 @@ def render(key: str, header: str, pins: list[dict], dbc_hashes: dict[str, str]) 
             f'mx = {pin["mx"]:.4f}, my = {pin["my"]:.4f},'
         )
         lines.append(f'      cont = {pin["cont"]}, cx = {pin["cx"]:.4f}, cy = {pin["cy"]:.4f},')
+        extra_zones = pin.get("zones") or []
+        if extra_zones:
+            joined = ", ".join(str(z) for z in extra_zones)
+            lines.append(f"      zones = {{ {joined} }},")
         destinations = pin.get("lines") or []
         if destinations:
             lines.append("      lines = {")
@@ -677,9 +699,14 @@ def build(maps: Maps) -> dict[str, str]:
             )
         )
 
+    for pin in bosses + services + portals + transports:
+        pin["zones"] = [ZONE_PARENTS[pin["zone"]]] if pin["zone"] in ZONE_PARENTS else []
+
     portals.sort(key=lambda pin: (pin["cont"], pin["zone"], pin["subtitle"]))
     transports.sort(key=lambda pin: (pin["kind"], pin["cont"], pin["place"], pin["lines"][0]))
+    # The parent zone names must be in zones.lua too, or the addon cannot match them.
     zone_ids = {pin["zone"] for pin in bosses + services + portals + transports}
+    zone_ids |= {zone for pin in bosses + services + portals + transports for zone in pin["zones"]}
     hashes = {
         name: hashlib.sha256((maps.dbc / name).read_bytes()).hexdigest()
         for name in (

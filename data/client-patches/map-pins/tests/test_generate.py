@@ -8,6 +8,7 @@ Run: python3 -m unittest discover -s data/client-patches/map-pins/tests -v
 
 from __future__ import annotations
 
+import os
 import struct
 import sys
 import tempfile
@@ -390,6 +391,69 @@ def write_taxi_dbc(path: Path, rows: list[tuple]) -> None:
                 values.append(int(value))
         packed.append(values)
     write_dbc(path, packed, [""])
+
+
+class ZoneParentTest(unittest.TestCase):
+    """Every curated parent must really overlap its city on the same map.
+
+    Geometric containment is not the rule (each city's bounds overlap three outdoor zones), so
+    this asserts the curated pair differently: the parent must be on the same map, it must cover
+    most of the city rectangle, and the city must not fall entirely outside it. Orgrimmar is the
+    reason a tolerance is needed at all: its auction house stands on Durotar's eastern edge, where
+    only half the city rectangle overlaps the zone.
+    """
+
+    def maps(self):
+        path = Path(os.environ.get("ACORE_DATA", os.path.expanduser("~/wow/Data/dbc")))
+        return generate.Maps(path)
+
+    def test_curated_parents_are_real_zones(self):
+        maps = self.maps()
+        by_key = {zone.key: zone for zone in maps.zones}
+        for city, parent in generate.ZONE_PARENTS.items():
+            self.assertIn(city, by_key, f"city zone {city} is not in WorldMapArea")
+            self.assertIn(parent, by_key, f"parent zone {parent} is not in WorldMapArea")
+            self.assertEqual(by_key[city].map_id, by_key[parent].map_id,
+                             "a city and its parent must share a map")
+
+    def test_every_parent_overlaps_most_of_its_city(self):
+        maps = self.maps()
+        by_key = {zone.key: zone for zone in maps.zones}
+        for city, parent in generate.ZONE_PARENTS.items():
+            zone, city_zone = by_key[parent], by_key[city]
+            ox = max(0.0, min(max(city_zone.x_min, city_zone.x_max), max(zone.x_min, zone.x_max))
+                      - max(min(city_zone.x_min, city_zone.x_max), min(zone.x_min, zone.x_max)))
+            oy = max(0.0, min(max(city_zone.y_min, city_zone.y_max), max(zone.y_min, zone.y_max))
+                      - max(min(city_zone.y_min, city_zone.y_max), min(zone.y_min, zone.y_max)))
+            city_area = abs(city_zone.x_max - city_zone.x_min) * abs(city_zone.y_max - city_zone.y_min)
+            self.assertGreater(city_area, 0, f"{city} has zero bounds")
+            coverage = (ox * oy) / city_area
+            self.assertGreater(
+                coverage, 0.4,
+                f"{maps.map_zone_name(city)} overlaps only {coverage:.0%} of "
+                f"{maps.map_zone_name(parent)}",
+            )
+
+    def test_every_serviced_city_has_a_parent(self):
+        # The pins that need a parent are the cities the project actually services. Comparing the
+        # exact set stops a deleted entry from silently passing every other assertion.
+        self.assertEqual(
+            set(generate.ZONE_PARENTS),
+            {1519, 1497, 1537, 1637, 1638, 1657, 3487, 3557, 3703},
+            "every serviced capital must have a curated parent zone",
+        )
+
+    def test_dalaran_has_no_parent(self):
+        self.assertNotIn(4395, generate.ZONE_PARENTS,
+                         "Dalaran is its own micro-map and must not draw on a Northrend zone")
+
+    def test_every_parent_zone_is_generated_into_zones_lua(self):
+        # The addon resolves a parent id through zones.lua, so a missing name means a pin that
+        # never draws on the region map.
+        text = (Path(__file__).resolve().parents[1] / "src" / "WorldMapPins" / "data" / "zones.lua")
+        generated = text.read_text()
+        for parent in generate.ZONE_PARENTS.values():
+            self.assertIn(f"[{parent}] =", generated, f"zone {parent} is missing from zones.lua")
 
 
 class PortalRoomsTest(unittest.TestCase):

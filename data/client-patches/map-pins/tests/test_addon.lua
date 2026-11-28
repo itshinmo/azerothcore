@@ -373,6 +373,33 @@ duskwood[1].scripts.OnEnter(duskwood[1])
 assert(WorldMapTooltip.lines[1] == "Taerar", "boss tooltip title is the boss name")
 assert(WorldMapTooltip.lines[2] == "Classic world boss - Duskwood", "boss tooltip names kind and zone")
 
+-- A city's pins must also draw on the zone map that contains it. Thunder Bluff stores zone 1638
+-- (the city) and Mulgore is 215, so matching the id alone left the Mulgore map empty.
+local function zonePins(name)
+    continent, mapZoneIndex, zoneName = 1, 1, name
+    ns.Refresh()
+    return visible()
+end
+local function titles(list)
+    local out = {}
+    for _, frame in ipairs(list) do
+        out[frame.pin.title or frame.pin.label .. "|" .. frame.pin.place] = true
+    end
+    return out
+end
+local tbCity = titles(zonePins("Thunder Bluff"))
+assert(tbCity["Thunder Bluff"], "the Thunder Bluff city map must draw its own pins")
+local tbMulgore = titles(zonePins("Mulgore"))
+assert(tbMulgore["Thunder Bluff"],
+    "the Mulgore map must draw the Thunder Bluff pins; a city's pins draw on their region map")
+local elwynn = titles(zonePins("Elwynn Forest"))
+assert(elwynn["Stormwind City"], "the Elwynn Forest map must draw the Stormwind pins")
+-- A zone with no pin of its own and no city inside it stays empty.
+assert(#zonePins("Westfall") == 0, "Westfall has no pin and no city, so it must stay empty")
+-- The parent rule must not leak pins to unrelated zones.
+local strangle = titles(zonePins("Stranglethorn Vale"))
+assert(not strangle["Stormwind City"], "Stormwind pins must not appear in Stranglethorn")
+
 -- A zone without pins shows none.
 continent, mapZoneIndex, zoneName = 1, 1, "Westfall"
 ns.Refresh()

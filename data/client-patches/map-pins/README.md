@@ -144,11 +144,11 @@ Continent index order is the client's, not the map id order: **1 Kalimdor, 2 Eas
 
 | Input | Source | SHA256 |
 |-------|--------|--------|
-| Zone and continent pin fractions | `Data/patch-M.mpq` `WorldMapArea.dbc` | `f712a0e435d22b73ecd4d812a1aae5ef8e21a36371c9f5de03de461b05f46cdb` |
-| Dalaran pin fractions | `Data/patch-M.mpq` `DungeonMap.dbc` row 27 | `f712a0e435d22b73ecd4d812a1aae5ef8e21a36371c9f5de03de461b05f46cdb` |
-| FrameXML canary | `Data/enUS/patch-enUS-3.MPQ` (source archive) | `f712a0e435d22b73ecd4d812a1aae5ef8e21a36371c9f5de03de461b05f46cdb` |
-| Cooldown nil guard | `Data/enUS/locale-enUS.MPQ` (source archive) | `f712a0e435d22b73ecd4d812a1aae5ef8e21a36371c9f5de03de461b05f46cdb` |
-| Built archive | `dist/patch-Z.MPQ`, 35,580 bytes | `f712a0e435d22b73ecd4d812a1aae5ef8e21a36371c9f5de03de461b05f46cdb` |
+| Zone and continent pin fractions | `Data/patch-M.mpq` `WorldMapArea.dbc` | `8d119e9591fae47e191ee9740ec6dabc36541f566679e43b3337b7a5ac8e1925` |
+| Dalaran pin fractions | `Data/patch-M.mpq` `DungeonMap.dbc` row 27 | `8d119e9591fae47e191ee9740ec6dabc36541f566679e43b3337b7a5ac8e1925` |
+| FrameXML canary | `Data/enUS/patch-enUS-3.MPQ` (source archive) | `8d119e9591fae47e191ee9740ec6dabc36541f566679e43b3337b7a5ac8e1925` |
+| Cooldown nil guard | `Data/enUS/locale-enUS.MPQ` (source archive) | `8d119e9591fae47e191ee9740ec6dabc36541f566679e43b3337b7a5ac8e1925` |
+| Built archive | `dist/patch-Z.MPQ`, 36,056 bytes | `8d119e9591fae47e191ee9740ec6dabc36541f566679e43b3337b7a5ac8e1925` |
 
 `manifest.json` carries the per-entry hashes and is the audit record; this table names the DBC
 sources the fractions were computed from. The built archive row is the current checked-in pair;
