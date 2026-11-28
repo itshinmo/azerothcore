@@ -244,7 +244,7 @@
 | `.group list` | 477 | `cs_group.cpp` |
 | `.group remove` | 475 | `cs_group.cpp` |
 | `.group revive` | 868 | `cs_group.cpp` |
-| `.groupsummon` | 478 | `cs_misc.cpp` |
+| `.group summon` | 478 | `cs_group.cpp` |
 | `.guid` | 506 | `cs_misc.cpp` |
 | `.guild create` | 402 | `cs_guild.cpp` |
 | `.guild delete` | 403 | `cs_guild.cpp` |
